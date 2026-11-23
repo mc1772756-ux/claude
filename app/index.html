@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Digitalizador de Fotos</title>
+  <meta name="theme-color" content="#14161a">
+  <meta name="description" content="Digitalize fotos impressas: recorte automático, correção de perspectiva e restauração de cores.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Tela inicial / galeria -->
+  <section id="screen-home" class="screen active">
+    <header class="topbar">
+      <h1>Digitalizador de Fotos</h1>
+    </header>
+    <main class="home-main">
+      <div class="actions">
+        <label class="btn primary big">
+          <span>📷 Fotografar foto</span>
+          <input id="input-camera" type="file" accept="image/*" capture="environment" hidden>
+        </label>
+        <label class="btn big">
+          <span>🖼️ Importar da galeria</span>
+          <input id="input-files" type="file" accept="image/*" multiple hidden>
+        </label>
+      </div>
+      <p class="tip">Dica: coloque a foto sobre uma superfície lisa e de cor contrastante, com boa luz e sem reflexos.</p>
+      <h2 class="section-title">Fotos digitalizadas <span id="count"></span></h2>
+      <div id="gallery" class="gallery"></div>
+      <p id="empty" class="empty">Nenhuma foto digitalizada ainda.</p>
+    </main>
+  </section>
+
+  <!-- Recorte -->
+  <section id="screen-crop" class="screen">
+    <header class="topbar">
+      <button class="icon-btn" id="crop-cancel" aria-label="Cancelar">✕</button>
+      <h1>Ajustar bordas <small id="queue-info"></small></h1>
+      <button class="icon-btn accent" id="crop-next" aria-label="Continuar">✓</button>
+    </header>
+    <div class="stage" id="crop-stage"><canvas id="crop-canvas"></canvas></div>
+    <footer class="toolbar">
+      <button class="tool" id="crop-auto">✨<span>Auto</span></button>
+      <button class="tool" id="crop-full">⬜<span>Inteira</span></button>
+      <button class="tool" id="crop-rotate">↻<span>Girar</span></button>
+    </footer>
+  </section>
+
+  <!-- Edição -->
+  <section id="screen-edit" class="screen">
+    <header class="topbar">
+      <button class="icon-btn" id="edit-back" aria-label="Voltar">←</button>
+      <h1>Ajustes</h1>
+      <button class="icon-btn accent" id="edit-save" aria-label="Salvar">💾</button>
+    </header>
+    <div class="stage" id="edit-stage"><canvas id="edit-canvas"></canvas></div>
+    <div class="panel">
+      <div class="toggles">
+        <button class="chip on" id="t-restore">Restaurar cores</button>
+        <button class="chip" id="t-bw">Preto e branco</button>
+        <button class="chip" id="t-rotate">Girar 90°</button>
+        <button class="chip" id="t-compare">Original</button>
+        <button class="chip" id="t-reset">Redefinir</button>
+      </div>
+      <div class="sliders">
+        <label>Brilho <input type="range" id="s-brightness" min="-100" max="100" value="0"></label>
+        <label>Contraste <input type="range" id="s-contrast" min="-100" max="100" value="0"></label>
+        <label>Saturação <input type="range" id="s-saturation" min="-100" max="100" value="0"></label>
+        <label>Temperatura <input type="range" id="s-warmth" min="-100" max="100" value="0"></label>
+        <label>Nitidez <input type="range" id="s-sharpen" min="0" max="100" value="20"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Visualizador -->
+  <div id="viewer" class="viewer" hidden>
+    <img id="viewer-img" alt="Foto digitalizada">
+    <div class="viewer-bar">
+      <button class="btn" id="v-close">Fechar</button>
+      <button class="btn" id="v-share">Compartilhar</button>
+      <button class="btn primary" id="v-download">Baixar</button>
+      <button class="btn danger" id="v-delete">Excluir</button>
+    </div>
+  </div>
+
+  <div id="busy" class="busy" hidden><div class="spinner"></div><p id="busy-text">Processando…</p></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="imaging.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
