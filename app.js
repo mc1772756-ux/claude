@@ -26,12 +26,30 @@ function salvar() {
   try {
     localStorage.setItem(CHAVE, JSON.stringify(estado));
   } catch (e) {
-    alert('Não foi possível salvar os dados neste navegador. Exporte um backup.');
+    const av = document.getElementById('aviso-armazenamento');
+    if (av) av.hidden = false;
   }
 }
 
 const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const $ = (sel) => document.querySelector(sel);
+
+// Confirmação no próprio botão: o 1º toque pede confirmação, o 2º executa.
+// (Evita confirm(), que é bloqueado em alguns visualizadores.)
+function pedeConfirmacao(btn, texto = 'Confirmar?') {
+  if (btn.dataset.confirmando === '1') return true;
+  btn.dataset.confirmando = '1';
+  btn.dataset.textoOriginal = btn.textContent;
+  btn.textContent = texto;
+  btn.classList.add('confirmando');
+  setTimeout(() => {
+    if (!btn.isConnected) return;
+    btn.dataset.confirmando = '';
+    btn.textContent = btn.dataset.textoOriginal;
+    btn.classList.remove('confirmando');
+  }, 4000);
+  return false;
+}
 
 /* ---------- Datas e números ---------- */
 function hojeISO() {
@@ -132,10 +150,10 @@ function editarPet(id) {
   $('#pet-nome').focus();
 }
 
-function removerPet(id) {
+function removerPet(id, btn) {
   const p = estado.pets.find((x) => x.id === id);
   if (!p) return;
-  if (!confirm(`Excluir ${p.nome} e todos os registros dele(a)? Isso não pode ser desfeito.`)) return;
+  if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
   estado.pets = estado.pets.filter((x) => x.id !== id);
   for (const k of ['pesos', 'racoes', 'saude']) estado[k] = estado[k].filter((r) => r.petId !== id);
   if (estado.petAtual === id) estado.petAtual = estado.pets[0]?.id || null;
@@ -171,7 +189,7 @@ $('#lista-pets').addEventListener('click', (ev) => {
   const ed = ev.target.closest('[data-editar-pet]');
   const rm = ev.target.closest('[data-remover-pet]');
   if (ed) editarPet(ed.dataset.editarPet);
-  if (rm) removerPet(rm.dataset.removerPet);
+  if (rm) removerPet(rm.dataset.removerPet, rm);
 });
 $('#btn-cancelar-pet').addEventListener('click', limparFormPet);
 $('#btn-pets').addEventListener('click', () => ($('#painel-pets').hidden ? abrirPainelPets() : fecharPainelPets()));
@@ -214,7 +232,7 @@ $('#lista-peso').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-remover-peso]');
   if (!b) return;
   const r = estado.pesos.find((x) => x.id === b.dataset.removerPeso);
-  if (r && confirm(`Excluir o registro de ${fmtKg(r.kg)} em ${fmtData(r.data)}?`)) {
+  if (r && pedeConfirmacao(b)) {
     estado.pesos = estado.pesos.filter((x) => x.id !== r.id);
     salvar();
     renderPeso();
