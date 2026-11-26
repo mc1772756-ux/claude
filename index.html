@@ -182,11 +182,40 @@
       </div>
     </section>
 
-    <!-- Próximas etapas: Ração, Backup -->
+    <!-- ===================== RAÇÃO ===================== -->
+    <section id="aba-racao" class="aba" hidden>
+      <div class="cartao">
+        <h2>Alimentação</h2>
+        <div id="racao-resumo"></div>
+      </div>
+
+      <div class="cartao">
+        <h2>Configurar alimentador</h2>
+        <form id="form-racao" novalidate>
+          <label>Marca / linha da ração
+            <input type="text" id="racao-marca" maxlength="60" placeholder="ex.: Premier Raças Específicas">
+          </label>
+          <fieldset class="grupo">
+            <legend>Horários programados</legend>
+            <ul id="racao-refeicoes" class="refeicoes"></ul>
+            <div class="linha-botoes">
+              <button type="button" class="btn pequeno" id="btn-add-refeicao">+ Adicionar horário</button>
+              <button type="button" class="btn pequeno" id="btn-igualar">Mesma quantidade em todos</button>
+            </div>
+            <p class="total-vivo" id="racao-total" aria-live="polite"></p>
+          </fieldset>
+          <p class="erro" id="racao-erro" role="alert" hidden></p>
+          <button type="submit" class="btn primario">Salvar alimentação</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Próxima etapa: Backup -->
   </main>
 
   <nav class="abas" id="abas" aria-label="Seções" hidden>
     <button type="button" class="aba-btn" data-aba="peso" aria-current="page"><span aria-hidden="true">⚖️</span>Peso</button>
+    <button type="button" class="aba-btn" data-aba="racao"><span aria-hidden="true">🥣</span>Ração</button>
     <button type="button" class="aba-btn" data-aba="saude"><span aria-hidden="true">🩺</span>Saúde<span class="contador" id="contador-saude" hidden></span></button>
   </nav>
 

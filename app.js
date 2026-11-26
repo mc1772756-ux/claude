@@ -233,7 +233,7 @@ $('#form-pet').addEventListener('submit', (ev) => {
   limparFormPet();
   renderTudo();
   renderListaPets();
-  if (!id) fecharPainelPets();
+  if (!id) { fecharPainelPets(); preencherFormRacao(); }
 });
 
 $('#lista-pets').addEventListener('click', (ev) => {
@@ -654,6 +654,139 @@ function renderBanho() {
     : '<li class="vazio">Sem registros.</li>';
 }
 
+/* ---------- Ração e alimentador ---------- */
+function racaoDoPet(petId = estado.petAtual) {
+  return estado.racoes.find((r) => r.petId === petId) || null;
+}
+const fmtG = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' g';
+function totalDia(refeicoes) {
+  return Math.round(refeicoes.reduce((s, x) => s + x.g, 0) * 10) / 10;
+}
+function agoraHHMM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function proximaRefeicao(refeicoes) {
+  if (!refeicoes.length) return null;
+  const agora = agoraHHMM();
+  return refeicoes.find((x) => x.hora > agora) || { ...refeicoes[0], amanha: true };
+}
+
+function linhaRefeicao(hora = '', g = '') {
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <label>Horário<input type="time" class="ref-hora" value="${esc(hora)}"></label>
+    <label>Gramas<input type="text" class="ref-g" inputmode="decimal" placeholder="ex.: 30" value="${g === '' ? '' : esc(String(g).replace('.', ','))}"></label>
+    <button type="button" class="btn icone perigo" data-remover-refeicao aria-label="Remover horário">✕</button>`;
+  return li;
+}
+
+// Lê as linhas do formulário; devolve { refeicoes, erro }
+function lerRefeicoes() {
+  const refeicoes = [];
+  for (const li of document.querySelectorAll('#racao-refeicoes li')) {
+    const hora = li.querySelector('.ref-hora').value;
+    const gTxt = li.querySelector('.ref-g').value.trim();
+    if (!hora && !gTxt) continue; // linha vazia: ignora
+    if (!hora) return { erro: 'Preencha o horário de todas as refeições.' };
+    const g = lerNumero(gTxt);
+    if (!(g > 0 && g <= 2000)) return { erro: `Informe as gramas da refeição das ${hora}.` };
+    refeicoes.push({ hora, g: Math.round(g * 10) / 10 });
+  }
+  refeicoes.sort((a, b) => (a.hora < b.hora ? -1 : 1));
+  for (let i = 1; i < refeicoes.length; i++) {
+    if (refeicoes[i].hora === refeicoes[i - 1].hora) return { erro: `O horário ${refeicoes[i].hora} está repetido.` };
+  }
+  return { refeicoes };
+}
+
+function atualizarTotalVivo() {
+  const { refeicoes, erro } = lerRefeicoes();
+  const el = $('#racao-total');
+  if (erro || !refeicoes.length) { el.textContent = 'Total por dia: —'; return; }
+  el.innerHTML = `Total por dia: <strong>${fmtG(totalDia(refeicoes))}</strong> em ${plural(refeicoes.length, 'refeição', 'refeições')}`;
+}
+
+function preencherFormRacao() {
+  const r = racaoDoPet();
+  $('#racao-erro').hidden = true;
+  $('#racao-marca').value = r ? r.marca : '';
+  const ul = $('#racao-refeicoes');
+  ul.innerHTML = '';
+  const linhas = r && r.refeicoes.length ? r.refeicoes : [{ hora: '08:00', g: '' }, { hora: '18:00', g: '' }];
+  for (const x of linhas) ul.appendChild(linhaRefeicao(x.hora, x.g));
+  atualizarTotalVivo();
+}
+
+$('#racao-refeicoes').addEventListener('input', atualizarTotalVivo);
+$('#racao-refeicoes').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-remover-refeicao]');
+  if (!b) return;
+  b.closest('li').remove();
+  atualizarTotalVivo();
+});
+$('#btn-add-refeicao').addEventListener('click', () => {
+  const li = linhaRefeicao();
+  $('#racao-refeicoes').appendChild(li);
+  li.querySelector('.ref-hora').focus();
+});
+// Copia as gramas da primeira linha preenchida para todas
+$('#btn-igualar').addEventListener('click', () => {
+  const campos = [...document.querySelectorAll('#racao-refeicoes .ref-g')];
+  const base = campos.find((c) => c.value.trim());
+  if (!base) { $('#racao-erro').textContent = 'Preencha as gramas de um horário primeiro.'; $('#racao-erro').hidden = false; return; }
+  campos.forEach((c) => (c.value = base.value));
+  $('#racao-erro').hidden = true;
+  atualizarTotalVivo();
+});
+
+$('#form-racao').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const erroEl = $('#racao-erro');
+  const { refeicoes, erro } = lerRefeicoes();
+  const marca = $('#racao-marca').value.trim();
+  let msg = erro || '';
+  if (!msg && !refeicoes.length) msg = 'Adicione pelo menos um horário com as gramas.';
+  if (msg) { erroEl.textContent = msg; erroEl.hidden = false; return; }
+  erroEl.hidden = true;
+  const atual = racaoDoPet();
+  const nova = { petId: estado.petAtual, marca, refeicoes, atualizado: hojeISO() };
+  if (atual) Object.assign(atual, nova);
+  else estado.racoes.push(nova);
+  salvar();
+  preencherFormRacao();
+  renderTudo();
+  $('#racao-resumo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+function renderRacao() {
+  const r = racaoDoPet();
+  const el = $('#racao-resumo');
+  if (!r || !r.refeicoes.length) {
+    el.innerHTML = '<p class="vazio-texto">Nenhuma alimentação configurada. Preencha a marca e os horários do alimentador abaixo.</p>';
+    return;
+  }
+  const total = totalDia(r.refeicoes);
+  const prox = proximaRefeicao(r.refeicoes);
+  const pesos = pesosDoPet();
+  const porKg = pesos.length ? total / pesos[pesos.length - 1].kg : null;
+  el.innerHTML = `
+    <div class="total-dia">
+      <span class="numero">${fmtG(total)}</span>
+      <span class="rot">por dia · ${plural(r.refeicoes.length, 'refeição', 'refeições')}</span>
+    </div>
+    ${r.marca ? `<p class="marca">🥣 ${esc(r.marca)}</p>` : ''}
+    <ul class="horarios">
+      ${r.refeicoes.map((x) => `
+        <li class="${prox && x.hora === prox.hora ? 'proxima' : ''}">
+          <span class="hora">${x.hora}</span>
+          <span class="g">${fmtG(x.g)}</span>
+          ${prox && x.hora === prox.hora ? `<span class="selo ok">Próxima${prox.amanha ? ' (amanhã)' : ''}</span>` : ''}
+        </li>`).join('')}
+    </ul>
+    <p class="nota">${porKg ? `≈ ${porKg.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} g por kg de peso · ` : ''}Atualizado em ${fmtData(r.atualizado)}</p>`;
+}
+
 /* ---------- Resumo do pet (topo) ---------- */
 function renderResumo() {
   const p = petAtual();
@@ -668,6 +801,7 @@ function renderResumo() {
     ['Idade', idade || '<button type="button" class="link" data-informar-idade>Informar</button>',
       p.nascimento ? (p.nascAprox ? 'estimada' : 'nasc. ' + fmtData(p.nascimento)) : ''],
     ['Peso', pesos.length ? fmtKg(pesos[pesos.length - 1].kg) : '—', pesos.length ? fmtData(pesos[pesos.length - 1].data) : ''],
+    ['Ração por dia', racaoDoPet() ? fmtG(totalDia(racaoDoPet().refeicoes)) : '—', racaoDoPet() ? plural(racaoDoPet().refeicoes.length, 'refeição', 'refeições') : ''],
     ['Último banho', banho ? textoHaDias(banho.data) : '—', banho ? fmtData(banho.data) : ''],
   ];
   $('#resumo-fatos').innerHTML = fatos
@@ -700,6 +834,7 @@ let abaAtual = 'peso';
 try { abaAtual = localStorage.getItem('diario-pet-aba') || 'peso'; } catch (e) { /* sem armazenamento */ }
 function mostrarAba(nome) {
   abaAtual = nome;
+  if (nome === 'racao') preencherFormRacao();
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
     if (b.dataset.aba === nome) b.setAttribute('aria-current', 'page');
@@ -723,17 +858,19 @@ function renderTudo() {
   $('#abas').hidden = !temPet;
   $('#aba-peso').hidden = !temPet || abaAtual !== 'peso';
   $('#aba-saude').hidden = !temPet || abaAtual !== 'saude';
+  $('#aba-racao').hidden = !temPet || abaAtual !== 'racao';
   if (!temPet) return;
   renderResumo();
   if (abaAtual === 'peso') renderPeso();
+  else if (abaAtual === 'racao') renderRacao();
   else renderSaude();
 }
 
-$('#pet-atual').addEventListener('change', () => limparFormSaude());
+$('#pet-atual').addEventListener('change', () => { limparFormSaude(); preencherFormRacao(); });
 $('#peso-data').value = hojeISO();
 $('#peso-data').max = hojeISO();
 $('#banho-data').value = hojeISO();
 $('#banho-data').max = hojeISO();
 $('#pet-nasc').max = hojeISO();
-mostrarAba(abaAtual === 'saude' ? 'saude' : 'peso');
+mostrarAba(['peso', 'racao', 'saude'].includes(abaAtual) ? abaAtual : 'peso');
 limparFormSaude();

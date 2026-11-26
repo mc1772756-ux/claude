@@ -184,7 +184,8 @@ input:focus, select:focus { outline: 2px solid var(--primaria); outline-offset: 
 }
 .resumo-nome { font-size: 1.2rem; font-weight: 700; }
 .resumo-det { font-size: 0.85rem; color: var(--texto-2); }
-.fatos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.fatos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+@media (min-width: 560px) { .fatos { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .fatos > div { background: var(--fundo); border-radius: 10px; padding: 8px 10px; min-width: 0; }
 .fatos dt { font-size: 0.72rem; color: var(--texto-2); text-transform: uppercase; letter-spacing: 0.04em; }
 .fatos dd { margin: 2px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -253,5 +254,23 @@ input:focus, select:focus { outline: 2px solid var(--primaria); outline-offset: 
   background: var(--erro); color: var(--cartao); font-size: 0.7rem; font-weight: 700;
   display: grid; place-items: center;
 }
-@media (max-width: 360px) { .fatos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* ---------- Ração ---------- */
+.refeicoes { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.refeicoes li { display: flex; gap: 8px; align-items: flex-end; }
+.refeicoes label { margin-bottom: 6px; }
+.refeicoes label:first-child { flex: 1.4; }
+.refeicoes .btn.icone { margin-bottom: 6px; flex: none; }
+.total-vivo { margin: 10px 0 6px; font-variant-numeric: tabular-nums; }
+.total-dia { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.total-dia .numero { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.total-dia .rot { color: var(--texto-2); }
+.marca { margin: 6px 0 10px; }
+.horarios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.horarios li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--fundo); font-variant-numeric: tabular-nums; }
+.horarios .hora { font-weight: 700; min-width: 3.2em; }
+.horarios .g { flex: 1; }
+.horarios .selo { margin-top: 0; }
+.nota { font-size: 0.8rem; color: var(--texto-2); margin: 10px 0 0; }
+.vazio-texto { color: var(--texto-2); margin: 0; }

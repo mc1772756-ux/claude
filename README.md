@@ -4,7 +4,7 @@ App web (pt-BR, mobile-first) para acompanhar a saúde de cães e gatos. Abra `i
 
 - [x] Vários pets (cão/gato)
 - [x] Registro de peso com gráfico
-- [ ] Ração e horários do alimentador
+- [x] Ração: marca, horários do alimentador e total de gramas por dia
 - [x] Idade (data de nascimento ou aproximada)
 - [x] Último banho
 - [x] Vacinas, vermífugo e antipulgas com avisos (15 dias antes e atrasadas)
