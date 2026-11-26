@@ -54,10 +54,11 @@ function pedeConfirmacao(btn, texto = 'Confirmar?') {
 }
 
 /* ---------- Datas e números ---------- */
-function hojeISO() {
-  const d = new Date();
+// Date → 'AAAA-MM-DD' no fuso local
+function paraISO(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+const hojeISO = () => paraISO(new Date());
 // Converte 'AAAA-MM-DD' para Date local (sem deslocamento de fuso)
 function dataLocal(iso) {
   const [a, m, d] = iso.split('-').map(Number);
@@ -109,7 +110,7 @@ function nascimentoEstimado(anos, meses) {
   const alvo = new Date(hoje.getFullYear(), hoje.getMonth() - (anos * 12 + meses), 1);
   const ultimo = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
   alvo.setDate(Math.min(hoje.getDate(), ultimo));
-  return `${alvo.getFullYear()}-${String(alvo.getMonth() + 1).padStart(2, '0')}-${String(alvo.getDate()).padStart(2, '0')}`;
+  return paraISO(alvo);
 }
 
 /* ---------- Pets ---------- */
@@ -384,7 +385,7 @@ function desenharGrafico(cont, regs, ideal = null) {
 
   // Rótulos de data espaçados igualmente no tempo (1 a cada ~90px), sem sobreposição
   const nx = Math.max(2, Math.floor(w / 90));
-  const isoDe = (t) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const isoDe = (t) => paraISO(new Date(t));
   const ticksX = [...new Set(Array.from({ length: nx }, (_, i) => isoDe(x0 + ((x1 - x0) * i) / (nx - 1))))];
 
   const pts = regs.map((r, i) => [px(xs[i]), py(r.kg)]);
@@ -972,10 +973,11 @@ function remediosDoPet() {
     .filter((r) => r.petId === estado.petAtual)
     .sort((a, b) => b.inicio.localeCompare(a.inicio) || b.criado - a.criado);
 }
-const remedioAtivo = (r) => !r.fim || r.fim >= hojeISO();
+const remedioAtivo = (r) => !r.encerrado && (!r.fim || r.fim >= hojeISO());
 
 function statusRemedio(r) {
   const hoje = hojeISO();
+  if (r.encerrado) return { classe: 'neutro', texto: `Encerrado em ${fmtData(r.encerrado)}` };
   if (r.inicio > hoje) return { classe: 'neutro', texto: `Começa em ${fmtData(r.inicio)}` };
   if (!r.fim) return { classe: 'ok', texto: 'Uso contínuo' };
   const dias = diasEntre(hoje, r.fim);
@@ -1024,6 +1026,8 @@ $('#form-remedio').addEventListener('submit', (ev) => {
   const id = $('#remedio-id').value;
   const existente = id && estado.remedios.find((r) => r.id === id);
   const dados = { nome, dose, frequencia, horarios, inicio, fim, doencaId, obs };
+  // Término alterado para hoje ou depois (ou em branco) num remédio encerrado: volta a ficar em uso
+  if (existente && existente.encerrado && fim !== existente.fim && (!fim || fim >= hojeISO())) dados.encerrado = '';
   if (existente) Object.assign(existente, dados);
   else estado.remedios.push({ id: novoId(), petId: estado.petAtual, ...dados, criado: Date.now() });
   salvar();
@@ -1050,14 +1054,21 @@ function editarRemedio(id) {
   $('#form-remedio').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Encerrar hoje (ex.: tratamento concluído antes do previsto)
+// Encerrar hoje (ex.: tratamento concluído antes do previsto); "Reativar" desfaz
 function encerrarRemedio(id) {
   const r = estado.remedios.find((x) => x.id === id);
   if (!r) return;
   const hoje = hojeISO();
-  // Encerra ontem para sair da lista "em uso" já hoje; se começou hoje, apaga o término no mesmo dia
-  const ontem = (() => { const d = dataLocal(hoje); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
-  r.fim = r.inicio > ontem ? r.inicio : ontem; // começou hoje ou depois: termina no próprio início
+  r.encerrado = hoje;
+  if ((!r.fim || r.fim > hoje) && r.inicio <= hoje) r.fim = hoje;
+  salvar();
+  renderTudo();
+}
+function reativarRemedio(id) {
+  const r = estado.remedios.find((x) => x.id === id);
+  if (!r) return;
+  r.encerrado = '';
+  if (r.fim && r.fim < hojeISO()) r.fim = '';
   salvar();
   renderTudo();
 }
@@ -1068,6 +1079,7 @@ $('#saude-clinico').addEventListener('click', (ev) => {
   if ((b = t('[data-editar-doenca]'))) editarDoenca(b.dataset.editarDoenca);
   if ((b = t('[data-editar-remedio]'))) editarRemedio(b.dataset.editarRemedio);
   if ((b = t('[data-encerrar-remedio]')) && pedeConfirmacao(b, 'Encerrar?')) encerrarRemedio(b.dataset.encerrarRemedio);
+  if ((b = t('[data-reativar-remedio]'))) reativarRemedio(b.dataset.reativarRemedio);
   if ((b = t('[data-remover-doenca]')) && pedeConfirmacao(b)) {
     const id = b.dataset.removerDoenca;
     if ($('#doenca-id').value === id) limparFormDoenca();
@@ -1105,7 +1117,8 @@ function renderClinico() {
           <span class="selo ${st.classe}">${st.texto}</span>
           <div class="acoes">
             <button type="button" class="btn pequeno" data-editar-remedio="${r.id}">Editar</button>
-            ${ativo ? `<button type="button" class="btn pequeno" data-encerrar-remedio="${r.id}">Encerrar</button>` : ''}
+            ${ativo && r.inicio <= hojeISO() ? `<button type="button" class="btn pequeno" data-encerrar-remedio="${r.id}">Encerrar</button>` : ''}
+            ${!ativo ? `<button type="button" class="btn pequeno" data-reativar-remedio="${r.id}">Voltar a usar</button>` : ''}
             <button type="button" class="btn pequeno perigo" data-remover-remedio="${r.id}">Excluir</button>
           </div>
         </div>
@@ -1574,7 +1587,9 @@ function avaliarCuidado(chave, daRaca, meses, ecc) {
   const c = CUIDADOS[chave];
   let pontos = daRaca ? 3 : 1;
   const motivos = [daRaca ? 'predisposição da raça' : null];
-  if (meses !== null) {
+  if (meses === null) {
+    pontos += daRaca ? 1 : 2; // sem idade não dá para descartar: tudo fica em "fique de olho"
+  } else {
     const [min, max] = c.idade;
     if (meses >= min && meses <= max) {
       pontos += 2;
@@ -1650,11 +1665,6 @@ function renderRaca() {
         Elas voltam para a lista sozinhas se a idade ou o peso mudarem.</p>` : '');
 }
 
-$('#saude-raca').addEventListener('click', (ev) => {
-  if (ev.target.closest('[data-informar-idade-raca]')) { abrirPainelPets(); editarPet(estado.petAtual); $('#pet-nasc').focus(); }
-  if (ev.target.closest('[data-ir-ecc]')) { mostrarAba('ecc'); window.scrollTo({ top: 0 }); }
-});
-
 $('#raca-guia').addEventListener('change', (ev) => {
   const p = petAtual();
   p.racaGuia = ev.target.value || '';
@@ -1663,6 +1673,8 @@ $('#raca-guia').addEventListener('change', (ev) => {
 });
 
 $('#saude-raca').addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-informar-idade-raca]')) { abrirPainelPets(); editarPet(estado.petAtual); $('#pet-nasc').focus(); }
+  if (ev.target.closest('[data-ir-ecc]')) { mostrarAba('ecc'); window.scrollTo({ top: 0 }); }
   let b;
   if ((b = ev.target.closest('[data-checar]'))) {
     const chave = b.dataset.checar;
@@ -2019,6 +2031,19 @@ function renderResumo() {
   cont.textContent = al.length;
   cont.setAttribute('aria-label', `${al.length} aviso(s)`);
 }
+let resumoAberto = true;
+try { resumoAberto = localStorage.getItem('diario-pet-resumo') !== 'fechado'; } catch (e) { /* ignora */ }
+function aplicarResumo() {
+  $('#resumo-corpo').hidden = !resumoAberto;
+  $('#btn-resumo').setAttribute('aria-expanded', String(resumoAberto));
+  $('#btn-resumo').textContent = resumoAberto ? 'Recolher' : 'Ver resumo';
+}
+$('#btn-resumo').addEventListener('click', () => {
+  resumoAberto = !resumoAberto;
+  try { localStorage.setItem('diario-pet-resumo', resumoAberto ? 'aberto' : 'fechado'); } catch (e) { /* ignora */ }
+  aplicarResumo();
+});
+aplicarResumo();
 $('#resumo-fatos').addEventListener('click', (ev) => {
   if (ev.target.closest('[data-informar-idade]')) {
     abrirPainelPets();
