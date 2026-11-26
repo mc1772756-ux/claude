@@ -358,3 +358,58 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
   .linha > label { flex-basis: 100%; }
   .alinhar-base .btn { width: 100%; }
 }
+
+/* ---------- Avatar e ícones ---------- */
+.avatar { overflow: hidden; }
+.avatar svg, .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.avatar.pequeno { width: 36px; height: 36px; flex: none; border-radius: 50%; }
+.avatar.grande { width: 72px; height: 72px; border-radius: 50%; flex: none; background: var(--neutro-fundo); }
+.resumo .avatar { width: 52px; height: 52px; font-size: 0; }
+.avatar-escolha { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.botao-arquivo { position: relative; display: inline-flex; align-items: center; cursor: pointer; color: var(--texto); margin: 0; }
+.botao-arquivo input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; min-height: 0; padding: 0; }
+.galeria-icones { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; margin-bottom: 8px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.opcao-icone { display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; font-size: 0.68rem; line-height: 1.15; color: var(--texto-2); background: var(--fundo); border: 2px solid transparent; border-radius: 10px; padding: 6px 2px; cursor: pointer; min-height: 44px; text-align: center; }
+.opcao-icone[aria-checked="true"] { border-color: var(--primaria); color: var(--texto); font-weight: 600; }
+.opcao-icone:focus-visible { outline: 2px solid var(--primaria); }
+
+/* ---------- Estoques ---------- */
+.barra-estoque { height: 12px; border-radius: 999px; background: var(--neutro-fundo); overflow: hidden; margin: 4px 0 8px; }
+.barra-estoque span { display: block; height: 100%; border-radius: 999px; background: var(--ok); }
+.barra-estoque.baixo span { background: var(--erro); }
+.estoque-txt { margin: 0 0 6px; }
+#saco-resumo .btn { margin: 10px 0 14px; }
+.horas-lembrete label { min-width: 0; }
+
+/* ---------- Diário ---------- */
+.item-sintoma, .item-consulta { align-items: flex-start; }
+.emoji-sintoma { font-size: 1.4rem; line-height: 1.2; }
+.foto-mini { flex: none; width: 56px; height: 56px; padding: 0; border: 1px solid var(--borda); border-radius: 10px; overflow: hidden; background: var(--neutro-fundo); cursor: zoom-in; }
+.foto-mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-campo { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.foto-nome { font-size: 0.85rem; color: var(--ok); }
+.chips-sintomas li.repetido { border-color: var(--aviso); color: var(--aviso); background: var(--aviso-fundo); font-weight: 600; }
+.resultado { margin: 6px 0; font-size: 0.9rem; white-space: pre-wrap; background: var(--fundo); border-radius: 8px; padding: 6px 8px; }
+textarea { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; color: var(--texto); background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; resize: vertical; }
+textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
+.cab-gastos { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.cab-gastos h2 { margin: 0; }
+.segmentos.compacto { margin: 0; }
+.segmentos.compacto .seg span { min-height: 36px; padding: 4px 12px; }
+.barras { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.barras li { display: grid; grid-template-columns: 3.4em 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.barras.categorias li { grid-template-columns: minmax(0, 9em) 1fr auto; }
+.barras .rot { color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barras li.atual .rot { color: var(--texto); font-weight: 700; }
+.barras .trilho { height: 10px; background: var(--neutro-fundo); border-radius: 999px; overflow: hidden; }
+.barras .barra { display: block; height: 100%; background: var(--serie); border-radius: 999px; }
+.barras .val { min-width: 6.5em; text-align: right; }
+#gastos-resumo h3 { font-size: 0.9rem; margin: 14px 0 8px; }
+.visor { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); }
+.visor img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
+.abas .aba-btn { font-size: 0.72rem; padding: 6px 2px; }
+fieldset { min-width: 0; }
+.horas-lembrete { flex-wrap: wrap; }
+.horas-lembrete label { flex: 1 1 96px; }
+.foto-campo .botao-arquivo { flex: none; width: auto; }
+.barras li { grid-template-columns: 4.2em 1fr auto; }

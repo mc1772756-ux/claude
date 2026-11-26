@@ -1,4 +1,4 @@
-/* Diário do Cachorro — dados salvos no navegador (localStorage) */
+/* Diário do Pet — dados salvos no navegador (localStorage + IndexedDB para fotos) */
 'use strict';
 
 const CHAVE = 'diario-pet-v1';
@@ -6,7 +6,7 @@ const ESPECIES = { cao: { nome: 'Cão', emoji: '🐶' }, gato: { nome: 'Gato', e
 
 /* ---------- Estado e armazenamento ---------- */
 function estadoVazio() {
-  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [], checagens: [] };
+  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [], checagens: [], sintomas: [], consultas: [], gastos: [] };
 }
 
 function carregar() {
@@ -14,7 +14,7 @@ function carregar() {
     const bruto = localStorage.getItem(CHAVE);
     if (!bruto) return estadoVazio();
     const e = Object.assign(estadoVazio(), JSON.parse(bruto));
-    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens']) if (!Array.isArray(e[k])) e[k] = [];
+    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos']) if (!Array.isArray(e[k])) e[k] = [];
     return e;
   } catch (e) {
     console.warn('Falha ao ler dados salvos', e);
@@ -127,7 +127,7 @@ function renderSeletorPet() {
   }
   sel.disabled = false;
   sel.innerHTML = estado.pets
-    .map((p) => `<option value="${p.id}">${ESPECIES[p.especie].emoji} ${esc(p.nome)}${alertasDoPet(p.id).length ? ' ⚠️' : ''}</option>`)
+    .map((p) => `<option value="${p.id}">${ESPECIES[p.especie].emoji} ${esc(p.nome)}${avisosDoPet(p.id).length ? ' ⚠️' : ''}</option>`)
     .join('');
   sel.value = estado.petAtual;
 }
@@ -141,7 +141,7 @@ function renderListaPets() {
   ul.innerHTML = estado.pets
     .map((p) => `
       <li>
-        <span aria-hidden="true">${ESPECIES[p.especie].emoji}</span>
+        <span class="avatar pequeno" aria-hidden="true">${avatarHTML(p, 36)}</span>
         <div class="info">
           <div class="principal">${esc(p.nome)}</div>
           <div class="secundario">${ESPECIES[p.especie].nome}${p.raca ? ' · ' + esc(p.raca) : ''}${idadeDoPet(p) ? ' · ' + idadeDoPet(p) : ''}</div>
@@ -170,6 +170,9 @@ function limparFormPet() {
   $('#btn-cancelar-pet').hidden = true;
   $('#pet-erro').hidden = true;
   atualizarSugestoesRaca();
+  fotoForm = '';
+  iconeForm = '';
+  atualizarPreviaAvatar();
 }
 
 function editarPet(id) {
@@ -180,6 +183,9 @@ function editarPet(id) {
   $('#pet-especie').value = p.especie;
   $('#pet-raca').value = p.raca || '';
   atualizarSugestoesRaca();
+  fotoForm = p.foto || '';
+  iconeForm = p.icone || '';
+  atualizarPreviaAvatar();
   $('#pet-nasc').value = p.nascimento || '';
   $('#pet-idade-anos').value = '';
   $('#pet-idade-meses').value = '';
@@ -194,8 +200,9 @@ function removerPet(id, btn) {
   if (!p) return;
   if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
   if ($('#pet-id').value === id) limparFormPet();
+  for (const r of [...estado.sintomas, ...estado.consultas]) if (r.petId === id && r.fotoId) FotosDB.apagar(r.fotoId);
   estado.pets = estado.pets.filter((x) => x.id !== id);
-  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens']) estado[k] = estado[k].filter((r) => r.petId !== id);
+  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos']) estado[k] = estado[k].filter((r) => r.petId !== id);
   const eraAtual = estado.petAtual === id;
   if (eraAtual) estado.petAtual = estado.pets[0]?.id || null;
   salvar();
@@ -238,9 +245,9 @@ $('#form-pet').addEventListener('submit', (ev) => {
   if (id && !existente) { limparFormPet(); erro.textContent = 'Este pet foi excluído. Cadastre de novo, se quiser.'; erro.hidden = false; return; }
   if (existente) {
     if (existente.raca !== raca || existente.especie !== especie) existente.racaGuia = '';
-    Object.assign(existente, { nome, especie, raca, nascimento, nascAprox });
+    Object.assign(existente, { nome, especie, raca, nascimento, nascAprox, foto: fotoForm, icone: iconeForm });
   } else {
-    const p = { id: novoId(), nome, especie, raca, nascimento, nascAprox };
+    const p = { id: novoId(), nome, especie, raca, nascimento, nascAprox, foto: fotoForm, icone: iconeForm };
     estado.pets.push(p);
     estado.petAtual = p.id;
   }
@@ -605,64 +612,20 @@ document.getElementById('aba-saude').addEventListener('click', (ev) => {
 // lá usamos o link do Google Agenda. Como site normal, geramos o .ics.
 const EMBUTIDO = (() => { try { return window.top !== window.self; } catch (e) { return true; } })();
 
-function dadosLembrete(r) {
-  const pet = estado.pets.find((p) => p.id === r.petId);
-  const titulo = `${TIPOS[r.tipo].emoji} ${pet ? pet.nome : 'Pet'}: ${TIPOS[r.tipo].nome.toLowerCase()} ${r.nome}`;
-  const detalhes = `Próxima dose de ${TIPOS[r.tipo].nome.toLowerCase()} (${r.nome}) de ${pet ? pet.nome : 'seu pet'}.\n` +
-    `Última aplicação: ${fmtData(r.data)}.${r.obs ? '\nObs.: ' + r.obs : ''}\nRegistrado no Diário do Cachorro.`;
-  const ini = r.proxima.replace(/-/g, '');
-  const d = dataLocal(r.proxima); d.setDate(d.getDate() + 1);
-  const fim = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-  return { titulo, detalhes, ini, fim };
-}
-
-function linkGoogleAgenda(r) {
-  const { titulo, detalhes, ini, fim } = dadosLembrete(r);
-  const q = new URLSearchParams({ action: 'TEMPLATE', text: titulo, dates: `${ini}/${fim}`, details: detalhes });
-  return 'https://calendar.google.com/calendar/render?' + q.toString();
-}
-
-function textoICS(r) {
-  const { titulo, detalhes, ini, fim } = dadosLembrete(r);
-  const escICS = (t) => t.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
-  // Linhas do iCalendar devem ter no máx. 75 bytes; dobra as maiores
-  const dobrar = (linha) => {
-    const partes = [];
-    let atual = '';
-    for (const ch of linha) {
-      if (new TextEncoder().encode(atual + ch).length > 73) { partes.push(atual); atual = ' '; }
-      atual += ch;
-    }
-    partes.push(atual);
-    return partes.join('\r\n');
+function eventoVacina(r) {
+  const tipo = TIPOS[r.tipo].nome.toLowerCase();
+  return {
+    uid: `${r.id}-${compacto(r.proxima)}`,
+    titulo: `${TIPOS[r.tipo].emoji} ${nomePet(r.petId)}: ${tipo} ${r.nome}`,
+    detalhes: `Próxima dose de ${tipo} (${r.nome}) de ${nomePet(r.petId)}.\nÚltima aplicação: ${fmtData(r.data)}.${r.obs ? '\nObs.: ' + r.obs : ''}\nRegistrado no Diário do Pet.`,
+    data: r.proxima,
+    alarmes: ['-P2DT15H', 'PT9H'], // 3 dias antes às 9h e no dia às 9h
   };
-  const agora = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-  return [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Diario do Cachorro//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${r.id}-${ini}@diario-do-cachorro`,
-    `DTSTAMP:${agora}`,
-    `DTSTART;VALUE=DATE:${ini}`,
-    `DTEND;VALUE=DATE:${fim}`,
-    `SUMMARY:${escICS(titulo)}`,
-    `DESCRIPTION:${escICS(detalhes)}`,
-    // Avisos: 3 dias antes (às 9h) e no dia (às 9h)
-    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escICS(titulo)}`, 'TRIGGER:-P2DT15H', 'END:VALARM',
-    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escICS(titulo)}`, 'TRIGGER:PT9H', 'END:VALARM',
-    'END:VEVENT', 'END:VCALENDAR', '',
-  ].map(dobrar).join('\r\n');
 }
-
+const linkGoogleAgenda = (r) => linkGoogle(eventoVacina(r));
+const textoICS = (r) => arquivoICS([eventoVacina(r)]);
 function baixarICS(r) {
-  const pet = estado.pets.find((p) => p.id === r.petId);
-  const nome = `${r.tipo}-${r.nome}-${pet ? pet.nome : 'pet'}`.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const blob = new Blob([textoICS(r)], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = nome + '.ics';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  baixarTexto(nomeArquivo(r.tipo, r.nome, nomePet(r.petId)) + '.ics', textoICS(r));
 }
 
 function botoesAgenda(r) {
@@ -1018,14 +981,24 @@ $('#form-remedio').addEventListener('submit', (ev) => {
   const fim = $('#remedio-fim').value || '';
   const doencaId = $('#remedio-doenca').value || '';
   const obs = $('#remedio-obs').value.trim();
+  const horas = [...new Set(['#remedio-hora1', '#remedio-hora2', '#remedio-hora3'].map((h) => $(h).value).filter(Boolean))].sort();
+  const estoqueTxt = $('#remedio-estoque').value.trim();
+  const dosesTxt = $('#remedio-doses-dia').value.trim();
+  const estoque = estoqueTxt ? lerNumero(estoqueTxt) : null;
+  const dosesDia = dosesTxt ? lerNumero(dosesTxt) : null;
   let msg = '';
-  if (!nome) msg = 'Informe o nome do remédio.';
+  if ((estoqueTxt || dosesTxt) && !(estoque >= 0 && dosesDia > 0)) msg = 'Estoque: informe as doses em casa e quantas doses por dia (ex.: 30 e 2).';
+  else if (!nome) msg = 'Informe o nome do remédio.';
   else if (!inicio) msg = 'Informe a data de início.';
   else if (fim && fim < inicio) msg = 'O término não pode ser antes do início.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   const id = $('#remedio-id').value;
   const existente = id && estado.remedios.find((r) => r.id === id);
-  const dados = { nome, dose, frequencia, horarios, inicio, fim, doencaId, obs };
+  const dados = { nome, dose, frequencia, horarios, inicio, fim, doencaId, obs, horas, dosesDia: dosesDia || null };
+  // Estoque: só "recomeça a contar" se o número mudou (compra nova ou correção)
+  const atualEst = existente ? estoqueRemedio(existente) : null;
+  if (estoque === null) { dados.estoque = null; dados.estoqueData = ''; }
+  else if (!atualEst || Math.abs(atualEst.restante - estoque) > 0.05 || existente.dosesDia !== dosesDia) { dados.estoque = estoque; dados.estoqueData = hojeISO(); }
   // Término alterado para hoje ou depois (ou em branco) num remédio encerrado: volta a ficar em uso
   if (existente && existente.encerrado && fim !== existente.fim && (!fim || fim >= hojeISO())) dados.encerrado = '';
   if (existente) Object.assign(existente, dados);
@@ -1048,6 +1021,10 @@ function editarRemedio(id) {
   $('#remedio-fim').value = r.fim || '';
   atualizarSelectDoencas(r.doencaId || '');
   $('#remedio-obs').value = r.obs || '';
+  ['#remedio-hora1', '#remedio-hora2', '#remedio-hora3'].forEach((h, i) => { $(h).value = (r.horas || [])[i] || ''; });
+  const est = estoqueRemedio(r);
+  $('#remedio-estoque').value = est ? String(est.restante).replace('.', ',') : '';
+  $('#remedio-doses-dia').value = r.dosesDia ? String(r.dosesDia).replace('.', ',') : '';
   $('#form-remedio-titulo').textContent = `Editar: ${r.nome}`;
   $('#btn-salvar-remedio').textContent = 'Salvar alterações';
   $('#btn-cancelar-remedio').hidden = false;
@@ -1115,7 +1092,10 @@ function renderClinico() {
           ${linha2 ? `<div class="secundario">${linha2}</div>` : ''}
           <div class="secundario">Desde ${fmtData(r.inicio)}${para ? ` · para ${esc(para)}` : ''}${r.obs ? ' · ' + esc(r.obs) : ''}</div>
           <span class="selo ${st.classe}">${st.texto}</span>
+          ${ativo && estoqueRemedio(r) ? (() => { const e = estoqueRemedio(r); return `<span class="selo ${e.diasRestantes <= 3 ? 'perto' : 'neutro'}">Restam ~${fmtNum(e.restante, e.restante % 1 ? 1 : 0)} doses (${plural(e.diasRestantes, 'dia', 'dias')})</span>`; })() : ''}
+          ${ativo && r.horas && r.horas.length ? `<div class="secundario">⏰ Lembrete: ${r.horas.join(', ')}</div>` : ''}
           <div class="acoes">
+            ${ativo && r.horas && r.horas.length ? botoesEvento('rem-' + r.id, eventosRemedio(r), (ev) => `📅 ${ev.hora}`) : ''}
             <button type="button" class="btn pequeno" data-editar-remedio="${r.id}">Editar</button>
             ${ativo && r.inicio <= hojeISO() ? `<button type="button" class="btn pequeno" data-encerrar-remedio="${r.id}">Encerrar</button>` : ''}
             ${!ativo ? `<button type="button" class="btn pequeno" data-reativar-remedio="${r.id}">Voltar a usar</button>` : ''}
@@ -1189,10 +1169,52 @@ const F = {
   surdezBranco: ['PetMD: Angorá Turco', 'https://www.petmd.com/cat/breeds/turkish-angora'],
   esporotricose: ['Montenegro et al., 2014 (esporotricose em SP)', 'https://link.springer.com/article/10.1186/s12917-014-0269-5'],
   esporotricoseSP: ['Secretaria da Saúde de SP: esporotricose', 'https://www.saude.sp.gov.br/resources/coordenadoria-de-defesa-e-saude-animal/homepage/acesso-rapido/acesso-rapido-zoonoses/esporotricose_serie_zoonoses.pdf'],
+  vetcompassYork: ['VetCompass: Yorkshire Terriers no Reino Unido', 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12344897/'],
+  shunt: ['Tobias & Rohrbach, 2003 (shunt por raça)', 'https://pubmed.ncbi.nlm.nih.gov/14664452/'],
+  hipoglicemia: ['AKC: hipoglicemia em cães', 'https://www.akc.org/expert-advice/health/hypoglycemia-in-dogs/'],
   aaha: ['AAHA 2021: nutrição e controle de peso', 'https://www.aaha.org/resources/2021-aaha-nutrition-and-weight-management-guidelines/weight-reduction-in-the-obese-pet/0/'],
 };
 
 const CUIDADOS = {
+  'colapso-traqueia': {
+    idade: [12, Infinity], peso: true,
+    nome: 'Colapso de traqueia',
+    sinais: ['Tosse seca e alta, parecida com o som de um ganso ou buzina', 'Piora com agitação, ao puxar a guia, no calor ou ao beber água', 'Cansa rápido nos passeios'],
+    urgente: 'Dificuldade para respirar ou gengiva azulada: emergência.',
+    prevenir: 'Use peitoral em vez de coleira no pescoço. Mantenha o peso ideal e evite fumaça e perfumes perto dele.',
+    inicial: 'Na crise de tosse, acalme-o e leve para lugar fresco e arejado. Não puxe pela coleira. Grave um vídeo da tosse para o veterinário.',
+    quando: 'Mais comum na meia-idade, mas pode começar cedo em raças toy.',
+    fontes: [],
+  },
+  shunt: {
+    idade: [0, 24],
+    nome: 'Shunt portossistêmico (desvio no fígado)',
+    sinais: ['Filhote menor que os irmãos ou que não ganha peso', 'Fica "aéreo", anda em círculos ou encosta a cabeça na parede, principalmente depois de comer', 'Baba muito', 'Bebe e urina mais'],
+    urgente: 'Convulsão ou desorientação forte: emergência.',
+    prevenir: 'Não há prevenção: é de nascença. Fique atento aos sinais na fase de filhote e leve às consultas de rotina.',
+    inicial: 'Anote se os sinais aparecem depois das refeições e marque consulta. O diagnóstico é por exame de sangue (ácidos biliares) e imagem.',
+    quando: 'Geralmente aparece antes dos 2 anos.',
+    fontes: [F.shunt],
+  },
+  hipoglicemia: {
+    idade: [0, 4],
+    nome: 'Hipoglicemia (açúcar baixo) em filhotes',
+    sinais: ['Fraqueza e sonolência fora do normal', 'Tremores', 'Cambaleia ou anda desequilibrado'],
+    urgente: 'Desmaio ou convulsão: emergência.',
+    prevenir: 'Filhotes de raça pequena precisam de 3 a 4 refeições por dia, sem longos períodos sem comer. Proteja do frio.',
+    inicial: 'Se estiver acordado e conseguir engolir, passe um pouco de mel ou xarope de glicose na gengiva e vá ao veterinário. Se estiver desacordado, não coloque nada na boca.',
+    quando: 'Filhotes até cerca de 4 meses.',
+    fontes: [F.hipoglicemia],
+  },
+  'dentes-leite': {
+    idade: [4, 12],
+    nome: 'Dentes de leite que não caem',
+    sinais: ['Dois dentes no mesmo lugar, principalmente os caninos (presas)', 'Dentes tortos ou apertados', 'Mau hálito precoce'],
+    prevenir: 'Olhe a boca dele entre 4 e 7 meses, quando os dentes de leite deveriam cair.',
+    inicial: 'Não tente arrancar. O veterinário costuma remover na castração ou num procedimento rápido.',
+    quando: 'Entre 4 e 7 meses de idade.',
+    fontes: [F.vetcompassYork],
+  },
   'luxacao-patelar': {
     idade: [4, Infinity], peso: true,
     nome: 'Luxação de patela',
@@ -1498,6 +1520,11 @@ const RACAS = {
       nome: 'Fox Paulistinha (Terrier Brasileiro)', apelidos: ['fox paulistinha', 'paulistinha', 'terrier brasileiro', 'fox brasileiro'],
       nota: 'Não há estudos de saúde publicados específicos para o Fox Paulistinha. A lista reúne problemas comuns em terriers e cães de porte pequeno.',
       itens: ['luxacao-patelar', 'perthes', 'periodontal-cao', 'atopia', 'valvar-mitral'],
+    },
+    yorkshire: {
+      nome: 'Yorkshire Terrier', apelidos: ['yorkshire', 'yorkshire terrier', 'yorkie', 'york'],
+      nota: 'Raça de vida longa (média de 13 a 14 anos). A doença dos dentes é o problema mais comum na raça.',
+      itens: ['periodontal-cao', 'dentes-leite', 'luxacao-patelar', 'colapso-traqueia', 'shunt', 'hipoglicemia', 'perthes', 'valvar-mitral'],
     },
     srd: { nome: 'Sem raça definida (SRD)', apelidos: ['srd', 'sem raca', 'vira lata', 'viralata', 'mestico', 'misturado'], itens: [] },
   },
@@ -1990,10 +2017,845 @@ function renderListaEcc() {
     </li>`).join('') : '<li class="vazio">Nenhuma avaliação salva. Escolha o escore e toque em "Salvar avaliação".</li>';
 }
 
+/* ---------- Valores em reais ---------- */
+// Aceita "189,90", "R$ 1.234,56", "59.9"
+function lerValor(txt) {
+  let t = String(txt || '').replace(/r\$/i, '').replace(/\s/g, '');
+  if (!t) return NaN;
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
+const fmtReais = (n) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const mesDe = (iso) => iso.slice(0, 7);
+function somarDias(iso, n) { const d = dataLocal(iso); d.setDate(d.getDate() + n); return paraISO(d); }
+const NOMES_MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const fmtMes = (ym) => `${NOMES_MES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(2, 4)}`;
+function agoraHM() { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+
+/* ---------- Fotos (IndexedDB: cabe muito mais que o localStorage) ---------- */
+const FotosDB = (() => {
+  let conexao = null;
+  function abrir() {
+    if (!conexao) {
+      conexao = new Promise((ok, falha) => {
+        try {
+          const req = indexedDB.open('diario-pet-fotos', 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('fotos');
+          req.onsuccess = () => ok(req.result);
+          req.onerror = () => falha(req.error);
+        } catch (e) { falha(e); }
+      });
+    }
+    return conexao;
+  }
+  async function operar(modo, fn) {
+    const db = await abrir();
+    return new Promise((ok, falha) => {
+      const tx = db.transaction('fotos', modo);
+      const req = fn(tx.objectStore('fotos'));
+      tx.oncomplete = () => ok(req ? req.result : undefined);
+      tx.onerror = () => falha(tx.error);
+    });
+  }
+  return {
+    salvar: (id, url) => operar('readwrite', (st) => st.put(url, id)),
+    ler: (id) => operar('readonly', (st) => st.get(id)),
+    apagar: (id) => operar('readwrite', (st) => st.delete(id)).catch(() => {}),
+  };
+})();
+const cacheFotos = new Map();
+
+// Reduz a foto antes de guardar (celulares tiram fotos de vários MB)
+function comprimirImagem(arquivo, max = 1024, qualidade = 0.78, quadrado = false) {
+  return new Promise((ok, falha) => {
+    const url = URL.createObjectURL(arquivo);
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight, sx = 0, sy = 0, sw = w, sh = h;
+      if (quadrado) { const lado = Math.min(w, h); sx = (w - lado) / 2; sy = (h - lado) / 2; sw = sh = w = h = lado; }
+      const f = Math.min(1, max / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * f); c.height = Math.round(h * f);
+      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', qualidade));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); falha(new Error('imagem inválida')); };
+    img.src = url;
+  });
+}
+
+// Preenche <img data-foto="id"> depois de desenhar a lista
+function carregarFotos(raiz) {
+  raiz.querySelectorAll('img[data-foto]').forEach((img) => {
+    const id = img.dataset.foto;
+    if (cacheFotos.has(id)) { img.src = cacheFotos.get(id); return; }
+    FotosDB.ler(id).then((url) => { if (url) { cacheFotos.set(id, url); img.src = url; } }).catch(() => {});
+  });
+}
+const miniatura = (fotoId) => (fotoId ? `<button type="button" class="foto-mini" data-ver-foto="${fotoId}" aria-label="Ver foto"><img data-foto="${fotoId}" alt=""></button>` : '');
+
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-ver-foto]');
+  if (b) {
+    const img = b.querySelector('img');
+    if (img && img.src) { $('#visor-foto img').src = img.src; $('#visor-foto').hidden = false; }
+  }
+});
+$('#visor-foto').addEventListener('click', () => { $('#visor-foto').hidden = true; });
+
+async function guardarFotoDoCampo(campo, idFoto, max = 1024) {
+  const arquivo = campo.files && campo.files[0];
+  if (!arquivo) return null;
+  const url = await comprimirImagem(arquivo, max);
+  await FotosDB.salvar(idFoto, url);
+  cacheFotos.set(idFoto, url);
+  return idFoto;
+}
+
+/* ---------- Avatar do pet: foto ou ícone de raça ---------- */
+const PALAVRAS_ICONE = [
+  ['caramelo', 'cao-caramelo'], ['yorkshire', 'cao-yorkshire'], ['york', 'cao-yorkshire'], ['shih', 'cao-shih-tzu'],
+  ['poodle', 'cao-poodle'], ['labrador', 'cao-labrador'], ['golden', 'cao-golden'], ['pinscher', 'cao-pinscher'],
+  ['dachshund', 'cao-dachshund'], ['salsicha', 'cao-dachshund'], ['teckel', 'cao-dachshund'], ['bulldog', 'cao-bulldog-frances'],
+  ['buldogue', 'cao-bulldog-frances'], ['pug', 'cao-pug'], ['spitz', 'cao-spitz'], ['lulu', 'cao-spitz'], ['beagle', 'cao-beagle'],
+  ['border', 'cao-border-collie'], ['husky', 'cao-husky'], ['jack', 'cao-jack-russell'], ['paulistinha', 'cao-fox-paulistinha'],
+  ['terrier brasileiro', 'cao-fox-paulistinha'], ['preto', 'cao-srd-preto'],
+  ['siames', 'gato-siames'], ['persa', 'gato-persa'], ['maine', 'gato-maine-coon'], ['angora', 'gato-angora'], ['frajola', 'gato-frajola'],
+  ['escaminha', 'gato-escaminha'], ['preto', 'gato-preto'], ['branco', 'gato-branco'], ['laranja', 'gato-laranja'], ['cinza', 'gato-cinza'],
+];
+function iconePadrao(p) {
+  const txt = normalizar(p.raca);
+  for (const [palavra, id] of PALAVRAS_ICONE) if (txt.includes(palavra) && ICONES[id].especie === p.especie) return id;
+  return p.especie === 'gato' ? 'gato-laranja' : 'cao-caramelo';
+}
+function avatarHTML(p, tam = 48) {
+  if (p.foto) return `<img class="foto-pet" src="${p.foto}" alt="" width="${tam}" height="${tam}">`;
+  const id = p.icone && ICONES[p.icone]?.especie === p.especie ? p.icone : iconePadrao(p);
+  return svgIcone(id, tam);
+}
+
+let fotoForm = '';
+let iconeForm = '';
+function atualizarPreviaAvatar() {
+  const especie = $('#pet-especie').value;
+  if (iconeForm && ICONES[iconeForm]?.especie !== especie) iconeForm = '';
+  const previa = { especie, raca: $('#pet-raca').value, foto: fotoForm, icone: iconeForm };
+  $('#pet-avatar-previa').innerHTML = avatarHTML(previa, 72);
+  $('#btn-remover-foto').hidden = !fotoForm;
+  const escolhido = fotoForm ? null : (iconeForm || iconePadrao(previa));
+  $('#galeria-icones').innerHTML = Object.entries(ICONES).filter(([, o]) => o.especie === especie).map(([id, o]) => `
+    <button type="button" class="opcao-icone" role="radio" aria-checked="${id === escolhido}" data-icone="${id}" title="${o.nome}">
+      ${svgIcone(id, 44)}<span>${o.nome}</span>
+    </button>`).join('');
+}
+$('#galeria-icones').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-icone]');
+  if (!b) return;
+  iconeForm = b.dataset.icone;
+  fotoForm = '';
+  atualizarPreviaAvatar();
+});
+$('#pet-foto').addEventListener('change', async (ev) => {
+  const arquivo = ev.target.files[0];
+  if (!arquivo) return;
+  try {
+    fotoForm = await comprimirImagem(arquivo, 256, 0.82, true);
+    atualizarPreviaAvatar();
+  } catch (e) {
+    $('#pet-erro').textContent = 'Não foi possível abrir essa imagem. Tente outra foto.';
+    $('#pet-erro').hidden = false;
+  }
+  ev.target.value = '';
+});
+$('#btn-remover-foto').addEventListener('click', () => { fotoForm = ''; atualizarPreviaAvatar(); });
+$('#pet-especie').addEventListener('change', atualizarPreviaAvatar);
+$('#pet-raca').addEventListener('input', atualizarPreviaAvatar);
+
+/* ---------- Agenda: eventos genéricos (.ics e Google Agenda) ---------- */
+const escICS = (t) => String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+function dobrarICS(linha) {
+  const partes = [];
+  let atual = '';
+  for (const ch of linha) {
+    if (new TextEncoder().encode(atual + ch).length > 73) { partes.push(atual); atual = ' '; }
+    atual += ch;
+  }
+  partes.push(atual);
+  return partes.join('\r\n');
+}
+const compacto = (iso) => iso.replace(/-/g, '');
+function inicioFimHora(ev) {
+  const [h, m] = ev.hora.split(':').map(Number);
+  const fim = dataLocal(ev.data);
+  fim.setHours(h, m + (ev.duracaoMin || 10));
+  const hm = (d) => `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}00`;
+  return [`${compacto(ev.data)}T${ev.hora.replace(':', '')}00`, `${compacto(paraISO(fim))}T${hm(fim)}`];
+}
+// ev: { uid, titulo, detalhes, data, hora?, rrule?, alarmes? }
+function veventICS(ev) {
+  const agora = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const l = ['BEGIN:VEVENT', `UID:${ev.uid}@diario-do-pet`, `DTSTAMP:${agora}`];
+  if (ev.hora) { const [ini, fim] = inicioFimHora(ev); l.push(`DTSTART:${ini}`, `DTEND:${fim}`); }
+  else l.push(`DTSTART;VALUE=DATE:${compacto(ev.data)}`, `DTEND;VALUE=DATE:${compacto(somarDias(ev.data, 1))}`);
+  if (ev.rrule) l.push(`RRULE:${ev.rrule}`);
+  l.push(`SUMMARY:${escICS(ev.titulo)}`, `DESCRIPTION:${escICS(ev.detalhes)}`);
+  for (const t of ev.alarmes || []) l.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escICS(ev.titulo)}`, `TRIGGER:${t}`, 'END:VALARM');
+  l.push('END:VEVENT');
+  return l;
+}
+function arquivoICS(eventos) {
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Diario do Pet//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    ...eventos.flatMap(veventICS), 'END:VCALENDAR', ''].map(dobrarICS).join('\r\n');
+}
+function linkGoogle(ev) {
+  const dates = ev.hora ? inicioFimHora(ev).join('/') : `${compacto(ev.data)}/${compacto(somarDias(ev.data, 1))}`;
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: ev.titulo, dates, details: ev.detalhes });
+  if (ev.rrule) q.set('recur', 'RRULE:' + ev.rrule);
+  return 'https://calendar.google.com/calendar/render?' + q.toString();
+}
+const nomeArquivo = (...partes) => partes.join('-').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function baixarTexto(nome, texto, tipo = 'text/calendar;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([texto], { type: tipo }));
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+// Botões: no claude.ai só o Google Agenda funciona; como site, também o .ics
+const EVENTOS = new Map();
+function botoesEvento(chave, eventos, rotuloGoogle = (ev) => '📅 Google Agenda') {
+  EVENTOS.set(chave, eventos);
+  const google = eventos.map((ev) => `<a class="btn pequeno" href="${esc(linkGoogle(ev))}" target="_blank" rel="noopener">${rotuloGoogle(ev)}</a>`).join('');
+  return (EMBUTIDO ? '' : `<button type="button" class="btn pequeno" data-agenda-evento="${chave}">📅 Agenda do celular</button>`) + google;
+}
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-agenda-evento]');
+  if (!b) return;
+  const evs = EVENTOS.get(b.dataset.agendaEvento);
+  if (evs) baixarTexto(nomeArquivo('lembrete', evs[0].titulo) + '.ics', arquivoICS(evs));
+});
+const nomePet = (petId) => estado.pets.find((p) => p.id === petId)?.nome || 'Pet';
+
+/* ---------- Remédios: estoque e lembretes ---------- */
+function estoqueRemedio(r) {
+  if (!(r.estoque > 0) || !(r.dosesDia > 0)) return null;
+  const base = r.estoqueData && r.estoqueData > r.inicio ? r.estoqueData : r.inicio;
+  const diasUso = Math.max(0, diasEntre(base, hojeISO()));
+  const restante = Math.max(0, Math.round((r.estoque - r.dosesDia * diasUso) * 10) / 10);
+  const diasRestantes = Math.floor(restante / r.dosesDia);
+  return { restante, diasRestantes, acaba: somarDias(hojeISO(), diasRestantes) };
+}
+function eventosRemedio(r) {
+  const ate = r.fim ? `;UNTIL=${compacto(r.fim)}T235959` : '';
+  const inicio = r.inicio > hojeISO() ? r.inicio : hojeISO();
+  return (r.horas || []).map((hora) => ({
+    uid: `rem-${r.id}-${hora.replace(':', '')}`,
+    titulo: `💊 ${nomePet(r.petId)}: ${r.nome}${r.dose ? ` (${r.dose})` : ''}`,
+    detalhes: `Dar ${r.nome}${r.dose ? ', ' + r.dose : ''}${r.horarios ? '. ' + r.horarios : ''}.\nRegistrado no Diário do Pet.`,
+    data: inicio, hora, rrule: 'FREQ=DAILY' + ate, alarmes: ['PT0M'],
+  }));
+}
+
+/* ---------- Estoque de ração ---------- */
+function estoqueRacao(p) {
+  const s = p.saco;
+  if (!s || !(s.kg > 0)) return null;
+  const r = racaoDoPet(p.id);
+  const consumo = r && r.refeicoes.length ? totalDia(r.refeicoes) : 0;
+  const total = s.kg * 1000;
+  const restanteG = Math.max(0, total - consumo * Math.max(0, diasEntre(s.abertura, hojeISO())));
+  const diasRestantes = consumo ? Math.floor(restanteG / consumo) : null;
+  return {
+    consumo, restanteG, diasRestantes, pct: restanteG / total,
+    acaba: diasRestantes !== null ? somarDias(hojeISO(), diasRestantes) : null,
+    duracao: consumo ? Math.floor(total / consumo) : null,
+    custoDia: s.preco && consumo ? s.preco / (total / consumo) : null,
+  };
+}
+
+function preencherFormSaco() {
+  const p = petAtual();
+  if (!p) return;
+  const s = p.saco;
+  $('#saco-kg').value = s ? String(s.kg).replace('.', ',') : '';
+  $('#saco-abertura').value = s ? s.abertura : hojeISO();
+  $('#saco-abertura').max = hojeISO();
+  $('#saco-preco').value = s && s.preco ? String(s.preco.toFixed(2)).replace('.', ',') : '';
+  $('#saco-erro').hidden = true;
+  $('#btn-salvar-saco').textContent = s ? 'Salvar alterações do saco' : 'Salvar saco';
+}
+
+function salvarSaco(p, kg, abertura, preco, novo) {
+  const id = novo || !p.saco?.id ? novoId() : p.saco.id;
+  p.saco = { id, kg, abertura, preco: preco || null };
+  sincronizarGasto({ tipo: 'saco', id }, p.id, preco ? { data: abertura, valor: preco, categoria: 'racao', descricao: `Saco de ração ${fmtNum(kg, kg % 1 ? 1 : 0)} kg` } : null);
+}
+
+$('#form-saco').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const p = petAtual();
+  const erro = $('#saco-erro');
+  const kg = lerNumero($('#saco-kg').value);
+  const abertura = $('#saco-abertura').value;
+  const precoTxt = $('#saco-preco').value.trim();
+  const preco = precoTxt ? lerValor(precoTxt) : null;
+  let msg = '';
+  if (!(kg >= 0.1 && kg <= 50)) msg = 'Informe o tamanho do saco em kg (ex.: 10,1).';
+  else if (!abertura) msg = 'Informe quando o saco foi aberto.';
+  else if (abertura > hojeISO()) msg = 'A data de abertura não pode estar no futuro.';
+  else if (precoTxt && !(preco > 0)) msg = 'Preço inválido (ex.: 189,90).';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  salvarSaco(p, kg, abertura, preco, false);
+  salvar();
+  preencherFormSaco();
+  renderTudo();
+});
+
+$('#saco-resumo').addEventListener('click', (ev) => {
+  const b = ev.target.closest('#btn-saco-novo');
+  if (!b || !pedeConfirmacao(b, 'Abri hoje um saco igual?')) return;
+  const p = petAtual();
+  salvarSaco(p, p.saco.kg, hojeISO(), p.saco.preco, true);
+  salvar();
+  preencherFormSaco();
+  renderTudo();
+});
+
+function renderSaco() {
+  const p = petAtual();
+  const el = $('#saco-resumo');
+  const e = estoqueRacao(p);
+  if (!e) { el.innerHTML = '<p class="vazio-texto">Informe o saco de ração aberto para saber quando vai acabar.</p>'; return; }
+  const s = p.saco;
+  let linha;
+  if (!e.consumo) linha = 'Configure os horários do alimentador abaixo para calcular quando a ração acaba.';
+  else if (e.diasRestantes <= 0) linha = '<strong>A ração deste saco já deve ter acabado.</strong> Abriu outro? Toque em "Abri um saco novo".';
+  else linha = `Restam cerca de <strong>${fmtNum(e.restanteG / 1000, 1)} kg</strong>: acaba por volta de <strong>${fmtData(e.acaba)}</strong> (${plural(e.diasRestantes, 'dia', 'dias')}).`;
+  const nivel = e.diasRestantes !== null && e.diasRestantes <= 5 ? 'baixo' : 'ok';
+  el.innerHTML = `
+    <div class="barra-estoque ${nivel}" role="img" aria-label="Estoque: ${Math.round(e.pct * 100)}%"><span style="width:${Math.max(2, Math.round(e.pct * 100))}%"></span></div>
+    <p class="estoque-txt">${linha}</p>
+    <p class="nota">Saco de ${fmtNum(s.kg, s.kg % 1 ? 1 : 0)} kg aberto em ${fmtData(s.abertura)}${e.duracao ? ` · dura ~${plural(e.duracao, 'dia', 'dias')}` : ''}${e.custoDia ? ` · ≈ ${fmtReais(e.custoDia)} por dia` : ''}</p>
+    <button type="button" class="btn" id="btn-saco-novo">Abri um saco novo hoje</button>`;
+}
+
+/* ---------- Gastos ---------- */
+const CATEGORIAS = {
+  racao: '🥣 Ração', veterinario: '🩺 Veterinário', exames: '🧪 Exames', vacinas: '💉 Vacinas', remedios: '💊 Remédios',
+  higiene: '🛁 Banho e tosa', petiscos: '🦴 Petiscos e brinquedos', acessorios: '🎒 Acessórios', outros: '📦 Outros',
+};
+// Mantém um gasto automático ligado a uma origem (consulta, saco de ração)
+function sincronizarGasto(origem, petId, dados) {
+  const i = estado.gastos.findIndex((g) => g.origem && g.origem.tipo === origem.tipo && g.origem.id === origem.id);
+  if (!dados) { if (i >= 0) estado.gastos.splice(i, 1); return; }
+  if (i >= 0) Object.assign(estado.gastos[i], dados);
+  else estado.gastos.push({ id: novoId(), petId, origem, criado: Date.now(), ...dados });
+}
+
+let escopoGastos = 'pet';
+try { escopoGastos = localStorage.getItem('diario-pet-gastos-escopo') === 'todos' ? 'todos' : 'pet'; } catch (e) { /* ignora */ }
+document.querySelectorAll('input[name="gastos-escopo"]').forEach((el) => {
+  el.checked = el.value === escopoGastos;
+  el.addEventListener('change', () => {
+    escopoGastos = el.value;
+    try { localStorage.setItem('diario-pet-gastos-escopo', escopoGastos); } catch (e) { /* ignora */ }
+    renderGastos();
+  });
+});
+
+function limparFormGasto() {
+  $('#form-gasto').reset();
+  $('#gasto-id').value = '';
+  $('#gasto-data').value = hojeISO();
+  $('#gasto-data').max = hojeISO();
+  $('#gasto-categoria').innerHTML = Object.entries(CATEGORIAS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  $('#form-gasto-titulo').textContent = 'Adicionar gasto';
+  $('#btn-salvar-gasto').textContent = 'Adicionar';
+  $('#btn-cancelar-gasto').hidden = true;
+  $('#gasto-erro').hidden = true;
+}
+$('#btn-cancelar-gasto').addEventListener('click', limparFormGasto);
+
+$('#form-gasto').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const erro = $('#gasto-erro');
+  const data = $('#gasto-data').value;
+  const valor = lerValor($('#gasto-valor').value);
+  const categoria = $('#gasto-categoria').value;
+  const descricao = $('#gasto-descricao').value.trim();
+  let msg = '';
+  if (!data) msg = 'Informe a data.';
+  else if (data > hojeISO()) msg = 'A data não pode estar no futuro.';
+  else if (!(valor > 0)) msg = 'Informe o valor (ex.: 59,90).';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  const id = $('#gasto-id').value;
+  const existente = id && estado.gastos.find((g) => g.id === id);
+  if (existente) Object.assign(existente, { data, valor, categoria, descricao });
+  else estado.gastos.push({ id: novoId(), petId: estado.petAtual, data, valor, categoria, descricao, criado: Date.now() });
+  salvar();
+  limparFormGasto();
+  renderTudo();
+});
+
+$('#diario-gastos').addEventListener('click', (ev) => {
+  let b;
+  if ((b = ev.target.closest('[data-editar-gasto]'))) {
+    const g = estado.gastos.find((x) => x.id === b.dataset.editarGasto);
+    if (!g) return;
+    $('#gasto-id').value = g.id;
+    $('#gasto-data').value = g.data;
+    $('#gasto-valor').value = g.valor.toFixed(2).replace('.', ',');
+    $('#gasto-categoria').value = g.categoria;
+    $('#gasto-descricao').value = g.descricao || '';
+    $('#form-gasto-titulo').textContent = 'Editar gasto';
+    $('#btn-salvar-gasto').textContent = 'Salvar alterações';
+    $('#btn-cancelar-gasto').hidden = false;
+    $('#form-gasto').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if ((b = ev.target.closest('[data-remover-gasto]')) && pedeConfirmacao(b)) {
+    if ($('#gasto-id').value === b.dataset.removerGasto) limparFormGasto();
+    estado.gastos = estado.gastos.filter((x) => x.id !== b.dataset.removerGasto);
+    salvar();
+    renderTudo();
+  }
+});
+
+function renderGastos() {
+  const p = petAtual();
+  $('#gastos-escopo-pet').textContent = p.nome;
+  const todos = escopoGastos === 'todos';
+  const regs = estado.gastos.filter((g) => todos || g.petId === p.id)
+    .sort((a, b) => b.data.localeCompare(a.data) || b.criado - a.criado);
+  const mesAtual = mesDe(hojeISO());
+  const meses = [];
+  for (let i = 5; i >= 0; i--) { const d = dataLocal(hojeISO()); d.setDate(1); d.setMonth(d.getMonth() - i); meses.push(mesDe(paraISO(d))); }
+  const somaMes = (m) => regs.filter((g) => mesDe(g.data) === m).reduce((s, g) => s + g.valor, 0);
+  const totais = meses.map((m) => [m, somaMes(m)]);
+  const atual = somaMes(mesAtual), anterior = totais[4][1];
+  const media = totais.reduce((s, [, v]) => s + v, 0) / 6;
+  const max = Math.max(...totais.map(([, v]) => v), 1);
+  const doMes = regs.filter((g) => mesDe(g.data) === mesAtual);
+  const porCat = Object.keys(CATEGORIAS).map((k) => [k, doMes.filter((g) => g.categoria === k).reduce((s, g) => s + g.valor, 0)])
+    .filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+
+  $('#gastos-resumo').innerHTML = regs.length ? `
+    <dl class="fatos fatos-3">
+      <div><dt>Este mês</dt><dd>${fmtReais(atual)}</dd></div>
+      <div><dt>Mês passado</dt><dd>${fmtReais(anterior)}</dd></div>
+      <div><dt>Média 6 meses</dt><dd>${fmtReais(media)}</dd></div>
+    </dl>
+    <h3>Últimos 6 meses</h3>
+    <ul class="barras">${totais.map(([m, v]) => `
+      <li class="${m === mesAtual ? 'atual' : ''}"><span class="rot">${fmtMes(m)}</span>
+        <span class="trilho"><span class="barra" style="width:${v ? Math.max(2, (v / max) * 100) : 0}%"></span></span>
+        <span class="val">${fmtReais(v)}</span></li>`).join('')}</ul>
+    ${porCat.length ? `<h3>Este mês por categoria</h3>
+    <ul class="barras categorias">${porCat.map(([k, v]) => `
+      <li><span class="rot">${CATEGORIAS[k]}</span>
+        <span class="trilho"><span class="barra" style="width:${Math.max(2, (v / porCat[0][1]) * 100)}%"></span></span>
+        <span class="val">${fmtReais(v)}</span></li>`).join('')}</ul>` : ''}`
+    : '<p class="vazio-texto">Nenhum gasto ainda. Adicione abaixo; consultas com valor e sacos de ração com preço entram sozinhos.</p>';
+
+  const item = (g) => {
+    const auto = g.origem ? (g.origem.tipo === 'consulta' ? 'veio de Consultas' : 'veio do estoque de ração') : '';
+    return `
+      <li>
+        <div class="info">
+          <div class="principal">${fmtReais(g.valor)} <span class="delta">${CATEGORIAS[g.categoria] || g.categoria}</span></div>
+          <div class="secundario">${fmtData(g.data)}${g.descricao ? ' · ' + esc(g.descricao) : ''}${todos ? ' · ' + esc(nomePet(g.petId)) : ''}${auto ? ` · <em>${auto}</em>` : ''}</div>
+        </div>
+        ${auto ? '' : `<button type="button" class="btn pequeno" data-editar-gasto="${g.id}">Editar</button>
+        <button type="button" class="btn pequeno perigo" data-remover-gasto="${g.id}">Excluir</button>`}
+      </li>`;
+  };
+  const antigos = regs.filter((g) => mesDe(g.data) !== mesAtual);
+  $('#lista-gastos').innerHTML = doMes.length ? doMes.map(item).join('') : '<li class="vazio">Nenhum gasto neste mês.</li>';
+  $('#det-gastos-antigos').hidden = !antigos.length;
+  $('#lista-gastos-antigos').innerHTML = antigos.map(item).join('');
+}
+
+/* ---------- Sintomas ---------- */
+const SINTOMAS = {
+  vomito: { nome: 'Vômito', emoji: '🤮' },
+  diarreia: { nome: 'Diarreia', emoji: '💩' },
+  coceira: { nome: 'Coceira', emoji: '🐾' },
+  tosse: { nome: 'Tosse', emoji: '😮‍💨' },
+  espirro: { nome: 'Espirros', emoji: '🤧' },
+  apetite: { nome: 'Sem apetite', emoji: '🍽️' },
+  apatia: { nome: 'Apatia / cansaço', emoji: '😴' },
+  mancando: { nome: 'Mancando', emoji: '🦵' },
+  olho: { nome: 'Olho vermelho ou com secreção', emoji: '👁️' },
+  xixi: { nome: 'Xixi alterado', emoji: '🚽', urgente: 'Gato macho que tenta urinar e não sai nada é emergência: vá ao veterinário agora.' },
+  sangue: { nome: 'Sangue nas fezes, urina ou vômito', emoji: '🩸', urgente: 'Sangue no vômito, nas fezes ou na urina: procure o veterinário hoje.' },
+  convulsao: { nome: 'Convulsão', emoji: '⚡', urgente: 'Durante a crise, afaste objetos e não coloque a mão na boca dele. Cronometre. Mais de 5 minutos ou crises seguidas: emergência.' },
+  respiracao: { nome: 'Dificuldade para respirar', emoji: '🫁', urgente: 'Respiração difícil, gato respirando de boca aberta ou gengiva azulada: emergência.' },
+  outro: { nome: 'Outro', emoji: '📝' },
+};
+const INTENSIDADES = { leve: 'leve', moderada: 'moderada', forte: 'forte' };
+
+function sintomasDoPet(petId = estado.petAtual) {
+  return estado.sintomas.filter((s) => s.petId === petId)
+    .sort((a, b) => (b.data + (b.hora || '')).localeCompare(a.data + (a.hora || '')) || b.criado - a.criado);
+}
+function atualizarAlertaSintoma() {
+  const t = SINTOMAS[$('#sintoma-tipo').value];
+  $('#sintoma-alerta').hidden = !t?.urgente;
+  $('#sintoma-alerta').textContent = t?.urgente ? '🚨 ' + t.urgente : '';
+}
+function limparFormSintoma() {
+  $('#form-sintoma').reset();
+  $('#sintoma-id').value = '';
+  $('#sintoma-tipo').innerHTML = Object.entries(SINTOMAS).map(([k, v]) => `<option value="${k}">${v.emoji} ${v.nome}</option>`).join('');
+  $('#sintoma-data').value = hojeISO();
+  $('#sintoma-data').max = hojeISO();
+  $('#sintoma-hora').value = agoraHM();
+  $('#sintoma-foto-nome').textContent = '';
+  $('#form-sintoma-titulo').textContent = 'Registrar sintoma';
+  $('#btn-salvar-sintoma').textContent = 'Registrar';
+  $('#btn-cancelar-sintoma').hidden = true;
+  $('#sintoma-erro').hidden = true;
+  atualizarAlertaSintoma();
+}
+$('#sintoma-tipo').addEventListener('change', atualizarAlertaSintoma);
+$('#btn-cancelar-sintoma').addEventListener('click', limparFormSintoma);
+for (const campo of ['sintoma', 'consulta']) {
+  $(`#${campo}-foto`).addEventListener('change', (ev) => {
+    $(`#${campo}-foto-nome`).textContent = ev.target.files[0] ? '✓ foto escolhida' : '';
+  });
+}
+
+$('#form-sintoma').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('#sintoma-erro');
+  const tipo = $('#sintoma-tipo').value;
+  const data = $('#sintoma-data').value;
+  const hora = $('#sintoma-hora').value || '';
+  const intensidade = document.querySelector('input[name="sintoma-intensidade"]:checked').value;
+  const obs = $('#sintoma-obs').value.trim();
+  let msg = '';
+  if (!SINTOMAS[tipo]) msg = 'Escolha o sintoma.';
+  else if (!data) msg = 'Informe a data.';
+  else if (data > hojeISO()) msg = 'A data não pode estar no futuro.';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  const btn = $('#btn-salvar-sintoma');
+  btn.disabled = true;
+  try {
+    const id = $('#sintoma-id').value;
+    const existente = id && estado.sintomas.find((s) => s.id === id);
+    const novoIdSintoma = existente ? existente.id : novoId();
+    let fotoId = existente?.fotoId || '';
+    try {
+      const f = await guardarFotoDoCampo($('#sintoma-foto'), 'sin-' + novoIdSintoma + '-' + Date.now());
+      if (f) { if (fotoId) FotosDB.apagar(fotoId); fotoId = f; }
+    } catch (e) {
+      erro.textContent = 'Não foi possível guardar a foto neste navegador. O sintoma foi salvo sem foto.';
+      erro.hidden = false;
+    }
+    const dados = { tipo, data, hora, intensidade, obs, fotoId };
+    if (existente) Object.assign(existente, dados);
+    else estado.sintomas.push({ id: novoIdSintoma, petId: estado.petAtual, ...dados, criado: Date.now() });
+    salvar();
+    const erroVisivel = !erro.hidden;
+    limparFormSintoma();
+    if (erroVisivel) erro.hidden = false;
+    renderTudo();
+  } finally { btn.disabled = false; }
+});
+
+$('#diario-sintomas').addEventListener('click', (ev) => {
+  let b;
+  if ((b = ev.target.closest('[data-editar-sintoma]'))) {
+    const s = estado.sintomas.find((x) => x.id === b.dataset.editarSintoma);
+    if (!s) return;
+    $('#sintoma-id').value = s.id;
+    $('#sintoma-tipo').value = s.tipo;
+    $('#sintoma-data').value = s.data;
+    $('#sintoma-hora').value = s.hora || '';
+    document.querySelector(`input[name="sintoma-intensidade"][value="${s.intensidade}"]`).checked = true;
+    $('#sintoma-obs').value = s.obs || '';
+    $('#sintoma-foto-nome').textContent = s.fotoId ? 'já tem foto (escolha outra para trocar)' : '';
+    $('#form-sintoma-titulo').textContent = 'Editar sintoma';
+    $('#btn-salvar-sintoma').textContent = 'Salvar alterações';
+    $('#btn-cancelar-sintoma').hidden = false;
+    atualizarAlertaSintoma();
+    $('#form-sintoma').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if ((b = ev.target.closest('[data-remover-sintoma]')) && pedeConfirmacao(b)) {
+    const s = estado.sintomas.find((x) => x.id === b.dataset.removerSintoma);
+    if ($('#sintoma-id').value === s?.id) limparFormSintoma();
+    if (s?.fotoId) FotosDB.apagar(s.fotoId);
+    estado.sintomas = estado.sintomas.filter((x) => x.id !== b.dataset.removerSintoma);
+    salvar();
+    renderTudo();
+  }
+});
+
+// Sintomas repetidos nos últimos 7 dias
+function repeticoesSintomas(petId) {
+  const limite = somarDias(hojeISO(), -6);
+  const cont = {};
+  for (const s of estado.sintomas) if (s.petId === petId && s.data >= limite) cont[s.tipo] = (cont[s.tipo] || 0) + 1;
+  return cont;
+}
+
+function renderSintomas() {
+  const regs = sintomasDoPet();
+  const limite30 = somarDias(hojeISO(), -29);
+  const recentes = regs.filter((s) => s.data >= limite30);
+  const antigos = regs.filter((s) => s.data < limite30);
+  const cont = repeticoesSintomas(estado.petAtual);
+  const chips = Object.entries(cont).sort((a, b) => b[1] - a[1]);
+  $('#sintomas-resumo').innerHTML = chips.length ? `
+    <p class="dica-campo">Últimos 7 dias:</p>
+    <ul class="motivos chips-sintomas">${chips.map(([k, n]) => `<li class="${n >= 3 ? 'repetido' : ''}">${SINTOMAS[k].emoji} ${SINTOMAS[k].nome} ×${n}</li>`).join('')}</ul>
+    ${chips.some(([, n]) => n >= 3) ? '<p class="nota-raca">Sintoma repetido 3 vezes ou mais em uma semana: vale marcar uma consulta. Mostre este diário ao veterinário.</p>' : ''}` : '';
+  const item = (s) => {
+    const t = SINTOMAS[s.tipo] || SINTOMAS.outro;
+    return `
+      <li class="item-sintoma">
+        <span class="emoji-sintoma" aria-hidden="true">${t.emoji}</span>
+        <div class="info">
+          <div class="principal">${t.nome} <span class="delta">${INTENSIDADES[s.intensidade] || ''}</span></div>
+          <div class="secundario">${fmtData(s.data)}${s.hora ? ' às ' + s.hora : ''}${s.obs ? ' · ' + esc(s.obs) : ''}</div>
+          <div class="acoes">
+            <button type="button" class="btn pequeno" data-editar-sintoma="${s.id}">Editar</button>
+            <button type="button" class="btn pequeno perigo" data-remover-sintoma="${s.id}">Excluir</button>
+          </div>
+        </div>
+        ${miniatura(s.fotoId)}
+      </li>`;
+  };
+  $('#lista-sintomas').innerHTML = recentes.length ? recentes.map(item).join('') : '<li class="vazio">Nenhum sintoma nos últimos 30 dias. 🎉</li>';
+  $('#det-sintomas-antigos').hidden = !antigos.length;
+  $('#lista-sintomas-antigos').innerHTML = antigos.map(item).join('');
+  carregarFotos($('#diario-sintomas'));
+}
+
+/* ---------- Consultas e exames ---------- */
+const TIPOS_CONSULTA = {
+  consulta: { nome: 'Consulta', emoji: '🩺', categoria: 'veterinario' },
+  retorno: { nome: 'Retorno', emoji: '🔁', categoria: 'veterinario' },
+  exame: { nome: 'Exame', emoji: '🧪', categoria: 'exames' },
+  vacinacao: { nome: 'Vacinação', emoji: '💉', categoria: 'vacinas' },
+  cirurgia: { nome: 'Cirurgia', emoji: '🏥', categoria: 'veterinario' },
+  emergencia: { nome: 'Emergência', emoji: '🚑', categoria: 'veterinario' },
+};
+function consultasDoPet(petId = estado.petAtual) {
+  return estado.consultas.filter((c) => c.petId === petId).sort((a, b) => b.data.localeCompare(a.data) || b.criado - a.criado);
+}
+// Retorno ainda pendente: nenhuma outra consulta registrada perto ou depois da data marcada
+function retornoPendente(c) {
+  if (!c.retorno) return false;
+  const limite = somarDias(c.retorno, -7);
+  return !estado.consultas.some((o) => o.petId === c.petId && o.id !== c.id && o.data > c.data && o.data >= limite);
+}
+function eventoRetorno(c) {
+  return {
+    uid: `ret-${c.id}`,
+    titulo: `🩺 ${nomePet(c.petId)}: retorno${c.clinica ? ' — ' + c.clinica : ''}`,
+    detalhes: `Retorno da consulta de ${fmtData(c.data)}${c.motivo ? ' (' + c.motivo + ')' : ''}.\nRegistrado no Diário do Pet.`,
+    data: c.retorno, alarmes: ['-PT15H', 'PT8H'],
+  };
+}
+
+function limparFormConsulta() {
+  $('#form-consulta').reset();
+  $('#consulta-id').value = '';
+  $('#consulta-data').value = hojeISO();
+  $('#consulta-data').max = hojeISO();
+  $('#consulta-foto-nome').textContent = '';
+  $('#form-consulta-titulo').textContent = 'Registrar consulta ou exame';
+  $('#btn-salvar-consulta').textContent = 'Registrar';
+  $('#btn-cancelar-consulta').hidden = true;
+  $('#consulta-erro').hidden = true;
+  const clinicas = [...new Set(estado.consultas.map((c) => c.clinica).filter(Boolean))];
+  $('#sugestoes-clinica').innerHTML = clinicas.map((c) => `<option value="${esc(c)}"></option>`).join('');
+}
+$('#btn-cancelar-consulta').addEventListener('click', limparFormConsulta);
+
+$('#form-consulta').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('#consulta-erro');
+  const data = $('#consulta-data').value;
+  const tipo = $('#consulta-tipo').value;
+  const clinica = $('#consulta-clinica').value.trim();
+  const motivo = $('#consulta-motivo').value.trim();
+  const resultado = $('#consulta-resultado').value.trim();
+  const valorTxt = $('#consulta-valor').value.trim();
+  const valor = valorTxt ? lerValor(valorTxt) : null;
+  const retorno = $('#consulta-retorno').value || '';
+  let msg = '';
+  if (!data) msg = 'Informe a data.';
+  else if (data > hojeISO()) msg = 'A data não pode estar no futuro. Para marcar uma consulta futura, use "Retorno em".';
+  else if (!motivo && !clinica) msg = 'Informe pelo menos o motivo ou a clínica.';
+  else if (valorTxt && !(valor >= 0)) msg = 'Valor inválido (ex.: 180,00).';
+  else if (retorno && retorno <= data) msg = 'O retorno precisa ser depois da data da consulta.';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  const btn = $('#btn-salvar-consulta');
+  btn.disabled = true;
+  try {
+    const id = $('#consulta-id').value;
+    const existente = id && estado.consultas.find((c) => c.id === id);
+    const idConsulta = existente ? existente.id : novoId();
+    let fotoId = existente?.fotoId || '';
+    try {
+      const f = await guardarFotoDoCampo($('#consulta-foto'), 'con-' + idConsulta + '-' + Date.now(), 1600);
+      if (f) { if (fotoId) FotosDB.apagar(fotoId); fotoId = f; }
+    } catch (e) {
+      erro.textContent = 'Não foi possível guardar a foto neste navegador. A consulta foi salva sem foto.';
+      erro.hidden = false;
+    }
+    const dados = { data, tipo, clinica, motivo, resultado, valor, retorno, fotoId };
+    if (existente) Object.assign(existente, dados);
+    else estado.consultas.push({ id: idConsulta, petId: estado.petAtual, ...dados, criado: Date.now() });
+    sincronizarGasto({ tipo: 'consulta', id: idConsulta }, estado.petAtual, valor > 0 ? {
+      data, valor, categoria: TIPOS_CONSULTA[tipo].categoria,
+      descricao: [TIPOS_CONSULTA[tipo].nome, clinica].filter(Boolean).join(' — '),
+    } : null);
+    salvar();
+    const erroVisivel = !erro.hidden;
+    limparFormConsulta();
+    if (erroVisivel) erro.hidden = false;
+    renderTudo();
+  } finally { btn.disabled = false; }
+});
+
+$('#diario-consultas').addEventListener('click', (ev) => {
+  let b;
+  if ((b = ev.target.closest('[data-editar-consulta]'))) {
+    const c = estado.consultas.find((x) => x.id === b.dataset.editarConsulta);
+    if (!c) return;
+    $('#consulta-id').value = c.id;
+    $('#consulta-data').value = c.data;
+    $('#consulta-tipo').value = c.tipo;
+    $('#consulta-clinica').value = c.clinica || '';
+    $('#consulta-motivo').value = c.motivo || '';
+    $('#consulta-resultado').value = c.resultado || '';
+    $('#consulta-valor').value = c.valor ? c.valor.toFixed(2).replace('.', ',') : '';
+    $('#consulta-retorno').value = c.retorno || '';
+    $('#consulta-foto-nome').textContent = c.fotoId ? 'já tem foto (escolha outra para trocar)' : '';
+    $('#form-consulta-titulo').textContent = 'Editar consulta';
+    $('#btn-salvar-consulta').textContent = 'Salvar alterações';
+    $('#btn-cancelar-consulta').hidden = false;
+    $('#form-consulta').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if ((b = ev.target.closest('[data-remover-consulta]')) && pedeConfirmacao(b)) {
+    const c = estado.consultas.find((x) => x.id === b.dataset.removerConsulta);
+    if ($('#consulta-id').value === c?.id) limparFormConsulta();
+    if (c?.fotoId) FotosDB.apagar(c.fotoId);
+    sincronizarGasto({ tipo: 'consulta', id: c.id }, c.petId, null);
+    estado.consultas = estado.consultas.filter((x) => x.id !== c.id);
+    salvar();
+    renderTudo();
+  }
+});
+
+function renderConsultas() {
+  const regs = consultasDoPet();
+  $('#lista-consultas').innerHTML = regs.length ? regs.map((c) => {
+    const t = TIPOS_CONSULTA[c.tipo] || TIPOS_CONSULTA.consulta;
+    let retorno = '';
+    if (c.retorno) {
+      const pend = retornoPendente(c);
+      const d = diasEntre(hojeISO(), c.retorno);
+      const st = !pend ? ['neutro', `Retorno ${fmtData(c.retorno)} (feito)`]
+        : d < 0 ? ['atrasada', `Retorno atrasado: era ${fmtData(c.retorno)}`]
+        : d === 0 ? ['perto', 'Retorno hoje'] : d <= 7 ? ['perto', `Retorno em ${plural(d, 'dia', 'dias')} (${fmtData(c.retorno)})`]
+        : ['ok', `Retorno em ${fmtData(c.retorno)}`];
+      retorno = `<span class="selo ${st[0]}">${st[1]}</span>`;
+    }
+    return `
+      <li class="item-consulta">
+        <div class="info">
+          <div class="principal">${t.emoji} ${t.nome}${c.motivo ? ': ' + esc(c.motivo) : ''}</div>
+          <div class="secundario">${fmtData(c.data)}${c.clinica ? ' · ' + esc(c.clinica) : ''}${c.valor ? ' · ' + fmtReais(c.valor) : ''}</div>
+          ${c.resultado ? `<p class="resultado">${esc(c.resultado)}</p>` : ''}
+          ${retorno}
+          <div class="acoes">
+            ${c.retorno && retornoPendente(c) && c.retorno >= hojeISO() ? botoesEvento('ret-' + c.id, [eventoRetorno(c)]) : ''}
+            <button type="button" class="btn pequeno" data-editar-consulta="${c.id}">Editar</button>
+            <button type="button" class="btn pequeno perigo" data-remover-consulta="${c.id}">Excluir</button>
+          </div>
+        </div>
+        ${miniatura(c.fotoId)}
+      </li>`;
+  }).join('') : '<li class="vazio">Nenhuma consulta registrada.</li>';
+  carregarFotos($('#diario-consultas'));
+}
+
+/* ---------- Sub-abas do Diário ---------- */
+let subabaDiario = 'sintomas';
+try {
+  const salva = localStorage.getItem('diario-pet-subaba-diario');
+  if (['sintomas', 'consultas', 'gastos'].includes(salva)) subabaDiario = salva;
+} catch (e) { /* ignora */ }
+function mostrarSubabaDiario(nome) {
+  subabaDiario = nome;
+  try { localStorage.setItem('diario-pet-subaba-diario', nome); } catch (e) { /* ignora */ }
+  document.querySelectorAll('[data-subaba-diario]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subabaDiario === nome)));
+  for (const k of ['sintomas', 'consultas', 'gastos']) $(`#diario-${k}`).hidden = k !== nome;
+}
+$('#subabas-diario').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-subaba-diario]');
+  if (b) mostrarSubabaDiario(b.dataset.subabaDiario);
+});
+function renderDiario() {
+  renderSintomas();
+  renderConsultas();
+  renderGastos();
+}
+
+/* ---------- Avisos do pet (todos os tipos) ---------- */
+// nivel: 'atrasada' (vermelho) | 'perto' (amarelo); aba: onde resolver
+function avisosDoPet(petId) {
+  const p = estado.pets.find((x) => x.id === petId);
+  if (!p) return [];
+  const hoje = hojeISO();
+  const lista = alertasDoPet(petId).map(({ r, st }) => ({
+    nivel: st.nivel, icone: st.icone, aba: 'saude', ordem: st.dias,
+    html: `<strong>${TIPOS[r.tipo].nome}: ${esc(r.nome)}</strong> — ${st.texto.toLowerCase()} (${fmtData(r.proxima)})`,
+  }));
+  for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x) && x.inicio <= hoje)) {
+    const e = estoqueRemedio(r);
+    if (e && e.diasRestantes <= 3 && (!r.fim || e.acaba < r.fim)) {
+      lista.push({ nivel: e.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: '💊', aba: 'saude', ordem: e.diasRestantes,
+        html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
+    }
+    if (r.fim) {
+      const d = diasEntre(hoje, r.fim);
+      if (d === 0 || d === 1) lista.push({ nivel: 'perto', icone: '💊', aba: 'saude', ordem: d,
+        html: `<strong>${esc(r.nome)}</strong> — ${d === 0 ? 'último dia hoje' : 'termina amanhã'}` });
+    }
+  }
+  const er = estoqueRacao(p);
+  if (er && er.diasRestantes !== null && er.diasRestantes <= 5) {
+    lista.push({ nivel: er.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: '🥣', aba: 'racao', ordem: er.diasRestantes,
+      html: er.diasRestantes <= 0 ? '<strong>Ração</strong> — o saco já deve ter acabado: registre o novo'
+        : `<strong>Ração</strong> — acaba em ~${plural(er.diasRestantes, 'dia', 'dias')} (${fmtData(er.acaba)})` });
+  }
+  for (const c of consultasDoPet(petId).filter(retornoPendente)) {
+    const d = diasEntre(hoje, c.retorno);
+    if (d <= 7 && d >= -30) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: '🩺', aba: 'diario', ordem: d,
+      html: `<strong>Retorno${c.clinica ? ' — ' + esc(c.clinica) : ''}</strong> — ${d < 0 ? `atrasado (era ${fmtData(c.retorno)})` : d === 0 ? 'hoje' : `em ${plural(d, 'dia', 'dias')} (${fmtData(c.retorno)})`}` });
+  }
+  const cont = repeticoesSintomas(petId);
+  for (const [k, n] of Object.entries(cont)) {
+    if (n >= 3) lista.push({ nivel: 'perto', icone: SINTOMAS[k].emoji, aba: 'diario', ordem: 2,
+      html: `<strong>${SINTOMAS[k].nome}</strong> — ${n} vezes em 7 dias: vale consultar o veterinário` });
+  }
+  const urgente = estado.sintomas.find((s) => s.petId === petId && SINTOMAS[s.tipo]?.urgente && s.data >= somarDias(hoje, -1));
+  if (urgente) lista.push({ nivel: 'atrasada', icone: '🚨', aba: 'diario', ordem: -99,
+    html: `<strong>${SINTOMAS[urgente.tipo].nome}</strong> registrado: ${SINTOMAS[urgente.tipo].urgente}` });
+  return lista.sort((a, b) => (a.nivel === b.nivel ? a.ordem - b.ordem : a.nivel === 'atrasada' ? -1 : 1));
+}
+
 /* ---------- Resumo do pet (topo) ---------- */
 function renderResumo() {
   const p = petAtual();
-  $('#resumo-emoji').textContent = ESPECIES[p.especie].emoji;
+  $('#resumo-emoji').innerHTML = avatarHTML(p, 52);
   $('#resumo-nome').textContent = p.nome;
   $('#resumo-det').textContent = [ESPECIES[p.especie].nome, p.raca].filter(Boolean).join(' · ');
 
@@ -2018,18 +2880,18 @@ function renderResumo() {
     ? `<span aria-hidden="true">💊</span> <span><strong>Em uso:</strong> ${emUso.map((r) => esc(r.nome) + (r.frequencia ? ` (${esc(r.frequencia)})` : '')).join(', ')}</span>`
     : '';
 
-  const al = alertasDoPet(p.id);
-  $('#alertas').innerHTML = al
-    .map(({ r, st }) => `
-      <li class="alerta ${st.nivel}">
-        <span aria-hidden="true">${st.icone}</span>
-        <span><strong>${TIPOS[r.tipo].nome}: ${esc(r.nome)}</strong> — ${st.texto.toLowerCase()} (${fmtData(r.proxima)})</span>
-      </li>`)
-    .join('');
-  const cont = $('#contador-saude');
-  cont.hidden = !al.length;
-  cont.textContent = al.length;
-  cont.setAttribute('aria-label', `${al.length} aviso(s)`);
+  const al = avisosDoPet(p.id);
+  $('#alertas').innerHTML = al.map((a) => `
+      <li class="alerta ${a.nivel}">
+        <span aria-hidden="true">${a.icone}</span>
+        <span>${a.html}</span>
+      </li>`).join('');
+  for (const [aba, el] of [['saude', '#contador-saude'], ['diario', '#contador-diario']]) {
+    const n = al.filter((a) => a.aba === aba).length;
+    $(el).hidden = !n;
+    $(el).textContent = n;
+    $(el).setAttribute('aria-label', `${n} aviso(s)`);
+  }
 }
 let resumoAberto = true;
 try { resumoAberto = localStorage.getItem('diario-pet-resumo') !== 'fechado'; } catch (e) { /* ignora */ }
@@ -2059,6 +2921,7 @@ function mostrarAba(nome) {
   abaAtual = nome;
   if (nome === 'racao') preencherFormRacao();
   if (nome === 'ecc') preencherFormEcc();
+  if (nome === 'racao') preencherFormSaco();
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
     if (b.dataset.aba === nome) b.setAttribute('aria-current', 'page');
@@ -2079,6 +2942,10 @@ function aoTrocarPet() {
   limparFormRemedio();
   preencherFormRacao();
   preencherFormEcc();
+  preencherFormSaco();
+  limparFormSintoma();
+  limparFormConsulta();
+  limparFormGasto();
   renderTudo();
 }
 
@@ -2095,7 +2962,7 @@ window.addEventListener('storage', (ev) => {
 
 /* ---------- Virada do dia com o app aberto ---------- */
 let diaAtual = hojeISO();
-const CAMPOS_DATA = ['#peso-data', '#banho-data', '#saude-data'];
+const CAMPOS_DATA = ['#peso-data', '#banho-data', '#saude-data', '#sintoma-data', '#consulta-data', '#gasto-data'];
 function atualizarDia() {
   const hoje = hojeISO();
   if (hoje !== diaAtual) {
@@ -2121,10 +2988,12 @@ function renderTudo() {
   $('#aba-saude').hidden = !temPet || abaAtual !== 'saude';
   $('#aba-racao').hidden = !temPet || abaAtual !== 'racao';
   $('#aba-ecc').hidden = !temPet || abaAtual !== 'ecc';
+  $('#aba-diario').hidden = !temPet || abaAtual !== 'diario';
   if (!temPet) return;
   renderResumo();
   if (abaAtual === 'peso') renderPeso();
-  else if (abaAtual === 'racao') renderRacao();
+  else if (abaAtual === 'racao') { renderRacao(); renderSaco(); }
+  else if (abaAtual === 'diario') renderDiario();
   else if (abaAtual === 'ecc') { renderEcc(); renderListaEcc(); }
   else { renderSaude(); renderClinico(); renderRaca(); }
 }
@@ -2135,7 +3004,11 @@ $('#banho-data').value = hojeISO();
 $('#banho-data').max = hojeISO();
 $('#pet-nasc').max = hojeISO();
 mostrarSubaba(subabaSaude);
-mostrarAba(['peso', 'racao', 'saude', 'ecc'].includes(abaAtual) ? abaAtual : 'peso');
+mostrarSubabaDiario(subabaDiario);
+limparFormSintoma();
+limparFormConsulta();
+limparFormGasto();
+mostrarAba(['peso', 'racao', 'saude', 'ecc', 'diario'].includes(abaAtual) ? abaAtual : 'peso');
 limparFormDoenca();
 limparFormRemedio();
 limparFormSaude();

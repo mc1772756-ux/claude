@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#257de0">
-  <title>Diário do Cachorro</title>
+  <title>Diário do Pet</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topo">
-    <h1>🐾 Diário do Cachorro</h1>
+    <h1>🐾 Diário do Pet</h1>
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
@@ -41,6 +41,18 @@
             <datalist id="sugestoes-raca"></datalist>
           </label>
         </div>
+        <fieldset class="grupo">
+          <legend>Foto ou ícone</legend>
+          <div class="avatar-escolha">
+            <div class="avatar grande" id="pet-avatar-previa" aria-hidden="true"></div>
+            <div class="linha-botoes">
+              <label class="btn pequeno botao-arquivo">📷 Usar foto<input type="file" id="pet-foto" accept="image/*"></label>
+              <button type="button" class="btn pequeno perigo" id="btn-remover-foto" hidden>Remover foto</button>
+            </div>
+          </div>
+          <p class="dica-campo">Ou escolha um ícone:</p>
+          <div class="galeria-icones" id="galeria-icones" role="radiogroup" aria-label="Ícone do pet"></div>
+        </fieldset>
         <fieldset class="grupo">
           <legend>Idade</legend>
           <label>Data de nascimento
@@ -236,9 +248,29 @@
                 </datalist>
               </label>
             </div>
-            <label>Horários (opcional)
-              <input type="text" id="remedio-horarios" maxlength="60" placeholder="ex.: 8h e 20h, junto com a ração">
+            <label>Observação sobre horários (opcional)
+              <input type="text" id="remedio-horarios" maxlength="60" placeholder="ex.: junto com a ração">
             </label>
+            <fieldset class="grupo">
+              <legend>Lembrete diário (opcional)</legend>
+              <div class="linha horas-lembrete">
+                <label>1º horário<input type="time" id="remedio-hora1"></label>
+                <label>2º horário<input type="time" id="remedio-hora2"></label>
+                <label>3º horário<input type="time" id="remedio-hora3"></label>
+              </div>
+            </fieldset>
+            <fieldset class="grupo">
+              <legend>Estoque (opcional)</legend>
+              <div class="linha">
+                <label>Doses em casa
+                  <input type="text" id="remedio-estoque" inputmode="decimal" placeholder="ex.: 30">
+                </label>
+                <label>Doses por dia
+                  <input type="text" id="remedio-doses-dia" inputmode="decimal" placeholder="ex.: 2">
+                </label>
+              </div>
+              <p class="dica-campo">Conte comprimidos, pipetas ou mL. Ao comprar mais, edite e informe o novo total.</p>
+            </fieldset>
             <div class="linha">
               <label>Início
                 <input type="date" id="remedio-inicio" required>
@@ -363,6 +395,27 @@
       </div>
 
       <div class="cartao">
+        <h2>Estoque de ração</h2>
+        <div id="saco-resumo"></div>
+        <form id="form-saco" novalidate>
+          <div class="linha">
+            <label>Tamanho do saco (kg)
+              <input type="text" id="saco-kg" inputmode="decimal" placeholder="ex.: 10,1">
+            </label>
+            <label>Aberto em
+              <input type="date" id="saco-abertura">
+            </label>
+          </div>
+          <label>Preço pago (opcional)
+            <input type="text" id="saco-preco" inputmode="decimal" placeholder="ex.: 189,90">
+          </label>
+          <p class="dica-campo">Com o preço, o saco entra sozinho nos gastos.</p>
+          <p class="erro" id="saco-erro" role="alert" hidden></p>
+          <button type="submit" class="btn primario" id="btn-salvar-saco">Salvar saco</button>
+        </form>
+      </div>
+
+      <div class="cartao">
         <h2>Configurar alimentador</h2>
         <form id="form-racao" novalidate>
           <label>Marca / linha da ração
@@ -384,15 +437,168 @@
     </section>
 
     <!-- Próxima etapa: Backup -->
+    <!-- ===================== DIÁRIO ===================== -->
+    <section id="aba-diario" class="aba" hidden>
+      <div class="subabas" id="subabas-diario" role="tablist" aria-label="Seções do diário">
+        <button type="button" class="subaba" data-subaba-diario="sintomas" aria-selected="true" role="tab">Sintomas</button>
+        <button type="button" class="subaba" data-subaba-diario="consultas" aria-selected="false" role="tab">Consultas</button>
+        <button type="button" class="subaba" data-subaba-diario="gastos" aria-selected="false" role="tab">Gastos</button>
+      </div>
+
+      <!-- Sintomas -->
+      <div id="diario-sintomas">
+        <div class="cartao">
+          <h2 id="form-sintoma-titulo">Registrar sintoma</h2>
+          <form id="form-sintoma" novalidate>
+            <input type="hidden" id="sintoma-id">
+            <label>O que aconteceu
+              <select id="sintoma-tipo"></select>
+            </label>
+            <p class="urgente" id="sintoma-alerta" hidden></p>
+            <div class="linha">
+              <label>Data<input type="date" id="sintoma-data" required></label>
+              <label>Hora<input type="time" id="sintoma-hora"></label>
+            </div>
+            <div class="segmentos" role="radiogroup" aria-label="Intensidade">
+              <label class="seg"><input type="radio" name="sintoma-intensidade" value="leve" checked><span>Leve</span></label>
+              <label class="seg"><input type="radio" name="sintoma-intensidade" value="moderada"><span>Moderada</span></label>
+              <label class="seg"><input type="radio" name="sintoma-intensidade" value="forte"><span>Forte</span></label>
+            </div>
+            <label>Observação (opcional)
+              <input type="text" id="sintoma-obs" maxlength="160" placeholder="ex.: vomitou depois de comer capim">
+            </label>
+            <div class="foto-campo">
+              <label class="btn pequeno botao-arquivo">📷 Foto (opcional)<input type="file" id="sintoma-foto" accept="image/*"></label>
+              <span class="foto-nome" id="sintoma-foto-nome"></span>
+            </div>
+            <p class="erro" id="sintoma-erro" role="alert" hidden></p>
+            <div class="linha-botoes">
+              <button type="submit" class="btn primario" id="btn-salvar-sintoma">Registrar</button>
+              <button type="button" class="btn" id="btn-cancelar-sintoma" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+        <div class="cartao">
+          <h2>Últimos 30 dias</h2>
+          <div id="sintomas-resumo"></div>
+          <ul class="lista" id="lista-sintomas"></ul>
+          <details class="historico" id="det-sintomas-antigos" hidden>
+            <summary>Mais antigos</summary>
+            <ul class="lista" id="lista-sintomas-antigos"></ul>
+          </details>
+        </div>
+      </div>
+
+      <!-- Consultas e exames -->
+      <div id="diario-consultas" hidden>
+        <div class="cartao">
+          <h2 id="form-consulta-titulo">Registrar consulta ou exame</h2>
+          <form id="form-consulta" novalidate>
+            <input type="hidden" id="consulta-id">
+            <div class="linha">
+              <label>Data<input type="date" id="consulta-data" required></label>
+              <label>Tipo
+                <select id="consulta-tipo">
+                  <option value="consulta">Consulta</option>
+                  <option value="retorno">Retorno</option>
+                  <option value="exame">Exame</option>
+                  <option value="vacinacao">Vacinação</option>
+                  <option value="cirurgia">Cirurgia</option>
+                  <option value="emergencia">Emergência</option>
+                </select>
+              </label>
+            </div>
+            <label>Clínica / veterinário(a)
+              <input type="text" id="consulta-clinica" maxlength="80" list="sugestoes-clinica" placeholder="ex.: Clínica Bicho Feliz, Dra. Ana">
+              <datalist id="sugestoes-clinica"></datalist>
+            </label>
+            <label>Motivo
+              <input type="text" id="consulta-motivo" maxlength="120" placeholder="ex.: coceira nas patas; hemograma de rotina">
+            </label>
+            <label>Diagnóstico, resultado ou orientações (opcional)
+              <textarea id="consulta-resultado" rows="3" maxlength="1000" placeholder="ex.: dermatite alérgica; trocar xampu; retorno em 15 dias"></textarea>
+            </label>
+            <div class="linha">
+              <label>Valor (R$)<input type="text" id="consulta-valor" inputmode="decimal" placeholder="ex.: 180,00"></label>
+              <label>Retorno em<input type="date" id="consulta-retorno"></label>
+            </div>
+            <div class="foto-campo">
+              <label class="btn pequeno botao-arquivo">📷 Foto do exame/receita<input type="file" id="consulta-foto" accept="image/*"></label>
+              <span class="foto-nome" id="consulta-foto-nome"></span>
+            </div>
+            <p class="erro" id="consulta-erro" role="alert" hidden></p>
+            <div class="linha-botoes">
+              <button type="submit" class="btn primario" id="btn-salvar-consulta">Registrar</button>
+              <button type="button" class="btn" id="btn-cancelar-consulta" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+        <div class="cartao">
+          <h2>Histórico</h2>
+          <ul class="lista" id="lista-consultas"></ul>
+        </div>
+      </div>
+
+      <!-- Gastos -->
+      <div id="diario-gastos" hidden>
+        <div class="cartao">
+          <div class="cab-gastos">
+            <h2>Gastos</h2>
+            <div class="segmentos compacto" role="radiogroup" aria-label="Mostrar gastos de">
+              <label class="seg"><input type="radio" name="gastos-escopo" value="pet" checked><span id="gastos-escopo-pet">Este pet</span></label>
+              <label class="seg"><input type="radio" name="gastos-escopo" value="todos"><span>Todos</span></label>
+            </div>
+          </div>
+          <div id="gastos-resumo"></div>
+        </div>
+        <div class="cartao">
+          <h2 id="form-gasto-titulo">Adicionar gasto</h2>
+          <form id="form-gasto" novalidate>
+            <input type="hidden" id="gasto-id">
+            <div class="linha">
+              <label>Data<input type="date" id="gasto-data" required></label>
+              <label>Valor (R$)<input type="text" id="gasto-valor" inputmode="decimal" placeholder="ex.: 59,90" required></label>
+            </div>
+            <label>Categoria
+              <select id="gasto-categoria"></select>
+            </label>
+            <label>Descrição (opcional)
+              <input type="text" id="gasto-descricao" maxlength="80" placeholder="ex.: banho e tosa; brinquedo">
+            </label>
+            <p class="erro" id="gasto-erro" role="alert" hidden></p>
+            <div class="linha-botoes">
+              <button type="submit" class="btn primario" id="btn-salvar-gasto">Adicionar</button>
+              <button type="button" class="btn" id="btn-cancelar-gasto" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+        <div class="cartao">
+          <h2>Lançamentos</h2>
+          <ul class="lista" id="lista-gastos"></ul>
+          <details class="historico" id="det-gastos-antigos" hidden>
+            <summary>Meses anteriores</summary>
+            <ul class="lista" id="lista-gastos-antigos"></ul>
+          </details>
+        </div>
+      </div>
+    </section>
+
   </main>
+
+  <div class="visor" id="visor-foto" hidden role="dialog" aria-label="Foto ampliada">
+    <img alt="">
+    <button type="button" class="btn">Fechar</button>
+  </div>
 
   <nav class="abas" id="abas" aria-label="Seções" hidden>
     <button type="button" class="aba-btn" data-aba="peso" aria-current="page"><span aria-hidden="true">⚖️</span>Peso</button>
     <button type="button" class="aba-btn" data-aba="racao"><span aria-hidden="true">🥣</span>Ração</button>
     <button type="button" class="aba-btn" data-aba="saude"><span aria-hidden="true">🩺</span>Saúde<span class="contador" id="contador-saude" hidden></span></button>
+    <button type="button" class="aba-btn" data-aba="diario"><span aria-hidden="true">📓</span>Diário<span class="contador" id="contador-diario" hidden></span></button>
     <button type="button" class="aba-btn" data-aba="ecc"><span aria-hidden="true">🎯</span>ECC</button>
   </nav>
 
+  <script src="icones.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
