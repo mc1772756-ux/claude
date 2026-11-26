@@ -40,6 +40,21 @@
             <input type="text" id="pet-raca" maxlength="40" placeholder="ex.: Jack Russell">
           </label>
         </div>
+        <fieldset class="grupo">
+          <legend>Idade</legend>
+          <label>Data de nascimento
+            <input type="date" id="pet-nasc">
+          </label>
+          <p class="ou">ou, se não souber a data, a idade aproximada hoje:</p>
+          <div class="linha">
+            <label>Anos
+              <input type="number" id="pet-idade-anos" inputmode="numeric" min="0" max="30" placeholder="ex.: 3">
+            </label>
+            <label>Meses
+              <input type="number" id="pet-idade-meses" inputmode="numeric" min="0" max="11" placeholder="0">
+            </label>
+          </div>
+        </fieldset>
         <p class="erro" id="pet-erro" role="alert" hidden></p>
         <div class="linha-botoes">
           <button type="submit" class="btn primario" id="btn-salvar-pet">Adicionar</button>
@@ -53,6 +68,19 @@
     <section id="sem-pets" class="cartao vazio-grande" hidden>
       <p>Cadastre seu primeiro pet para começar.</p>
       <button type="button" class="btn primario" id="btn-primeiro-pet">Cadastrar pet</button>
+    </section>
+
+    <!-- ===================== RESUMO DO PET ===================== -->
+    <section id="resumo-pet" class="resumo" hidden>
+      <div class="resumo-cab">
+        <div class="avatar" id="resumo-emoji" aria-hidden="true"></div>
+        <div class="info">
+          <div class="resumo-nome" id="resumo-nome"></div>
+          <div class="resumo-det" id="resumo-det"></div>
+        </div>
+      </div>
+      <dl class="fatos" id="resumo-fatos"></dl>
+      <ul class="alertas" id="alertas" aria-live="polite"></ul>
     </section>
 
     <!-- ===================== PESO ===================== -->
@@ -88,8 +116,79 @@
       </div>
     </section>
 
-    <!-- Próximas etapas: Ração, Saúde, Backup -->
+    <!-- ===================== SAÚDE ===================== -->
+    <section id="aba-saude" class="aba" hidden>
+      <div class="cartao">
+        <h2>Banho</h2>
+        <p class="destaque" id="banho-ultimo"></p>
+        <form id="form-banho" novalidate>
+          <div class="linha alinhar-base">
+            <label>Data do banho
+              <input type="date" id="banho-data" required>
+            </label>
+            <button type="submit" class="btn primario curto">Registrar banho</button>
+          </div>
+          <p class="erro" id="banho-erro" role="alert" hidden></p>
+        </form>
+        <details class="historico">
+          <summary>Banhos anteriores</summary>
+          <ul id="lista-banho" class="lista"></ul>
+        </details>
+      </div>
+
+      <div class="cartao">
+        <h2 id="form-saude-titulo">Registrar vacina, vermífugo ou antipulgas</h2>
+        <form id="form-saude" novalidate>
+          <input type="hidden" id="saude-id">
+          <div class="segmentos" role="radiogroup" aria-label="Tipo">
+            <label class="seg"><input type="radio" name="saude-tipo" value="vacina" checked><span>💉 Vacina</span></label>
+            <label class="seg"><input type="radio" name="saude-tipo" value="vermifugo"><span>💊 Vermífugo</span></label>
+            <label class="seg"><input type="radio" name="saude-tipo" value="antipulgas"><span>🛡️ Antipulgas</span></label>
+          </div>
+          <label>Nome / produto
+            <input type="text" id="saude-nome" maxlength="60" list="sugestoes-saude" required placeholder="ex.: V10, Antirrábica">
+            <datalist id="sugestoes-saude"></datalist>
+          </label>
+          <div class="linha">
+            <label>Data aplicada
+              <input type="date" id="saude-data" required>
+            </label>
+            <label>Próxima dose
+              <input type="date" id="saude-proxima">
+            </label>
+          </div>
+          <label>Observação (opcional)
+            <input type="text" id="saude-obs" maxlength="120" placeholder="ex.: clínica, lote, dose">
+          </label>
+          <p class="erro" id="saude-erro" role="alert" hidden></p>
+          <div class="linha-botoes">
+            <button type="submit" class="btn primario" id="btn-salvar-saude">Salvar</button>
+            <button type="button" class="btn" id="btn-cancelar-saude" hidden>Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="cartao" id="cartao-vacina">
+        <h2>💉 Vacinas</h2>
+        <ul class="lista" data-lista-tipo="vacina"></ul>
+      </div>
+      <div class="cartao">
+        <h2>💊 Vermífugo</h2>
+        <ul class="lista" data-lista-tipo="vermifugo"></ul>
+      </div>
+      <div class="cartao">
+        <h2>🛡️ Antipulgas</h2>
+        <ul class="lista" data-lista-tipo="antipulgas"></ul>
+      </div>
+    </section>
+
+    <!-- Próximas etapas: Ração, Backup -->
   </main>
+
+  <nav class="abas" id="abas" aria-label="Seções" hidden>
+    <button type="button" class="aba-btn" data-aba="peso" aria-current="page"><span aria-hidden="true">⚖️</span>Peso</button>
+    <button type="button" class="aba-btn" data-aba="saude"><span aria-hidden="true">🩺</span>Saúde<span class="contador" id="contador-saude" hidden></span></button>
+  </nav>
 
   <script src="app.js"></script>
 </body>
