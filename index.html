@@ -80,6 +80,7 @@
         </div>
       </div>
       <dl class="fatos" id="resumo-fatos"></dl>
+      <p class="em-uso" id="resumo-remedios" hidden></p>
       <ul class="alertas" id="alertas" aria-live="polite"></ul>
     </section>
 
@@ -118,6 +119,12 @@
 
     <!-- ===================== SAÚDE ===================== -->
     <section id="aba-saude" class="aba" hidden>
+      <div class="subabas" role="tablist" aria-label="Seções de saúde">
+        <button type="button" class="subaba" data-subaba="prevencao" aria-selected="true" role="tab">Prevenção</button>
+        <button type="button" class="subaba" data-subaba="clinico" aria-selected="false" role="tab">Doenças e remédios<span class="contador-mini" id="contador-remedios" hidden></span></button>
+      </div>
+
+      <div id="saude-prevencao">
       <div class="cartao">
         <h2>Banho</h2>
         <p class="destaque" id="banho-ultimo"></p>
@@ -180,6 +187,155 @@
         <h2>🛡️ Antipulgas</h2>
         <ul class="lista" data-lista-tipo="antipulgas"></ul>
       </div>
+      </div>
+
+      <div id="saude-clinico" hidden>
+        <div class="cartao">
+          <h2>💊 Remédios em uso</h2>
+          <ul class="lista" id="lista-remedios"></ul>
+          <details class="historico" id="det-remedios-antigos" hidden>
+            <summary>Remédios encerrados</summary>
+            <ul class="lista" id="lista-remedios-antigos"></ul>
+          </details>
+        </div>
+
+        <div class="cartao">
+          <h2 id="form-remedio-titulo">Adicionar remédio</h2>
+          <form id="form-remedio" novalidate>
+            <input type="hidden" id="remedio-id">
+            <label>Remédio
+              <input type="text" id="remedio-nome" maxlength="60" required placeholder="ex.: Apoquel">
+            </label>
+            <div class="linha">
+              <label>Dose
+                <input type="text" id="remedio-dose" maxlength="60" placeholder="ex.: 1 comprimido de 5,4 mg">
+              </label>
+              <label>Frequência
+                <input type="text" id="remedio-freq" maxlength="40" list="sugestoes-freq" placeholder="ex.: 2x ao dia">
+                <datalist id="sugestoes-freq">
+                  <option value="1x ao dia"></option><option value="2x ao dia"></option><option value="3x ao dia"></option>
+                  <option value="A cada 8 horas"></option><option value="A cada 12 horas"></option>
+                  <option value="Dia sim, dia não"></option><option value="1x por semana"></option><option value="Quando necessário"></option>
+                </datalist>
+              </label>
+            </div>
+            <label>Horários (opcional)
+              <input type="text" id="remedio-horarios" maxlength="60" placeholder="ex.: 8h e 20h, junto com a ração">
+            </label>
+            <div class="linha">
+              <label>Início
+                <input type="date" id="remedio-inicio" required>
+              </label>
+              <label>Término
+                <input type="date" id="remedio-fim">
+              </label>
+            </div>
+            <p class="dica-campo">Deixe o término em branco para uso contínuo.</p>
+            <label>Para tratar (opcional)
+              <select id="remedio-doenca"></select>
+            </label>
+            <label>Observação (opcional)
+              <input type="text" id="remedio-obs" maxlength="120" placeholder="ex.: dar com comida; receitado pela Dra. Ana">
+            </label>
+            <p class="erro" id="remedio-erro" role="alert" hidden></p>
+            <div class="linha-botoes">
+              <button type="submit" class="btn primario" id="btn-salvar-remedio">Adicionar remédio</button>
+              <button type="button" class="btn" id="btn-cancelar-remedio" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="cartao">
+          <h2>🩹 Doenças e condições</h2>
+          <ul class="lista" id="lista-doencas"></ul>
+          <details class="historico" id="det-doencas-curadas" hidden>
+            <summary>Curadas / resolvidas</summary>
+            <ul class="lista" id="lista-doencas-curadas"></ul>
+          </details>
+        </div>
+
+        <div class="cartao">
+          <h2 id="form-doenca-titulo">Adicionar doença ou condição</h2>
+          <form id="form-doenca" novalidate>
+            <input type="hidden" id="doenca-id">
+            <label>Doença / condição
+              <input type="text" id="doenca-nome" maxlength="60" required list="sugestoes-doenca" placeholder="ex.: Dermatite atópica">
+              <datalist id="sugestoes-doenca"></datalist>
+            </label>
+            <div class="linha">
+              <label>Diagnóstico em
+                <input type="date" id="doenca-data">
+              </label>
+              <label>Situação
+                <select id="doenca-situacao">
+                  <option value="tratamento">Em tratamento</option>
+                  <option value="controlada">Controlada</option>
+                  <option value="observacao">Em observação</option>
+                  <option value="curada">Curada / resolvida</option>
+                </select>
+              </label>
+            </div>
+            <label>Observação (opcional)
+              <input type="text" id="doenca-obs" maxlength="160" placeholder="ex.: piora no verão; evitar frango">
+            </label>
+            <p class="erro" id="doenca-erro" role="alert" hidden></p>
+            <div class="linha-botoes">
+              <button type="submit" class="btn primario" id="btn-salvar-doenca">Adicionar</button>
+              <button type="button" class="btn" id="btn-cancelar-doenca" hidden>Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CALCULADORA ECC ===================== -->
+    <section id="aba-ecc" class="aba" hidden>
+      <div class="cartao">
+        <h2>Calculadora ECC</h2>
+        <p class="intro">Escore de condição corporal na escala de 1 a 9. Avalie com as mãos e olhando o pet de cima e de lado.</p>
+        <form id="form-ecc" novalidate>
+          <label>Peso atual (kg)
+            <input type="text" id="ecc-peso" inputmode="decimal" placeholder="6,20">
+          </label>
+          <fieldset class="grupo">
+            <legend>Escore (ECC)</legend>
+            <div class="escala" id="ecc-escala" role="radiogroup" aria-label="Escore de condição corporal"></div>
+            <div class="descricao-ecc" id="ecc-descricao" aria-live="polite"></div>
+          </fieldset>
+          <div class="linha">
+            <label>Fase de vida
+              <select id="ecc-fase"></select>
+            </label>
+            <label>Castrado(a)?
+              <select id="ecc-castrado">
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+              </select>
+            </label>
+          </div>
+          <label>Nível de atividade
+            <select id="ecc-atividade">
+              <option value="baixa">Baixo (pouco exercício, idoso)</option>
+              <option value="normal" selected>Normal (passeios diários)</option>
+              <option value="alta">Alto (muito ativo, esporte)</option>
+            </select>
+          </label>
+          <label>Energia da ração (kcal/kg)
+            <input type="text" id="ecc-kcal" inputmode="numeric" placeholder="ex.: 3800">
+          </label>
+          <p class="dica-campo">Na embalagem, procure "Energia metabolizável" (EM). Se estiver em kcal/100 g, multiplique por 10.</p>
+        </form>
+      </div>
+
+      <div class="cartao" id="ecc-resultado-cartao">
+        <h2>Resultado</h2>
+        <div id="ecc-resultado"></div>
+      </div>
+
+      <div class="cartao">
+        <h2>Avaliações salvas</h2>
+        <ul class="lista" id="lista-ecc"></ul>
+      </div>
     </section>
 
     <!-- ===================== RAÇÃO ===================== -->
@@ -217,6 +373,7 @@
     <button type="button" class="aba-btn" data-aba="peso" aria-current="page"><span aria-hidden="true">⚖️</span>Peso</button>
     <button type="button" class="aba-btn" data-aba="racao"><span aria-hidden="true">🥣</span>Ração</button>
     <button type="button" class="aba-btn" data-aba="saude"><span aria-hidden="true">🩺</span>Saúde<span class="contador" id="contador-saude" hidden></span></button>
+    <button type="button" class="aba-btn" data-aba="ecc"><span aria-hidden="true">🎯</span>ECC</button>
   </nav>
 
   <script src="app.js"></script>
