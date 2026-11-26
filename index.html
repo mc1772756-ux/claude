@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#257de0">
+  <title>Diário do Cachorro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <h1>🐾 Diário do Cachorro</h1>
+    <div class="seletor-pet">
+      <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
+      <select id="pet-atual"></select>
+      <button type="button" class="btn icone" id="btn-pets" aria-label="Gerenciar pets">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===================== PETS ===================== -->
+    <section id="painel-pets" class="cartao" hidden>
+      <h2>Meus pets</h2>
+      <ul id="lista-pets" class="lista"></ul>
+      <form id="form-pet" novalidate>
+        <h3 id="form-pet-titulo">Adicionar pet</h3>
+        <input type="hidden" id="pet-id">
+        <label>Nome
+          <input type="text" id="pet-nome" maxlength="40" required placeholder="ex.: Thor">
+        </label>
+        <div class="linha">
+          <label>Espécie
+            <select id="pet-especie" required>
+              <option value="cao">🐶 Cão</option>
+              <option value="gato">🐱 Gato</option>
+            </select>
+          </label>
+          <label>Raça (opcional)
+            <input type="text" id="pet-raca" maxlength="40" placeholder="ex.: Jack Russell">
+          </label>
+        </div>
+        <p class="erro" id="pet-erro" role="alert" hidden></p>
+        <div class="linha-botoes">
+          <button type="submit" class="btn primario" id="btn-salvar-pet">Adicionar</button>
+          <button type="button" class="btn" id="btn-cancelar-pet" hidden>Cancelar</button>
+        </div>
+      </form>
+      <button type="button" class="btn" id="btn-fechar-pets">Fechar</button>
+    </section>
+
+    <!-- Aviso quando não há pets -->
+    <section id="sem-pets" class="cartao vazio-grande" hidden>
+      <p>Cadastre seu primeiro pet para começar.</p>
+      <button type="button" class="btn primario" id="btn-primeiro-pet">Cadastrar pet</button>
+    </section>
+
+    <!-- ===================== PESO ===================== -->
+    <section id="aba-peso" class="aba" hidden>
+      <div class="cartao">
+        <h2>Registrar peso</h2>
+        <form id="form-peso" novalidate>
+          <div class="linha">
+            <label>Data
+              <input type="date" id="peso-data" required>
+            </label>
+            <label>Peso (kg)
+              <input type="text" id="peso-kg" inputmode="decimal" placeholder="6,20" required>
+            </label>
+          </div>
+          <label>Observação (opcional)
+            <input type="text" id="peso-obs" maxlength="120" placeholder="ex.: pesado no veterinário">
+          </label>
+          <p class="erro" id="peso-erro" role="alert" hidden></p>
+          <button type="submit" class="btn primario">Salvar peso</button>
+        </form>
+      </div>
+
+      <div class="cartao">
+        <h2>Evolução do peso</h2>
+        <div class="estat" id="peso-estat"></div>
+        <div id="grafico-peso" class="grafico"></div>
+      </div>
+
+      <div class="cartao">
+        <h2>Histórico</h2>
+        <ul id="lista-peso" class="lista"></ul>
+      </div>
+    </section>
+
+    <!-- Próximas etapas: Ração, Saúde, Backup -->
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
