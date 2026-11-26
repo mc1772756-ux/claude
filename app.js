@@ -1155,202 +1155,323 @@ function renderClinico() {
 /* ---------- Guia de cuidados por raça ---------- */
 // Predisposições descritas na literatura veterinária. Ter predisposição
 // não significa que o pet terá a doença: é o que vale a pena checar.
+// Cada item: primeiros sinais (o que dá para notar em casa), sinal de urgência,
+// o que fazer, idade típica e fontes consultadas.
+const F = {
+  vetcompassPatela: ['O\'Neill et al., 2016 (VetCompass)', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4898461/'],
+  pll: ['Farias et al., 2010 (luxação do cristalino em terriers)', 'https://pubmed.ncbi.nlm.nih.gov/20375329/'],
+  ataxiaJrt: ['Ataxia hereditária em Russell terriers (2016)', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5057501/'],
+  perthes: ['Revisão: Legg-Calvé-Perthes em cães', 'https://www.sciencedirect.com/science/article/abs/pii/S1286011520301211'],
+  respiracao: ['VCA: contagem de respirações em casa', 'https://vcahospitals.com/know-your-pet/home-breathing-rate-evaluation'],
+  merck: ['Manual Merck: necessidades nutricionais', 'https://www.merckvetmanual.com/management-and-nutrition/nutrition-small-animals/nutritional-requirements-of-small-animals'],
+  pkd: ['UC Davis VGL: PKD em gatos', 'https://vgl.ucdavis.edu/test/pkd1-cat'],
+  persaOlhos: ['Revisão: saúde do gato Persa', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC6748978/'],
+  dermatofitose: ['Dermatologia veterinária: dermatofitose', 'https://open.lib.umn.edu/animaldermatology/chapter/dermatophytosis-dogs-and-cats/'],
+  cmhMaine: ['UC Davis VGL: CMH no Maine Coon', 'https://vgl.ucdavis.edu/test/maine-coon-hcm'],
+  displasiaMaine: ['Loder & Todhunter, 2018 (displasia no Maine Coon)', 'https://catvets.com/publication/demographics-of-hip-dysplasia-in-the-maine-coon-cat/'],
+  ame: ['Fyfe et al., 2006 (AME felina)', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1557767/'],
+  asma: ['Adamama-Moraitou et al., 2004 (doença das vias aéreas)', 'https://pubmed.ncbi.nlm.nih.gov/15265478/'],
+  amiloidose: ['UFAW: amiloidose no Siamês', 'https://www.ufaw.org.uk/cats/siamese---amyloidosis'],
+  praSiames: ['UC Davis VGL: atrofia de retina rdAc', 'https://vgl.ucdavis.edu/test/pra-rdac'],
+  surdezBranco: ['PetMD: Angorá Turco', 'https://www.petmd.com/cat/breeds/turkish-angora'],
+  esporotricose: ['Montenegro et al., 2014 (esporotricose em SP)', 'https://link.springer.com/article/10.1186/s12917-014-0269-5'],
+  esporotricoseSP: ['Secretaria da Saúde de SP: esporotricose', 'https://www.saude.sp.gov.br/resources/coordenadoria-de-defesa-e-saude-animal/homepage/acesso-rapido/acesso-rapido-zoonoses/esporotricose_serie_zoonoses.pdf'],
+  aaha: ['AAHA 2021: nutrição e controle de peso', 'https://www.aaha.org/resources/2021-aaha-nutrition-and-weight-management-guidelines/weight-reduction-in-the-obese-pet/0/'],
+};
+
 const CUIDADOS = {
   'luxacao-patelar': {
+    idade: [4, Infinity], peso: true,
     nome: 'Luxação de patela',
-    sinais: 'Dá "pulinhos" com uma pata de trás ou corre alguns passos em três patas e depois volta ao normal; manqueira que vai e volta.',
-    checar: 'Palpação dos joelhos pelo veterinário em toda consulta. Manter o peso ideal reduz a carga nos joelhos.',
+    sinais: ['Dá "pulinhos" com uma pata de trás durante a corrida', 'Corre alguns passos em três patas e logo volta ao normal', 'Estica a pata para trás como se "destravasse" o joelho', 'Manqueira que vai e volta'],
+    prevenir: 'Mantenha o peso ideal. Evite pulos de lugares altos (sofá, cama, carro): use rampa ou escada. Piso escorregadio piora; tapetes ajudam.',
+    inicial: 'Se ele travar a pata, não force o joelho. Deixe descansar e evite corridas e escadas por alguns dias. Grave um vídeo do episódio para mostrar ao veterinário.',
     quando: 'Desde filhote; mais atenção a partir dos 6 meses.',
+    fontes: [F.vetcompassPatela],
   },
   'luxacao-cristalino': {
-    nome: 'Luxação primária do cristalino',
-    sinais: 'Olho vermelho, lacrimejando, dolorido ou turvo; fica apertando o olho. É emergência: pode virar glaucoma e cegueira em poucas horas.',
-    checar: 'Teste genético (gene ADAMTS17) e exame oftalmológico anual.',
-    quando: 'Geralmente entre 3 e 8 anos.',
+    idade: [36, 96],
+    nome: 'Luxação do cristalino',
+    sinais: ['Olho vermelho ou lacrimejando de um lado só', 'Pisca muito ou fica apertando o olho', 'Olho turvo, azulado ou com aspecto diferente do outro'],
+    urgente: 'Qualquer um desses sinais é emergência: pode virar glaucoma e cegueira em poucas horas. Vá ao veterinário no mesmo dia.',
+    prevenir: 'Não há como evitar, mas como é comum na raça, peça exame dos olhos no check-up anual a partir dos 3 anos.',
+    inicial: 'Não esfregue nem aperte o olho e não pingue colírio sem orientação. Impeça que ele coce o olho com a pata (um colar elizabetano ajuda). Vá ao veterinário no mesmo dia.',
+    quando: 'Geralmente em adultos, entre 3 e 8 anos.',
+    fontes: [F.pll],
   },
   perthes: {
-    nome: 'Doença de Legg-Calvé-Perthes',
-    sinais: 'Manqueira de uma pata traseira que piora aos poucos, dor ao mexer no quadril, coxa mais fina (perda de músculo).',
-    checar: 'Raio-x do quadril se começar a mancar.',
-    quando: 'Filhotes e jovens, de 4 a 12 meses.',
+    idade: [4, 12],
+    nome: 'Doença de Legg-Calvé-Perthes (quadril)',
+    sinais: ['Começa a mancar de uma pata traseira', 'A manqueira piora aos poucos em semanas', 'Reclama ou se afasta quando mexem no quadril', 'Coxa daquele lado fica mais fina'],
+    prevenir: 'Não há prevenção conhecida. Leve o filhote às consultas de rotina para notar cedo.',
+    inicial: 'Repouso: evite pulos, escadas e brincadeiras de correr. Não dê remédio para dor de uso humano. Marque consulta nos próximos dias.',
+    quando: 'Filhotes e jovens, geralmente entre 4 e 12 meses.',
+    fontes: [F.perthes],
   },
   'surdez-congenita': {
-    nome: 'Surdez congênita',
-    sinais: 'Não reage quando chamado ou a barulhos fora do campo de visão; sono muito pesado.',
-    checar: 'Teste de audição BAER em filhotes, principalmente com muito branco na pelagem.',
-    quando: 'De nascença.',
+    idade: [0, 6],
+    nome: 'Surdez de nascença',
+    sinais: ['Não acorda nem vira a cabeça com barulhos', 'Não atende quando chamado sem ver você', 'Sono muito pesado; se assusta quando tocado', 'Late muito alto'],
+    prevenir: 'É de nascença. Ao escolher filhote, observe se reage a sons.',
+    inicial: 'Se ele não ouve, ande sempre na guia (não percebe carros). Ensine sinais com a mão e acorde-o tocando de leve, perto da cabeça.',
+    quando: 'De nascença; dá para notar nas primeiras semanas.',
+    fontes: [],
   },
   'ataxia-jrt': {
-    nome: 'Ataxia hereditária',
-    sinais: 'Andar descoordenado, patas de trás rígidas, quedas e tremores.',
-    checar: 'Testes genéticos disponíveis para a raça (genes KCNJ10 e CAPN1). Pergunte ao criador se os pais foram testados.',
+    idade: [2, 18],
+    nome: 'Ataxia hereditária (coordenação)',
+    sinais: ['Andar desajeitado, patas de trás "duras" ou abertas', 'Tropeça e cai mais que outros filhotes', 'Dificuldade em escadas e para pular', 'Tremores ou espasmos'],
+    prevenir: 'É hereditária: ao comprar um filhote, pergunte sobre problemas neurológicos na família.',
+    inicial: 'Evite escadas e lugares altos. Use tapetes em piso liso e passeios curtos. Marque consulta para avaliação.',
     quando: 'Geralmente no primeiro ano de vida.',
+    fontes: [F.ataxiaJrt],
   },
   atopia: {
-    nome: 'Dermatite atópica e alergias de pele',
-    sinais: 'Coceira, lambe muito as patas, vermelhidão na barriga e nas axilas, otites que voltam.',
-    checar: 'Avaliação dermatológica se coçar com frequência; antipulgas sempre em dia (alergia à picada de pulga é comum).',
+    idade: [6, 72],
+    nome: 'Alergias de pele (dermatite atópica)',
+    sinais: ['Coça muito, principalmente à noite', 'Lambe ou morde as patas (pelo entre os dedos fica avermelhado)', 'Vermelhidão na barriga, axilas e virilha', 'Coça as orelhas ou balança a cabeça; otites que voltam'],
+    prevenir: 'Antipulgas sempre em dia. Banhos só com xampu para cães e seque bem entre os dedos e as dobras. Anote o que piora (estação, comida, lugar).',
+    inicial: 'Lave as patas com água após o passeio e seque bem. Não use pomadas ou remédios humanos, como corticoide ou antialérgico, sem orientação. Se ele estiver se ferindo de tanto coçar, consulte logo.',
     quando: 'Costuma começar entre 6 meses e 3 anos.',
+    fontes: [],
   },
   'periodontal-cao': {
+    comumNaIdade: true,
+    idade: [24, Infinity],
     nome: 'Doença periodontal (dentes e gengiva)',
-    sinais: 'Mau hálito, tártaro amarelado, gengiva vermelha ou sangrando, mastiga de um lado só.',
-    checar: 'Escovação dos dentes (o ideal é diária) e avaliação odontológica anual. Raças pequenas são as mais afetadas.',
+    sinais: ['Mau hálito', 'Tártaro amarelado ou marrom nos dentes de trás', 'Gengiva vermelha ou que sangra', 'Mastiga de um lado só ou deixa a ração cair'],
+    prevenir: 'Escove os dentes, o ideal é todo dia, com pasta para cães (a humana não serve). Use brinquedos de mastigar seguros e faça limpeza quando o veterinário indicar.',
+    inicial: 'Dente mole, rosto inchado ou recusa de comida: ofereça ração molhada para amolecer e marque consulta. Não tente arrancar dente nem raspar tártaro em casa.',
     quando: 'A partir dos 2–3 anos.',
+    fontes: [],
   },
   'valvar-mitral': {
+    idade: [84, Infinity],
     nome: 'Doença da válvula mitral (coração)',
-    sinais: 'Tosse, principalmente à noite; cansa fácil nos passeios; respiração acelerada dormindo.',
-    checar: 'Ausculta do coração em toda consulta; ecocardiograma se houver sopro. Em casa, conte as respirações dormindo: o normal é menos de 30 por minuto.',
-    quando: 'Idosos, a partir dos 7–8 anos.',
+    sinais: ['Tosse, principalmente à noite ou ao acordar', 'Cansa mais rápido nos passeios', 'Respiração acelerada enquanto dorme'],
+    urgente: 'Respiração difícil, gengiva azulada ou desmaio: emergência.',
+    prevenir: 'Peso ideal e passeios regulares, sem esforço extremo no calor. Ausculta do coração em toda consulta a partir dos 6–7 anos.',
+    inicial: 'Com tosse ou cansaço, conte as respirações dormindo e anote. Deixe-o em lugar fresco e em repouso. Respiração difícil ou gengiva azulada: vá direto ao pronto-atendimento.',
+    quando: 'Idosos de raças pequenas, a partir dos 7–8 anos.',
+    fontes: [F.respiracao],
   },
-  // ----- todos os cães no Brasil -----
   carrapato: {
+    idade: [0, Infinity],
     nome: 'Doenças do carrapato (erliquiose e babesiose)',
-    sinais: 'Apatia, febre, falta de apetite, sangramento pelo nariz, manchinhas roxas na pele ou gengiva pálida.',
-    checar: 'Carrapaticida sempre em dia e revisão do corpo após passeios em grama. Hemograma se aparecer algum sinal.',
-    quando: 'Qualquer idade; mais comum nos meses quentes.',
+    sinais: ['Fica quieto e sem vontade de brincar', 'Come menos', 'Febre (focinho e orelhas quentes, corpo mole)', 'Manchinhas roxas na pele, sangramento pelo nariz, gengiva pálida'],
+    prevenir: 'Carrapaticida contínuo (coleira, comprimido ou pipeta) no prazo certo. Revise o corpo após passeios em grama ou mato. Trate o ambiente se aparecerem carrapatos em casa.',
+    inicial: 'Para tirar um carrapato, puxe firme com pinça, rente à pele, sem torcer nem esmagar. Não use álcool, fogo ou óleo. Com apatia, febre ou sangramento, consulte no mesmo dia.',
+    quando: 'Qualquer idade; mais nos meses quentes.',
+    fontes: [],
   },
   leishmaniose: {
+    idade: [0, Infinity],
     nome: 'Leishmaniose',
-    sinais: 'Perda de pelo ao redor dos olhos, descamação, unhas crescendo demais, feridas nas pontas das orelhas, emagrecimento.',
-    checar: 'Coleira repelente e vacina conforme orientação do veterinário. Teste anual em regiões onde a doença é comum.',
+    sinais: ['Perda de pelo ao redor dos olhos ("óculos")', 'Pele descamando como caspa', 'Unhas crescendo demais', 'Feridas nas pontas das orelhas e no focinho', 'Emagrecimento'],
+    prevenir: 'Coleira repelente específica, trocada no prazo. Evite passeios ao entardecer e à noite, quando o mosquito-palha é mais ativo. Mantenha o quintal limpo, sem folhas e matéria orgânica. Pergunte sobre a vacina.',
+    inicial: 'Não há cuidado caseiro: com perda de pelo nos olhos, unhas grandes ou feridas nas orelhas, marque consulta para teste.',
     quando: 'Qualquer idade.',
+    fontes: [],
   },
   dirofilariose: {
+    idade: [0, Infinity],
     nome: 'Dirofilariose (verme do coração)',
-    sinais: 'Tosse, cansaço fácil, perda de peso. No início pode não ter sinais.',
-    checar: 'Prevenção mensal e teste anual, principalmente no litoral e perto de rios e lagoas.',
+    sinais: ['Tosse seca', 'Cansa fácil', 'Perde peso. No início pode não ter sinais'],
+    prevenir: 'Prevenção mensal indicada pelo veterinário, principalmente no litoral. Use repelente e evite passeios no fim da tarde em áreas com muito mosquito.',
+    inicial: 'Com tosse ou cansaço, deixe-o em repouso e marque consulta. Não dê vermífugo comum achando que resolve: o tratamento é diferente.',
     quando: 'Qualquer idade.',
+    fontes: [],
   },
   'obesidade-cao': {
+    idade: [12, Infinity], obesidade: true,
     nome: 'Sobrepeso e obesidade',
-    sinais: 'Costelas difíceis de sentir, sem cintura vista de cima, cansa mais nos passeios.',
-    checar: 'Avalie o ECC a cada 1–2 meses na aba ECC e ajuste a ração. Petiscos contam calorias.',
+    sinais: ['Fica difícil sentir as costelas', 'Some a "cintura" vista de cima', 'Cansa mais nos passeios'],
+    prevenir: 'Pese a ração na balança (copo medidor engana). Petiscos até 10% das calorias. Faça passeios diários e reavalie o ECC na aba ECC.',
+    inicial: 'Reduza aos poucos, seguindo a meta da aba ECC. Não faça jejum nem corte brusco. Troque petiscos por pedaços de cenoura ou da própria ração.',
     quando: 'Mais comum após a castração e na meia-idade.',
+    fontes: [F.aaha],
   },
 
   // ----- gatos -----
-  'pkd': {
-    nome: 'Doença renal policística (PKD)',
-    sinais: 'Cistos nos rins que crescem com a idade. Com o tempo: bebe e urina mais, emagrece, vomita.',
-    checar: 'Teste genético (gene PKD1) e ultrassom dos rins.',
+  pkd: {
+    idade: [12, Infinity],
+    nome: 'Rins policísticos (PKD)',
+    sinais: ['Bebe mais água que o normal', 'Caixa de areia com mais xixi (torrões maiores)', 'Emagrece aos poucos', 'Vômitos e pelo sem brilho'],
+    prevenir: 'É genética. Água fresca à vontade e sachê ajudam os rins. Faça ultrassom no check-up de Persas e mestiços.',
+    inicial: 'Se começar a beber muito, mantenha a água sempre disponível (nunca restrinja) e marque consulta para exames.',
     quando: 'Cistos desde jovem; sinais geralmente após os 7 anos.',
+    fontes: [F.pkd],
   },
   braquicefalica: {
-    nome: 'Síndrome braquicefálica (focinho achatado)',
-    sinais: 'Respiração ruidosa, cansa no calor, respira pela boca, dificuldade para pegar a comida.',
-    checar: 'Evitar calor e esforço; avaliação das narinas e do palato pelo veterinário.',
+    idade: [0, Infinity],
+    nome: 'Problemas do focinho achatado',
+    sinais: ['Respiração barulhenta ou ronco', 'Cansa e respira pela boca no calor', 'Dificuldade para pegar a comida'],
+    urgente: 'Respirar de boca aberta em repouso é emergência em gatos.',
+    prevenir: 'Ambiente fresco e arejado. Peso ideal. Use comedouro raso e largo.',
+    inicial: 'Se cansar, leve para lugar fresco e deixe descansar sem estresse. Não molhe com água gelada. Respiração de boca aberta: vá ao veterinário imediatamente.',
     quando: 'Desde filhote.',
+    fontes: [F.persaOlhos],
   },
   'olhos-persa': {
+    idade: [0, Infinity],
     nome: 'Lacrimejamento e problemas na córnea',
-    sinais: 'Lágrima escorrendo e manchando a face, olho vermelho, mancha escura na córnea (sequestro corneano).',
-    checar: 'Limpeza diária ao redor dos olhos; veterinário se o olho ficar vermelho, turvo ou com mancha.',
+    sinais: ['Lágrima escorrendo e manchando o pelo do rosto', 'Olho vermelho ou semifechado', 'Mancha marrom ou preta no olho'],
+    prevenir: 'Limpe ao redor dos olhos todo dia com gaze e soro fisiológico, uma gaze para cada olho. Mantenha os pelos do rosto curtos.',
+    inicial: 'Limpe só a secreção com soro, sem tocar no olho. Não use colírio humano nem chá ou camomila. Olho fechado ou com mancha: consulte em até 1–2 dias.',
     quando: 'Qualquer idade.',
+    fontes: [F.persaOlhos],
   },
   dermatofitose: {
+    idade: [0, Infinity],
     nome: 'Micose de pele (dermatofitose)',
-    sinais: 'Falhas de pelo arredondadas, descamação, pelos quebradiços. Pode passar para pessoas.',
-    checar: 'Escovação diária para ver a pele; veterinário se surgir alguma falha.',
-    quando: 'Mais comum em filhotes e gatos de pelo longo.',
+    sinais: ['Falhas de pelo arredondadas', 'Pele descamando', 'Pelos quebradiços', 'Às vezes pouca coceira'],
+    prevenir: 'Escove para ver a pele, aspire a casa com frequência e lave as caminhas. Observe gatos novos antes de juntar com os outros.',
+    inicial: 'Separe o gato dos outros animais. Use luvas e lave as mãos após manusear. Lave caminhas e cobertas em água quente. Não use pomada humana: marque consulta.',
+    quando: 'Mais comum em filhotes. Persas têm formas mais graves e duradouras.',
+    fontes: [F.dermatofitose],
   },
   cmh: {
+    idade: [12, Infinity],
     nome: 'Cardiomiopatia hipertrófica (CMH)',
-    sinais: 'Muitas vezes sem sinais até ficar grave. Atenção: respiração acelerada ou pela boca, cansaço, paralisia súbita das patas de trás (emergência).',
-    checar: 'Ecocardiograma periódico; teste genético quando existir para a raça. Conte as respirações dormindo: o normal é menos de 30 por minuto.',
+    sinais: ['Respiração acelerada enquanto dorme', 'Cansa ou ofega depois de brincar', 'Mais quieto e dormindo mais', 'Muitas vezes não há sinal nenhum antes de uma crise'],
+    urgente: 'Respirar de boca aberta, ou paralisia súbita das patas de trás com dor e choro: emergência.',
+    prevenir: 'Ausculta do coração em toda consulta. Se houver sopro, faça o ecocardiograma que o veterinário indicar. Conte as respirações dormindo uma vez por mês para conhecer o normal dele.',
+    inicial: 'Respiração acelerada: deixe em lugar calmo e fresco, sem manipular muito, e vá ao veterinário. Paralisia das patas de trás: emergência. Transporte com cuidado e sem demora.',
     quando: 'Pode surgir a partir de 1 ano.',
-  },
-  'cmh-maine': {
-    nome: 'Cardiomiopatia hipertrófica (CMH)',
-    sinais: 'Muitas vezes sem sinais até ficar grave. Atenção: respiração acelerada ou pela boca, cansaço, paralisia súbita das patas de trás (emergência).',
-    checar: 'Teste genético (MYBPC3, mutação A31P) e ecocardiograma periódico.',
-    quando: 'Pode surgir a partir de 1 ano.',
+    fontes: [F.cmhMaine, F.respiracao],
   },
   'displasia-quadril': {
+    idade: [12, Infinity], peso: true,
     nome: 'Displasia de quadril',
-    sinais: 'Evita pular, rigidez nas patas de trás, anda "rebolando".',
-    checar: 'Raio-x do quadril; manter o peso ideal.',
-    quando: 'Sinais costumam aparecer em adultos.',
+    sinais: ['Evita pular em lugares altos', 'Sobe a escada ou entra na caixa de areia com dificuldade', 'Patas de trás rígidas depois de dormir'],
+    prevenir: 'Peso ideal. Use degraus ou rampas para lugares altos e caixa de areia com entrada baixa.',
+    inicial: 'Ofereça lugares baixos e macios para dormir. Não dê anti-inflamatório humano: é tóxico para gatos. Marque consulta.',
+    quando: 'Sinais geralmente em adultos.',
+    fontes: [F.displasiaMaine],
   },
   'ame-maine': {
+    idade: [2, 8],
     nome: 'Atrofia muscular espinhal (AME)',
-    sinais: 'Fraqueza e tremores nas patas de trás, postura agachada, dificuldade para pular.',
-    checar: 'Teste genético (gene LIX1). Pergunte ao criador se os pais foram testados.',
+    sinais: ['Filhote com tremores nas patas de trás', 'Anda agachado ou "rebolando"', 'Não consegue pular como os irmãos'],
+    prevenir: 'É hereditária: ao comprar, pergunte ao criador sobre a saúde dos pais e dos filhotes anteriores.',
+    inicial: 'Proteja de quedas: sem lugares altos e com caixa de areia baixa. Marque consulta para avaliação.',
     quando: 'Por volta dos 3–4 meses.',
+    fontes: [F.ame],
   },
   asma: {
+    idade: [24, 96],
     nome: 'Asma felina',
-    sinais: 'Tosse agachado com o pescoço esticado (parece querer pôr bola de pelo e não sai nada), chiado, respira pela boca.',
-    checar: 'Evite fumaça, perfumes e areia com pó. Raio-x do tórax se tossir.',
+    sinais: ['Tosse agachado com o pescoço esticado (parece bola de pelo, mas não sai nada)', 'Chiado ao respirar', 'Cansa mais rápido brincando'],
+    urgente: 'Respirar de boca aberta ou com esforço da barriga: emergência.',
+    prevenir: 'Evite fumaça de cigarro, incenso, perfumes e sprays em casa. Use areia com pouca poeira. Mantenha a casa ventilada e o peso ideal.',
+    inicial: 'Durante a crise, deixe-o em lugar calmo e ventilado, longe de fumaça e poeira, e grave um vídeo. Se respirar de boca aberta ou a crise não passar em alguns minutos, vá ao veterinário.',
     quando: 'Geralmente entre 2 e 8 anos.',
+    fontes: [F.asma],
   },
   amiloidose: {
-    nome: 'Amiloidose',
-    sinais: 'Acúmulo de proteína no fígado ou rins: fraqueza, falta de apetite, gengiva pálida.',
-    checar: 'Exames de sangue de rotina.',
-    quando: 'Adultos jovens e de meia-idade.',
+    idade: [12, 84],
+    nome: 'Amiloidose (fígado)',
+    sinais: ['Come menos e emagrece', 'Mais quieto', 'Gengiva mais clara que o normal'],
+    urgente: 'Fraqueza súbita, gengiva muito pálida ou barriga aumentada podem ser sangramento interno: emergência.',
+    prevenir: 'Não há prevenção conhecida. Faça exames de sangue de rotina e trate infecções e inflamações (gengivite, por exemplo).',
+    inicial: 'Com fraqueza súbita ou gengiva muito pálida, evite que ele pule ou faça esforço e leve ao veterinário imediatamente.',
+    quando: 'Adultos jovens, entre 1 e 7 anos.',
+    fontes: [F.amiloidose],
   },
   'pra-siames': {
+    idade: [6, Infinity],
     nome: 'Atrofia progressiva da retina',
-    sinais: 'Dificuldade para enxergar no escuro, pupilas sempre dilatadas, esbarra em objetos.',
-    checar: 'Teste genético (rdAc) e exame oftalmológico.',
+    sinais: ['Hesita ou esbarra em objetos à noite ou no escuro', 'Pupilas grandes mesmo com luz', 'Pula com menos confiança'],
+    prevenir: 'Não há prevenção. Exame de olhos no check-up permite planejar a adaptação.',
+    inicial: 'Não mude os móveis de lugar. Use luz noturna. Mantenha água, comida e caixa de areia sempre no mesmo lugar. Gato com visão ruim não deve sair à rua.',
     quando: 'Começa em jovens e piora com os anos.',
+    fontes: [F.praSiames],
   },
   'surdez-branco': {
+    idade: [0, 6],
     nome: 'Surdez (gatos brancos de olhos azuis)',
-    sinais: 'Não reage a sons fora do campo de visão; mia muito alto.',
-    checar: 'Teste de audição BAER; com surdez, evite acesso à rua.',
+    sinais: ['Não reage a barulhos fora do campo de visão', 'Mia muito alto', 'Se assusta quando tocado dormindo'],
+    prevenir: 'É de nascença. Gatos brancos de olhos azuis também precisam de protetor solar veterinário nas orelhas.',
+    inicial: 'Mantenha dentro de casa. Chame-o com gestos e vibração no chão. Ao acordá-lo, toque de leve.',
     quando: 'De nascença.',
+    fontes: [F.surdezBranco],
   },
   'bolas-pelo': {
+    idade: [0, Infinity],
     nome: 'Bolas de pelo',
-    sinais: 'Vômitos com pelo, ânsia frequente, prisão de ventre.',
-    checar: 'Escovação 2–3 vezes por semana (diária na troca de pelo); veterinário se vomitar com frequência.',
+    sinais: ['Vomita pelo com frequência', 'Ânsia sem vomitar nada', 'Prisão de ventre'],
+    prevenir: 'Escovação regular, água à vontade e fibras se o veterinário indicar.',
+    inicial: 'Ânsia ocasional é comum. Vômitos repetidos no mesmo dia, recusa de comida ou barriga dura: consulte. Não dê óleo mineral nem laxante humano.',
     quando: 'Qualquer idade.',
+    fontes: [],
   },
-  // ----- todos os gatos no Brasil -----
   drc: {
+    comumNaIdade: true,
+    idade: [84, Infinity],
     nome: 'Doença renal crônica',
-    sinais: 'Bebe e urina mais, emagrece, vomita, mau hálito, pelo sem brilho.',
-    checar: 'Exames de sangue e urina (com SDMA) todo ano a partir dos 7 anos. Estimule a água: fonte, sachê.',
+    sinais: ['Bebe mais água', 'Mais xixi na caixa (torrões maiores)', 'Emagrece aos poucos', 'Mau hálito, vômitos, pelo sem brilho'],
+    prevenir: 'Água fresca em vários pontos ou fonte; parte da dieta úmida (sachê). Exames anuais a partir dos 7 anos.',
+    inicial: 'Se começar a beber muito, nunca restrinja a água. Ofereça sachê para hidratar. Marque consulta para exames de sangue e urina.',
     quando: 'Principalmente acima dos 7 anos.',
+    fontes: [],
   },
   dtuif: {
-    nome: 'Doença do trato urinário (cistite / DTUIF)',
-    sinais: 'Vai várias vezes à caixa e sai pouco xixi, xixi com sangue, faz fora da caixa. Macho sem conseguir urinar é emergência.',
-    checar: 'Mais água (fonte, sachê), caixas sempre limpas (uma por gato + uma), rotina sem estresse.',
+    idade: [24, 72], peso: true,
+    nome: 'Cistite e problemas urinários (DTUIF)',
+    sinais: ['Vai várias vezes à caixa e sai pouco xixi', 'Xixi com sangue', 'Faz xixi fora da caixa', 'Lambe muito a região genital'],
+    urgente: 'Gato macho que vai à caixa e não sai xixi é emergência: pode ser obstrução.',
+    prevenir: 'Mais água (fonte, sachê). Caixas limpas todo dia, uma por gato e mais uma. Rotina estável e peso ideal.',
+    inicial: 'Se for macho e não sair xixi: emergência, vá agora (risco de vida em horas). Com sangue ou idas frequentes, mantenha o gato calmo, ofereça água e marque consulta no mesmo dia.',
     quando: 'Mais comum entre 2 e 6 anos.',
+    fontes: [],
   },
   'dentes-gato': {
+    comumNaIdade: true,
+    idade: [36, Infinity],
     nome: 'Doença periodontal e reabsorção dentária',
-    sinais: 'Mau hálito, baba, mastiga de um lado só, deixa a comida cair.',
-    checar: 'Avaliação odontológica anual (a reabsorção só aparece no raio-x).',
+    sinais: ['Mau hálito', 'Baba', 'Mastiga de um lado só ou deixa a comida cair', 'Prefere sachê à ração seca'],
+    prevenir: 'Escovação com pasta veterinária, se ele aceitar. Avaliação odontológica anual.',
+    inicial: 'Ofereça comida úmida enquanto não consulta. Não use pasta humana: o flúor e o xilitol fazem mal.',
     quando: 'A partir dos 3 anos.',
+    fontes: [],
   },
   'obesidade-gato': {
+    idade: [12, Infinity], obesidade: true,
     nome: 'Obesidade e diabetes',
-    sinais: 'Barriga pendurada e sem cintura. Diabetes: bebe e urina muito, come mais e emagrece.',
-    checar: 'ECC a cada 1–2 meses na aba ECC; glicose nos exames anuais.',
+    sinais: ['Barriga pendurada, sem cintura', 'Dificuldade para se limpar nas costas', 'Diabetes: bebe e urina muito, come mais e emagrece'],
+    prevenir: 'Porções medidas na balança e brincadeiras diárias (varinha, bolinha). Comedouros interativos ajudam.',
+    inicial: 'Reduza só um pouco por vez, seguindo a meta da aba ECC. Nunca deixe sem comer: o jejum causa lipidose hepática. Se ele parar de comer por 1–2 dias, vá ao veterinário.',
     quando: 'Castrados e gatos de apartamento, a partir dos 5 anos.',
+    fontes: [F.aaha],
   },
   'fiv-felv': {
+    idade: [0, Infinity],
     nome: 'FIV e FeLV',
-    sinais: 'Infecções que voltam, gengivite forte, emagrecimento, anemia.',
-    checar: 'Teste rápido para todo gato que chega e antes de juntar gatos; vacina de FeLV conforme o veterinário.',
+    sinais: ['Infecções que voltam (gripes, feridas)', 'Gengiva muito inflamada', 'Emagrecimento', 'Gengiva pálida'],
+    prevenir: 'Castração (diminui brigas), sem acesso à rua, teste de todo gato novo e vacina de FeLV conforme indicação.',
+    inicial: 'Separe o gato suspeito dos outros, com potes e caixa próprios, até sair o resultado do teste.',
     quando: 'Qualquer idade; risco maior com acesso à rua.',
+    fontes: [],
   },
   esporotricose: {
+    idade: [0, Infinity],
     nome: 'Esporotricose',
-    sinais: 'Feridas que não cicatrizam, principalmente no focinho, cabeça e patas. Passa para pessoas e outros animais.',
-    checar: 'Evitar acesso à rua. Se surgir ferida, use luvas ao manusear e leve ao veterinário logo. Atenção redobrada no RJ, SP e outras regiões com surtos.',
+    sinais: ['Ferida que não cicatriza, principalmente no focinho, cabeça ou patas', 'Nódulos que abrem e soltam secreção', 'Espirros com ferida no nariz'],
+    urgente: 'Passa para pessoas e outros animais por arranhão e mordida: use luvas ao manusear e leve ao veterinário logo.',
+    prevenir: 'Gato dentro de casa e castrado. Telas nas janelas.',
+    inicial: 'Use luvas sempre. Separe o gato num cômodo e não deixe a ferida em contato com outras pessoas e animais. Não aperte nem esprema a ferida. Leve ao veterinário em caixa de transporte. Se alguém for arranhado, procure um posto de saúde.',
     quando: 'Qualquer idade; mais em machos com acesso à rua.',
+    fontes: [F.esporotricose, F.esporotricoseSP],
   },
   hipertireoidismo: {
+    comumNaIdade: true,
+    idade: [120, Infinity],
     nome: 'Hipertireoidismo',
-    sinais: 'Emagrece mesmo comendo muito, agitação, vômitos, pelo malcuidado.',
-    checar: 'Dosagem de T4 nos exames anuais a partir dos 10 anos.',
+    sinais: ['Emagrece mesmo comendo muito', 'Agitado, mia mais à noite', 'Vômitos', 'Pelo malcuidado'],
+    prevenir: 'Não há prevenção conhecida; exames anuais a partir dos 10 anos permitem descobrir cedo.',
+    inicial: 'Anote o peso e o apetite e marque consulta. Mantenha água e comida disponíveis.',
     quando: 'Idosos, acima de 10 anos.',
+    fontes: [],
   },
 };
 
@@ -1362,7 +1483,7 @@ const RACAS = {
     },
     'fox-paulistinha': {
       nome: 'Fox Paulistinha (Terrier Brasileiro)', apelidos: ['fox paulistinha', 'paulistinha', 'terrier brasileiro', 'fox brasileiro'],
-      nota: 'Raça brasileira com poucos estudos próprios. A lista reúne problemas relatados na raça e comuns em terriers pequenos.',
+      nota: 'Não há estudos de saúde publicados específicos para o Fox Paulistinha. A lista reúne problemas comuns em terriers e cães de porte pequeno.',
       itens: ['luxacao-patelar', 'perthes', 'periodontal-cao', 'atopia', 'valvar-mitral'],
     },
     srd: { nome: 'Sem raça definida (SRD)', apelidos: ['srd', 'sem raca', 'vira lata', 'viralata', 'mestico', 'misturado'], itens: [] },
@@ -1382,12 +1503,12 @@ const RACAS = {
     },
     'maine-coon': {
       nome: 'Maine Coon', apelidos: ['maine coon', 'maine'],
-      itens: ['cmh-maine', 'displasia-quadril', 'ame-maine', 'bolas-pelo'],
+      itens: ['cmh', 'displasia-quadril', 'ame-maine', 'bolas-pelo'],
     },
     angora: {
       nome: 'Angorá', apelidos: ['angora', 'angora turco', 'turkish angora'],
       nota: 'No Brasil, "angorá" muitas vezes é um gato de pelo longo sem raça definida; nesse caso valem os cuidados gerais e as bolas de pelo.',
-      itens: ['surdez-branco', 'cmh', 'bolas-pelo'],
+      itens: ['surdez-branco', 'bolas-pelo'],
     },
   },
 };
@@ -1419,17 +1540,22 @@ function checagemDe(chave) {
   return estado.checagens.find((c) => c.petId === estado.petAtual && c.chave === chave) || null;
 }
 
-function itemCuidado(chave) {
+function itemCuidado(chave, origem = null, motivos = []) {
   const c = CUIDADOS[chave];
   const ch = checagemDe(chave);
   return `
     <li class="cuidado">
       <div class="cuidado-nome">${c.nome}</div>
-      <dl class="cuidado-det">
-        <div><dt>Fique de olho</dt><dd>${c.sinais}</dd></div>
-        <div><dt>Como checar</dt><dd>${c.checar}</dd></div>
-        <div><dt>Quando</dt><dd>${c.quando}</dd></div>
-      </dl>
+      ${motivos.length || origem ? `<ul class="motivos">${origem ? `<li>risco para ${origem}</li>` : ''}${motivos.map((m) => `<li>${m}</li>`).join('')}</ul>` : ''}
+      <div class="cuidado-rot">Primeiros sinais</div>
+      <ul class="sinais">${c.sinais.map((x) => `<li>${x}</li>`).join('')}</ul>
+      ${c.urgente ? `<p class="urgente"><span aria-hidden="true">🚨</span> ${c.urgente}</p>` : ''}
+      <div class="cuidado-rot">🛡️ Prevenção</div>
+      <p class="cuidado-txt">${c.prevenir}</p>
+      <div class="cuidado-rot">🩹 Até chegar ao veterinário</div>
+      <p class="cuidado-txt">${c.inicial}</p>
+      <p class="cuidado-quando"><strong>Quando:</strong> ${c.quando}</p>
+      ${c.fontes.length ? `<p class="fontes">Fonte: ${c.fontes.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join(' · ')}</p>` : ''}
       <div class="cuidado-rodape">
         <span class="selo ${ch ? 'ok' : 'neutro'}">${ch ? `✓ Checado em ${fmtData(ch.data)} (${textoHaDias(ch.data)})` : 'Ainda não checado'}</span>
         <div class="acoes">
@@ -1441,6 +1567,32 @@ function itemCuidado(chave) {
     </li>`;
 }
 
+const fmtMeses = (m) => (m < 12 ? plural(m, 'mês', 'meses') : plural(Math.round(m / 12), 'ano', 'anos'));
+
+// Pontua cada cuidado para este pet: raça + faixa de idade + ECC
+function avaliarCuidado(chave, daRaca, meses, ecc) {
+  const c = CUIDADOS[chave];
+  let pontos = daRaca ? 3 : 1;
+  const motivos = [daRaca ? 'predisposição da raça' : null];
+  if (meses !== null) {
+    const [min, max] = c.idade;
+    if (meses >= min && meses <= max) {
+      pontos += 2;
+      if (c.comumNaIdade) { pontos += 2; motivos.push('muito comum nessa idade'); } else motivos.push('idade de risco');
+    }
+    else if (meses < min) {
+      if (min - meses <= 12) motivos.push(`risco começa por volta de ${fmtMeses(min)}`);
+      else { pontos -= 2; motivos.push(`mais comum a partir de ${fmtMeses(min)}`); }
+    } else { pontos -= 3; motivos.push('já passou da idade em que costuma aparecer'); }
+  }
+  if (ecc !== null) {
+    if (c.obesidade && ecc >= 6) { pontos += 3; motivos.push(`ECC ${ecc}: já está acima do peso`); }
+    else if (c.obesidade && ecc <= 5) { pontos -= 1; motivos.push(`ECC ${ecc}: peso em ordem`); }
+    else if (c.peso && ecc >= 6) { pontos += 2; motivos.push(`ECC ${ecc}: excesso de peso aumenta o risco`); }
+  }
+  return { chave, daRaca, pontos, motivos: motivos.filter(Boolean) };
+}
+
 function renderRaca() {
   const p = petAtual();
   const chave = racaDoGuia(p);
@@ -1450,25 +1602,58 @@ function renderRaca() {
     Object.entries(RACAS[p.especie]).map(([k, r]) => `<option value="${k}">${r.nome}</option>`).join('');
   sel.value = p.racaGuia && RACAS[p.especie][p.racaGuia] ? p.racaGuia : '';
 
-  const cab = $('#raca-cabecalho');
-  if (raca) {
-    cab.innerHTML = `<h2>${ESPECIES[p.especie].emoji} ${raca.nome}</h2>
-      ${raca.itens.length ? `<p class="intro">Predisposições da raça: problemas que aparecem com mais frequência nela. Não quer dizer que ${esc(p.nome)} vá ter, mas vale checar.</p>` : ''}
-      ${raca.nota ? `<p class="nota-raca">${raca.nota}</p>` : ''}`;
-  } else {
-    const nomes = Object.values(RACAS[p.especie]).map((r) => r.nome).join(', ');
-    cab.innerHTML = `<h2>Cuidados da raça</h2>
-      <p class="intro">${p.raca ? `Ainda não há guia para "${esc(p.raca)}".` : `A raça de ${esc(p.nome)} não está cadastrada.`}
-      Escolha abaixo uma das raças disponíveis (${nomes}) ou veja os cuidados gerais.</p>`;
-  }
-  $('#lista-raca').innerHTML = raca && raca.itens.length ? raca.itens.map(itemCuidado).join('') : '';
-  $('#lista-raca').hidden = !(raca && raca.itens.length);
+  const meses = idadeEmMeses(p.nascimento);
+  const aval = ultimaAvaliacao();
+  const ecc = aval ? aval.escore : null;
 
-  const ger = GERAIS[p.especie];
-  const jaNaRaca = new Set(raca ? raca.itens : []);
-  $('#gerais-titulo').textContent = ger.titulo;
-  $('#lista-gerais').innerHTML = ger.itens.filter((k) => !jaNaRaca.has(k)).map(itemCuidado).join('');
+  // Perfil usado na personalização
+  const perfil = [
+    raca ? raca.nome : (p.raca ? `${esc(p.raca)} (sem guia)` : 'raça não informada'),
+    meses !== null ? (p.nascAprox ? '≈ ' : '') + idadeTexto(p.nascimento) : 'idade não informada',
+    ecc !== null ? `ECC ${ecc}/9 (${ECC_DESC[ecc][0].toLowerCase()})` : 'sem avaliação de ECC',
+  ];
+  const faltando = [];
+  if (meses === null) faltando.push('<button type="button" class="link" data-informar-idade-raca>informe a idade</button>');
+  if (ecc === null) faltando.push('<button type="button" class="link" data-ir-ecc>faça a avaliação de ECC</button>');
+
+  $('#raca-cabecalho').innerHTML = `
+    <h2>Riscos para ${esc(p.nome)}</h2>
+    <p class="intro">Ordenado pelo que é mais provável agora, cruzando raça, idade e peso.</p>
+    <ul class="perfil">${perfil.map((t) => `<li>${t}</li>`).join('')}</ul>
+    ${faltando.length ? `<p class="dica-campo">Para personalizar melhor, ${faltando.join(' e ')}.</p>` : ''}
+    ${!raca ? `<p class="dica-campo">${p.raca ? `Ainda não há guia para "${esc(p.raca)}".` : 'Raça não informada.'} Escolha abaixo ou veja só os riscos gerais.</p>` : ''}
+    ${raca && raca.nota ? `<p class="nota-raca">${raca.nota}</p>` : ''}`;
+
+  const itensRaca = raca ? raca.itens : [];
+  const todos = [
+    ...itensRaca.map((k) => avaliarCuidado(k, true, meses, ecc)),
+    ...GERAIS[p.especie].itens.filter((k) => !itensRaca.includes(k)).map((k) => avaliarCuidado(k, false, meses, ecc)),
+  ].sort((a, b) => b.pontos - a.pontos || (b.daRaca - a.daRaca));
+
+  const grupos = [
+    ['agora', 'Mais provável agora', (x) => x.pontos >= 5],
+    ['olho', 'Fique de olho', (x) => x.pontos >= 3 && x.pontos < 5],
+  ];
+  const origem = p.especie === 'gato' ? 'todos os gatos' : 'todos os cães';
+  const improvaveis = todos.filter((x) => x.pontos < 3);
+  $('#grupos-cuidados').innerHTML = grupos.map(([id, titulo, filtro]) => {
+    const itens = todos.filter(filtro);
+    if (!itens.length) return '';
+    return `
+      <section class="grupo-risco risco-${id}">
+        <h3>${titulo} <span class="qtd">${itens.length}</span></h3>
+        <ul class="lista-cuidados">${itens.map((x) => itemCuidado(x.chave, x.daRaca ? null : origem, x.motivos)).join('')}</ul>
+      </section>`;
+  }).join('') + (improvaveis.length ? `
+      <p class="improvaveis"><strong>Fora da lista por serem improváveis agora:</strong>
+        ${improvaveis.map((x) => `${CUIDADOS[x.chave].nome} <span>(${x.motivos.filter((m) => m !== 'predisposição da raça').join('; ') || 'baixo risco'})</span>`).join(' · ')}.
+        Elas voltam para a lista sozinhas se a idade ou o peso mudarem.</p>` : '');
 }
+
+$('#saude-raca').addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-informar-idade-raca]')) { abrirPainelPets(); editarPet(estado.petAtual); $('#pet-nasc').focus(); }
+  if (ev.target.closest('[data-ir-ecc]')) { mostrarAba('ecc'); window.scrollTo({ top: 0 }); }
+});
 
 $('#raca-guia').addEventListener('change', (ev) => {
   const p = petAtual();
@@ -1736,7 +1921,8 @@ function renderEcc() {
       ${temKcal ? `<button type="button" class="btn" id="btn-aplicar-alimentador">Programar ${fmtGInt(r.gMeta)}/dia no alimentador</button>` : ''}
       <button type="button" class="btn primario" id="btn-salvar-ecc">Salvar avaliação</button>
     </div>
-    <p class="nota">Estimativa pelas diretrizes da WSAVA (energia de repouso = 70 × peso<sup>0,75</sup>; fator ${fmtNum(r.fator, 1)}${r.objetivo === 'perder' ? `; emagrecimento: ${entrada.especie === 'gato' ? '0,8' : '1,0'} × repouso no peso ideal` : ''}). Petiscos entram na conta: no máximo 10% das calorias. Confirme o plano com o veterinário${entrada.especie === 'gato' ? '. Gatos nunca devem ficar em jejum nem ter corte brusco de comida (risco de lipidose hepática)' : ''}.</p>`;
+    <p class="nota">Estimativa (energia de repouso = 70 × peso<sup>0,75</sup>; fator ${fmtNum(r.fator, 1)}${r.objetivo === 'perder' ? `; emagrecimento: ${entrada.especie === 'gato' ? '0,8' : '1,0'} × repouso no peso ideal` : ''}). Petiscos entram na conta: no máximo 10% das calorias. Confirme o plano com o veterinário${entrada.especie === 'gato' ? '. Gatos nunca devem ficar em jejum nem ter corte brusco de comida (risco de lipidose hepática)' : ''}.</p>
+    <p class="fontes">Fontes: <a href="${F.merck[1]}" target="_blank" rel="noopener">fatores de energia (Manual Merck)</a> · <a href="${F.aaha[1]}" target="_blank" rel="noopener">10% de excesso por ponto de ECC (AAHA 2021)</a> · <a href="https://wsava.org/global-guidelines/global-nutrition-guidelines/" target="_blank" rel="noopener">escala de ECC (WSAVA)</a></p>`;
 }
 
 $('#ecc-resultado').addEventListener('click', (ev) => {
