@@ -124,6 +124,7 @@ input:focus, select:focus { outline: 2px solid var(--primaria); outline-offset: 
 .linha-botoes .btn.primario { width: auto; flex: 1; }
 .btn.icone { padding: 8px 10px; min-width: 44px; }
 .btn.pequeno { min-height: 36px; padding: 6px 10px; font-size: 0.85rem; }
+a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .btn.perigo { color: var(--erro); }
 .btn.confirmando { background: var(--erro); color: var(--cartao); border-color: transparent; font-weight: 600; }
 .aviso { background: var(--perigo-fundo); color: var(--erro); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.9rem; }

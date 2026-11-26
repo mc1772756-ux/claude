@@ -8,4 +8,5 @@ App web (pt-BR, mobile-first) para acompanhar a saúde de cães e gatos. Abra `i
 - [x] Idade (data de nascimento ou aproximada)
 - [x] Último banho
 - [x] Vacinas, vermífugo e antipulgas com avisos (15 dias antes e atrasadas)
+- [x] Lembrete na agenda: arquivo .ics (agenda nativa do celular) e link do Google Agenda
 - [ ] Exportar/importar backup

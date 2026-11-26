@@ -565,6 +565,8 @@ document.getElementById('aba-saude').addEventListener('click', (ev) => {
   const rm = ev.target.closest('[data-remover-saude]');
   if (ed) editarSaude(ed.dataset.editarSaude);
   if (nd) novaDose(nd.dataset.novaDose);
+  const ag = ev.target.closest('[data-agenda]');
+  if (ag) baixarICS(estado.saude.find((x) => x.id === ag.dataset.agenda));
   if (rm && pedeConfirmacao(rm)) {
     estado.saude = estado.saude.filter((x) => x.id !== rm.dataset.removerSaude);
     salvar();
@@ -577,6 +579,78 @@ document.getElementById('aba-saude').addEventListener('click', (ev) => {
     renderTudo();
   }
 });
+
+/* ---------- Lembrete na agenda do celular ---------- */
+// Dentro do visualizador do claude.ai (iframe) downloads de .ics são bloqueados:
+// lá usamos o link do Google Agenda. Como site normal, geramos o .ics.
+const EMBUTIDO = (() => { try { return window.top !== window.self; } catch (e) { return true; } })();
+
+function dadosLembrete(r) {
+  const pet = estado.pets.find((p) => p.id === r.petId);
+  const titulo = `${TIPOS[r.tipo].emoji} ${pet ? pet.nome : 'Pet'}: ${TIPOS[r.tipo].nome.toLowerCase()} ${r.nome}`;
+  const detalhes = `Próxima dose de ${TIPOS[r.tipo].nome.toLowerCase()} (${r.nome}) de ${pet ? pet.nome : 'seu pet'}.\n` +
+    `Última aplicação: ${fmtData(r.data)}.${r.obs ? '\nObs.: ' + r.obs : ''}\nRegistrado no Diário do Cachorro.`;
+  const ini = r.proxima.replace(/-/g, '');
+  const d = dataLocal(r.proxima); d.setDate(d.getDate() + 1);
+  const fim = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  return { titulo, detalhes, ini, fim };
+}
+
+function linkGoogleAgenda(r) {
+  const { titulo, detalhes, ini, fim } = dadosLembrete(r);
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: titulo, dates: `${ini}/${fim}`, details: detalhes });
+  return 'https://calendar.google.com/calendar/render?' + q.toString();
+}
+
+function textoICS(r) {
+  const { titulo, detalhes, ini, fim } = dadosLembrete(r);
+  const escICS = (t) => t.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  // Linhas do iCalendar devem ter no máx. 75 bytes; dobra as maiores
+  const dobrar = (linha) => {
+    const partes = [];
+    let atual = '';
+    for (const ch of linha) {
+      if (new TextEncoder().encode(atual + ch).length > 73) { partes.push(atual); atual = ' '; }
+      atual += ch;
+    }
+    partes.push(atual);
+    return partes.join('\r\n');
+  };
+  const agora = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Diario do Cachorro//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${r.id}-${ini}@diario-do-cachorro`,
+    `DTSTAMP:${agora}`,
+    `DTSTART;VALUE=DATE:${ini}`,
+    `DTEND;VALUE=DATE:${fim}`,
+    `SUMMARY:${escICS(titulo)}`,
+    `DESCRIPTION:${escICS(detalhes)}`,
+    // Avisos: 3 dias antes (às 9h) e no dia (às 9h)
+    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escICS(titulo)}`, 'TRIGGER:-P2DT15H', 'END:VALARM',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${escICS(titulo)}`, 'TRIGGER:PT9H', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR', '',
+  ].map(dobrar).join('\r\n');
+}
+
+function baixarICS(r) {
+  const pet = estado.pets.find((p) => p.id === r.petId);
+  const nome = `${r.tipo}-${r.nome}-${pet ? pet.nome : 'pet'}`.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const blob = new Blob([textoICS(r)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome + '.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function botoesAgenda(r) {
+  if (!r.proxima) return '';
+  const google = `<a class="btn pequeno" href="${esc(linkGoogleAgenda(r))}" target="_blank" rel="noopener">📅 Google Agenda</a>`;
+  if (EMBUTIDO) return google;
+  return `<button type="button" class="btn pequeno" data-agenda="${r.id}">📅 Agenda do celular</button>${google}`;
+}
 
 function seloStatus(st) {
   if (!st) return '<span class="selo neutro">Sem próxima dose</span>';
@@ -605,6 +679,7 @@ function renderSaude() {
           ${atual ? seloStatus(statusDose(r.proxima)) : '<span class="selo neutro">Dose anterior</span>'}
           <div class="acoes">
             ${atual ? `<button type="button" class="btn pequeno" data-nova-dose="${r.id}">+ Nova dose</button>` : ''}
+            ${atual ? botoesAgenda(r) : ''}
             <button type="button" class="btn pequeno" data-editar-saude="${r.id}">Editar</button>
             <button type="button" class="btn pequeno perigo" data-remover-saude="${r.id}">Excluir</button>
           </div>
