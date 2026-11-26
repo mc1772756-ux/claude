@@ -74,7 +74,8 @@ function fmtDataCurta(iso) {
 const fmtNum = (n, casas = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
 const fmtKg = (n) => fmtNum(n) + ' kg';
 function lerNumero(txt) {
-  const n = Number(String(txt).trim().replace(/\s/g, '').replace(',', '.'));
+  const limpo = String(txt).trim().replace(/\s*(kg|g)\.?$/i, '').replace(/\s/g, '').replace(',', '.');
+  const n = limpo === '' ? NaN : Number(limpo);
   return Number.isFinite(n) ? n : NaN;
 }
 function esc(s) {
@@ -189,11 +190,13 @@ function removerPet(id, btn) {
   const p = estado.pets.find((x) => x.id === id);
   if (!p) return;
   if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
+  if ($('#pet-id').value === id) limparFormPet();
   estado.pets = estado.pets.filter((x) => x.id !== id);
   for (const k of ['pesos', 'racoes', 'saude', 'banhos']) estado[k] = estado[k].filter((r) => r.petId !== id);
-  if (estado.petAtual === id) estado.petAtual = estado.pets[0]?.id || null;
+  const eraAtual = estado.petAtual === id;
+  if (eraAtual) estado.petAtual = estado.pets[0]?.id || null;
   salvar();
-  renderTudo();
+  if (eraAtual) aoTrocarPet(); else renderTudo();
   renderListaPets();
 }
 
@@ -209,10 +212,16 @@ $('#form-pet').addEventListener('submit', (ev) => {
   let nascimento = $('#pet-nasc').value || '';
   let nascAprox = false;
   const anosTxt = $('#pet-idade-anos').value.trim(), mesesTxt = $('#pet-idade-meses').value.trim();
+  if ($('#pet-idade-anos').validity.badInput || $('#pet-idade-meses').validity.badInput) {
+    erro.textContent = 'Idade aproximada: use só números inteiros (ex.: 3 anos e 2 meses).'; erro.hidden = false; return;
+  }
   if (anosTxt || mesesTxt) {
     const anos = anosTxt ? Number(anosTxt) : 0, meses = mesesTxt ? Number(mesesTxt) : 0;
     if (!Number.isInteger(anos) || !Number.isInteger(meses) || anos < 0 || anos > 30 || meses < 0 || meses > 11) {
       erro.textContent = 'Idade aproximada: anos de 0 a 30 e meses de 0 a 11.'; erro.hidden = false; return;
+    }
+    if (anos === 0 && meses === 0) {
+      erro.textContent = 'Com menos de 1 mês, informe a data de nascimento.'; erro.hidden = false; return;
     }
     nascimento = nascimentoEstimado(anos, meses);
     nascAprox = true;
@@ -222,8 +231,10 @@ $('#form-pet').addEventListener('submit', (ev) => {
     nascAprox = !!(antigo && antigo.nascAprox && antigo.nascimento === nascimento);
   }
   const id = $('#pet-id').value;
-  if (id) {
-    Object.assign(estado.pets.find((p) => p.id === id), { nome, especie, raca, nascimento, nascAprox });
+  const existente = id && estado.pets.find((p) => p.id === id);
+  if (id && !existente) { limparFormPet(); erro.textContent = 'Este pet foi excluído. Cadastre de novo, se quiser.'; erro.hidden = false; return; }
+  if (existente) {
+    Object.assign(existente, { nome, especie, raca, nascimento, nascAprox });
   } else {
     const p = { id: novoId(), nome, especie, raca, nascimento, nascAprox };
     estado.pets.push(p);
@@ -233,7 +244,7 @@ $('#form-pet').addEventListener('submit', (ev) => {
   limparFormPet();
   renderTudo();
   renderListaPets();
-  if (!id) { fecharPainelPets(); preencherFormRacao(); }
+  if (!id) { fecharPainelPets(); aoTrocarPet(); }
 });
 
 $('#lista-pets').addEventListener('click', (ev) => {
@@ -249,7 +260,7 @@ $('#btn-primeiro-pet').addEventListener('click', abrirPainelPets);
 $('#pet-atual').addEventListener('change', (ev) => {
   estado.petAtual = ev.target.value;
   salvar();
-  renderTudo();
+  aoTrocarPet();
 });
 
 /* ---------- Peso ---------- */
@@ -276,7 +287,7 @@ $('#form-peso').addEventListener('submit', (ev) => {
   salvar();
   $('#peso-kg').value = '';
   $('#peso-obs').value = '';
-  renderPeso();
+  renderTudo();
 });
 
 $('#lista-peso').addEventListener('click', (ev) => {
@@ -286,7 +297,7 @@ $('#lista-peso').addEventListener('click', (ev) => {
   if (r && pedeConfirmacao(b)) {
     estado.pesos = estado.pesos.filter((x) => x.id !== r.id);
     salvar();
-    renderPeso();
+    renderTudo();
   }
 });
 
@@ -364,13 +375,14 @@ function desenharGrafico(cont, regs) {
   const ticksY = [];
   for (let v = Math.ceil(y0 / passo) * passo; v <= y1 + 1e-9; v += passo) ticksY.push(Math.round(v * 100) / 100);
 
-  const casasY = passo < 0.1 ? 2 : passo < 1 ? 1 : 0;
+  const casasY = (String(passo).split('.')[1] || '').length;
   const px = (t) => m.l + ((t - x0) / (x1 - x0)) * w;
   const py = (v) => m.t + (1 - (v - y0) / (y1 - y0)) * h;
 
-  // Até 4 rótulos de data no eixo X, sem sobreposição
-  const nx = Math.min(regs.length, Math.max(2, Math.floor(w / 80)));
-  const idxX = [...new Set(Array.from({ length: nx }, (_, i) => Math.round((i * (regs.length - 1)) / (nx - 1))))];
+  // Rótulos de data espaçados igualmente no tempo (1 a cada ~90px), sem sobreposição
+  const nx = Math.max(2, Math.floor(w / 90));
+  const isoDe = (t) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const ticksX = [...new Set(Array.from({ length: nx }, (_, i) => isoDe(x0 + ((x1 - x0) * i) / (nx - 1))))];
 
   const pts = regs.map((r, i) => [px(xs[i]), py(r.kg)]);
   const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
@@ -381,8 +393,8 @@ function desenharGrafico(cont, regs) {
       ${ticksY.map((v) => `
         <line class="grade" x1="${m.l}" x2="${L - m.r}" y1="${py(v)}" y2="${py(v)}"/>
         <text class="eixo" x="${m.l - 6}" y="${py(v) + 4}" text-anchor="end">${fmtNum(v, casasY)}</text>`).join('')}
-      ${idxX.map((i, k) => `
-        <text class="eixo" x="${px(xs[i])}" y="${A - 6}" text-anchor="${k === 0 ? 'start' : k === idxX.length - 1 ? 'end' : 'middle'}">${fmtDataCurta(regs[i].data)}</text>`).join('')}
+      ${ticksX.map((iso, k) => `
+        <text class="eixo" x="${Math.min(Math.max(px(dataLocal(iso).getTime()), m.l), L - m.r)}" y="${A - 6}" text-anchor="${k === 0 ? 'start' : k === ticksX.length - 1 ? 'end' : 'middle'}">${fmtDataCurta(iso)}</text>`).join('')}
       <path class="linha-serie" d="${d}"/>
       ${mostrarPontos ? pts.map((p) => `<circle class="ponto" cx="${p[0]}" cy="${p[1]}" r="4"/>`).join('') : ''}
       <line class="mira" x1="0" x2="0" y1="${m.t}" y2="${m.t + h}" visibility="hidden"/>
@@ -520,8 +532,9 @@ $('#form-saude').addEventListener('submit', (ev) => {
   else if (proxima && proxima <= data) msg = 'A próxima dose precisa ser depois da data aplicada.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   const id = $('#saude-id').value;
-  if (id) {
-    Object.assign(estado.saude.find((r) => r.id === id), { tipo, nome, data, proxima, obs });
+  const existente = id && estado.saude.find((r) => r.id === id);
+  if (existente) {
+    Object.assign(existente, { tipo, nome, data, proxima, obs });
   } else {
     estado.saude.push({ id: novoId(), petId: estado.petAtual, tipo, nome, data, proxima, obs, criado: Date.now() });
   }
@@ -568,6 +581,7 @@ document.getElementById('aba-saude').addEventListener('click', (ev) => {
   const ag = ev.target.closest('[data-agenda]');
   if (ag) baixarICS(estado.saude.find((x) => x.id === ag.dataset.agenda));
   if (rm && pedeConfirmacao(rm)) {
+    if ($('#saude-id').value === rm.dataset.removerSaude) limparFormSaude();
     estado.saude = estado.saude.filter((x) => x.id !== rm.dataset.removerSaude);
     salvar();
     renderTudo();
@@ -669,7 +683,7 @@ function renderSaude() {
     }
     // Vigentes primeiro (ordenados pela próxima dose), histórico depois
     const atuais = doTipo.filter((r) => ids.has(r.id))
-      .sort((a, b) => (a.proxima || '9999') < (b.proxima || '9999') ? -1 : 1);
+      .sort((a, b) => (a.proxima || '9999').localeCompare(b.proxima || '9999'));
     const antigos = doTipo.filter((r) => !ids.has(r.id));
     const item = (r, atual) => `
       <li class="item-saude${atual ? '' : ' antigo'}">
@@ -922,6 +936,39 @@ $('#abas').addEventListener('click', (ev) => {
   if (b) { mostrarAba(b.dataset.aba); window.scrollTo({ top: 0 }); }
 });
 
+/* ---------- Troca de pet ---------- */
+// Formulários com dados de um pet não podem "vazar" para outro
+function aoTrocarPet() {
+  limparFormSaude();
+  preencherFormRacao();
+  renderTudo();
+}
+
+/* ---------- Mudanças vindas de outra aba/janela ---------- */
+window.addEventListener('storage', (ev) => {
+  if (ev.key !== CHAVE) return;
+  const antes = estado.petAtual;
+  estado = carregar();
+  if (estado.petAtual !== antes || ($('#saude-id').value && !estado.saude.some((r) => r.id === $('#saude-id').value))) aoTrocarPet();
+  else renderTudo();
+  if (!$('#painel-pets').hidden) renderListaPets();
+});
+
+/* ---------- Virada do dia com o app aberto ---------- */
+let diaAtual = hojeISO();
+const CAMPOS_DATA = ['#peso-data', '#banho-data', '#saude-data'];
+function atualizarDia() {
+  const hoje = hojeISO();
+  if (hoje !== diaAtual) {
+    for (const sel of CAMPOS_DATA) if ($(sel).value === diaAtual) $(sel).value = hoje;
+    for (const sel of [...CAMPOS_DATA, '#pet-nasc']) $(sel).max = hoje;
+    diaAtual = hoje;
+  }
+  renderTudo(); // idade, "há X dias", avisos e próxima refeição
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarDia(); });
+setInterval(() => { if (!document.hidden && hojeISO() !== diaAtual) atualizarDia(); }, 60000);
+
 /* ---------- Render geral ---------- */
 function renderTudo() {
   if (estado.petAtual && !petAtual()) estado.petAtual = estado.pets[0]?.id || null;
@@ -941,7 +988,6 @@ function renderTudo() {
   else renderSaude();
 }
 
-$('#pet-atual').addEventListener('change', () => { limparFormSaude(); preencherFormRacao(); });
 $('#peso-data').value = hojeISO();
 $('#peso-data').max = hojeISO();
 $('#banho-data').value = hojeISO();
