@@ -311,3 +311,17 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .acoes-ecc .btn { width: 100%; }
 .grafico .linha-ideal { stroke: var(--ok); stroke-width: 1.5; stroke-dasharray: 5 4; }
 .grafico .rotulo-ideal { fill: var(--ok); font-weight: 600; }
+
+/* ---------- Guia por raça ---------- */
+.subaba { font-size: 0.85rem; padding: 4px 6px; }
+.lista-cuidados { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lista-cuidados:not(:empty) { margin-top: 12px; }
+.cuidado { border: 1px solid var(--borda); border-radius: 12px; padding: 12px; background: var(--fundo); }
+.cuidado-nome { font-weight: 700; margin-bottom: 8px; }
+.cuidado-det { margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.cuidado-det dt { font-size: 0.72rem; color: var(--texto-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.cuidado-det dd { margin: 1px 0 0; }
+.cuidado-rodape { margin-top: 8px; }
+.cuidado .btn.pequeno { background: var(--cartao); }
+.nota-raca { font-size: 0.85rem; background: var(--aviso-fundo); color: var(--aviso); border-radius: 10px; padding: 8px 10px; margin: 0 0 10px; }
+.aviso-raca { padding: 0 4px 8px; }

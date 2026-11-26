@@ -37,7 +37,8 @@
             </select>
           </label>
           <label>Raça (opcional)
-            <input type="text" id="pet-raca" maxlength="40" placeholder="ex.: Jack Russell">
+            <input type="text" id="pet-raca" maxlength="40" list="sugestoes-raca" placeholder="ex.: Jack Russell">
+            <datalist id="sugestoes-raca"></datalist>
           </label>
         </div>
         <fieldset class="grupo">
@@ -122,6 +123,7 @@
       <div class="subabas" role="tablist" aria-label="Seções de saúde">
         <button type="button" class="subaba" data-subaba="prevencao" aria-selected="true" role="tab">Prevenção</button>
         <button type="button" class="subaba" data-subaba="clinico" aria-selected="false" role="tab">Doenças e remédios<span class="contador-mini" id="contador-remedios" hidden></span></button>
+        <button type="button" class="subaba" data-subaba="raca" aria-selected="false" role="tab">Raça</button>
       </div>
 
       <div id="saude-prevencao">
@@ -187,6 +189,21 @@
         <h2>🛡️ Antipulgas</h2>
         <ul class="lista" data-lista-tipo="antipulgas"></ul>
       </div>
+      </div>
+
+      <div id="saude-raca" hidden>
+        <div class="cartao">
+          <div id="raca-cabecalho"></div>
+          <label>Guia usado
+            <select id="raca-guia"></select>
+          </label>
+          <ul class="lista-cuidados" id="lista-raca"></ul>
+        </div>
+        <div class="cartao">
+          <h2 id="gerais-titulo"></h2>
+          <ul class="lista-cuidados" id="lista-gerais"></ul>
+        </div>
+        <p class="nota aviso-raca">Informações gerais sobre predisposições descritas na literatura veterinária. Não substituem a consulta: leve esta lista ao veterinário e pergunte quais exames fazem sentido para o seu pet.</p>
       </div>
 
       <div id="saude-clinico" hidden>

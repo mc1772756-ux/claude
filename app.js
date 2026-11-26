@@ -6,7 +6,7 @@ const ESPECIES = { cao: { nome: 'Cão', emoji: '🐶' }, gato: { nome: 'Gato', e
 
 /* ---------- Estado e armazenamento ---------- */
 function estadoVazio() {
-  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [] };
+  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [], checagens: [] };
 }
 
 function carregar() {
@@ -14,7 +14,7 @@ function carregar() {
     const bruto = localStorage.getItem(CHAVE);
     if (!bruto) return estadoVazio();
     const e = Object.assign(estadoVazio(), JSON.parse(bruto));
-    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc']) if (!Array.isArray(e[k])) e[k] = [];
+    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens']) if (!Array.isArray(e[k])) e[k] = [];
     return e;
   } catch (e) {
     console.warn('Falha ao ler dados salvos', e);
@@ -168,6 +168,7 @@ function limparFormPet() {
   $('#btn-salvar-pet').textContent = 'Adicionar';
   $('#btn-cancelar-pet').hidden = true;
   $('#pet-erro').hidden = true;
+  atualizarSugestoesRaca();
 }
 
 function editarPet(id) {
@@ -177,6 +178,7 @@ function editarPet(id) {
   $('#pet-nome').value = p.nome;
   $('#pet-especie').value = p.especie;
   $('#pet-raca').value = p.raca || '';
+  atualizarSugestoesRaca();
   $('#pet-nasc').value = p.nascimento || '';
   $('#pet-idade-anos').value = '';
   $('#pet-idade-meses').value = '';
@@ -192,7 +194,7 @@ function removerPet(id, btn) {
   if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
   if ($('#pet-id').value === id) limparFormPet();
   estado.pets = estado.pets.filter((x) => x.id !== id);
-  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc']) estado[k] = estado[k].filter((r) => r.petId !== id);
+  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens']) estado[k] = estado[k].filter((r) => r.petId !== id);
   const eraAtual = estado.petAtual === id;
   if (eraAtual) estado.petAtual = estado.pets[0]?.id || null;
   salvar();
@@ -234,6 +236,7 @@ $('#form-pet').addEventListener('submit', (ev) => {
   const existente = id && estado.pets.find((p) => p.id === id);
   if (id && !existente) { limparFormPet(); erro.textContent = 'Este pet foi excluído. Cadastre de novo, se quiser.'; erro.hidden = false; return; }
   if (existente) {
+    if (existente.raca !== raca || existente.especie !== especie) existente.racaGuia = '';
     Object.assign(existente, { nome, especie, raca, nascimento, nascAprox });
   } else {
     const p = { id: novoId(), nome, especie, raca, nascimento, nascAprox };
@@ -880,13 +883,17 @@ function renderRacao() {
 
 /* ---------- Saúde: sub-abas ---------- */
 let subabaSaude = 'prevencao';
-try { subabaSaude = localStorage.getItem('diario-pet-subaba') === 'clinico' ? 'clinico' : 'prevencao'; } catch (e) { /* ignora */ }
+try {
+  const salva = localStorage.getItem('diario-pet-subaba');
+  subabaSaude = ['prevencao', 'clinico', 'raca'].includes(salva) ? salva : 'prevencao';
+} catch (e) { /* ignora */ }
 function mostrarSubaba(nome) {
   subabaSaude = nome;
   try { localStorage.setItem('diario-pet-subaba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.subaba').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subaba === nome)));
   $('#saude-prevencao').hidden = nome !== 'prevencao';
   $('#saude-clinico').hidden = nome !== 'clinico';
+  $('#saude-raca').hidden = nome !== 'raca';
 }
 document.querySelector('.subabas').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-subaba]');
@@ -1144,6 +1151,365 @@ function renderClinico() {
     .map((n) => `<option value="${esc(n)}"></option>`).join('');
   atualizarSelectDoencas();
 }
+
+/* ---------- Guia de cuidados por raça ---------- */
+// Predisposições descritas na literatura veterinária. Ter predisposição
+// não significa que o pet terá a doença: é o que vale a pena checar.
+const CUIDADOS = {
+  'luxacao-patelar': {
+    nome: 'Luxação de patela',
+    sinais: 'Dá "pulinhos" com uma pata de trás ou corre alguns passos em três patas e depois volta ao normal; manqueira que vai e volta.',
+    checar: 'Palpação dos joelhos pelo veterinário em toda consulta. Manter o peso ideal reduz a carga nos joelhos.',
+    quando: 'Desde filhote; mais atenção a partir dos 6 meses.',
+  },
+  'luxacao-cristalino': {
+    nome: 'Luxação primária do cristalino',
+    sinais: 'Olho vermelho, lacrimejando, dolorido ou turvo; fica apertando o olho. É emergência: pode virar glaucoma e cegueira em poucas horas.',
+    checar: 'Teste genético (gene ADAMTS17) e exame oftalmológico anual.',
+    quando: 'Geralmente entre 3 e 8 anos.',
+  },
+  perthes: {
+    nome: 'Doença de Legg-Calvé-Perthes',
+    sinais: 'Manqueira de uma pata traseira que piora aos poucos, dor ao mexer no quadril, coxa mais fina (perda de músculo).',
+    checar: 'Raio-x do quadril se começar a mancar.',
+    quando: 'Filhotes e jovens, de 4 a 12 meses.',
+  },
+  'surdez-congenita': {
+    nome: 'Surdez congênita',
+    sinais: 'Não reage quando chamado ou a barulhos fora do campo de visão; sono muito pesado.',
+    checar: 'Teste de audição BAER em filhotes, principalmente com muito branco na pelagem.',
+    quando: 'De nascença.',
+  },
+  'ataxia-jrt': {
+    nome: 'Ataxia hereditária',
+    sinais: 'Andar descoordenado, patas de trás rígidas, quedas e tremores.',
+    checar: 'Testes genéticos disponíveis para a raça (genes KCNJ10 e CAPN1). Pergunte ao criador se os pais foram testados.',
+    quando: 'Geralmente no primeiro ano de vida.',
+  },
+  atopia: {
+    nome: 'Dermatite atópica e alergias de pele',
+    sinais: 'Coceira, lambe muito as patas, vermelhidão na barriga e nas axilas, otites que voltam.',
+    checar: 'Avaliação dermatológica se coçar com frequência; antipulgas sempre em dia (alergia à picada de pulga é comum).',
+    quando: 'Costuma começar entre 6 meses e 3 anos.',
+  },
+  'periodontal-cao': {
+    nome: 'Doença periodontal (dentes e gengiva)',
+    sinais: 'Mau hálito, tártaro amarelado, gengiva vermelha ou sangrando, mastiga de um lado só.',
+    checar: 'Escovação dos dentes (o ideal é diária) e avaliação odontológica anual. Raças pequenas são as mais afetadas.',
+    quando: 'A partir dos 2–3 anos.',
+  },
+  'valvar-mitral': {
+    nome: 'Doença da válvula mitral (coração)',
+    sinais: 'Tosse, principalmente à noite; cansa fácil nos passeios; respiração acelerada dormindo.',
+    checar: 'Ausculta do coração em toda consulta; ecocardiograma se houver sopro. Em casa, conte as respirações dormindo: o normal é menos de 30 por minuto.',
+    quando: 'Idosos, a partir dos 7–8 anos.',
+  },
+  // ----- todos os cães no Brasil -----
+  carrapato: {
+    nome: 'Doenças do carrapato (erliquiose e babesiose)',
+    sinais: 'Apatia, febre, falta de apetite, sangramento pelo nariz, manchinhas roxas na pele ou gengiva pálida.',
+    checar: 'Carrapaticida sempre em dia e revisão do corpo após passeios em grama. Hemograma se aparecer algum sinal.',
+    quando: 'Qualquer idade; mais comum nos meses quentes.',
+  },
+  leishmaniose: {
+    nome: 'Leishmaniose',
+    sinais: 'Perda de pelo ao redor dos olhos, descamação, unhas crescendo demais, feridas nas pontas das orelhas, emagrecimento.',
+    checar: 'Coleira repelente e vacina conforme orientação do veterinário. Teste anual em regiões onde a doença é comum.',
+    quando: 'Qualquer idade.',
+  },
+  dirofilariose: {
+    nome: 'Dirofilariose (verme do coração)',
+    sinais: 'Tosse, cansaço fácil, perda de peso. No início pode não ter sinais.',
+    checar: 'Prevenção mensal e teste anual, principalmente no litoral e perto de rios e lagoas.',
+    quando: 'Qualquer idade.',
+  },
+  'obesidade-cao': {
+    nome: 'Sobrepeso e obesidade',
+    sinais: 'Costelas difíceis de sentir, sem cintura vista de cima, cansa mais nos passeios.',
+    checar: 'Avalie o ECC a cada 1–2 meses na aba ECC e ajuste a ração. Petiscos contam calorias.',
+    quando: 'Mais comum após a castração e na meia-idade.',
+  },
+
+  // ----- gatos -----
+  'pkd': {
+    nome: 'Doença renal policística (PKD)',
+    sinais: 'Cistos nos rins que crescem com a idade. Com o tempo: bebe e urina mais, emagrece, vomita.',
+    checar: 'Teste genético (gene PKD1) e ultrassom dos rins.',
+    quando: 'Cistos desde jovem; sinais geralmente após os 7 anos.',
+  },
+  braquicefalica: {
+    nome: 'Síndrome braquicefálica (focinho achatado)',
+    sinais: 'Respiração ruidosa, cansa no calor, respira pela boca, dificuldade para pegar a comida.',
+    checar: 'Evitar calor e esforço; avaliação das narinas e do palato pelo veterinário.',
+    quando: 'Desde filhote.',
+  },
+  'olhos-persa': {
+    nome: 'Lacrimejamento e problemas na córnea',
+    sinais: 'Lágrima escorrendo e manchando a face, olho vermelho, mancha escura na córnea (sequestro corneano).',
+    checar: 'Limpeza diária ao redor dos olhos; veterinário se o olho ficar vermelho, turvo ou com mancha.',
+    quando: 'Qualquer idade.',
+  },
+  dermatofitose: {
+    nome: 'Micose de pele (dermatofitose)',
+    sinais: 'Falhas de pelo arredondadas, descamação, pelos quebradiços. Pode passar para pessoas.',
+    checar: 'Escovação diária para ver a pele; veterinário se surgir alguma falha.',
+    quando: 'Mais comum em filhotes e gatos de pelo longo.',
+  },
+  cmh: {
+    nome: 'Cardiomiopatia hipertrófica (CMH)',
+    sinais: 'Muitas vezes sem sinais até ficar grave. Atenção: respiração acelerada ou pela boca, cansaço, paralisia súbita das patas de trás (emergência).',
+    checar: 'Ecocardiograma periódico; teste genético quando existir para a raça. Conte as respirações dormindo: o normal é menos de 30 por minuto.',
+    quando: 'Pode surgir a partir de 1 ano.',
+  },
+  'cmh-maine': {
+    nome: 'Cardiomiopatia hipertrófica (CMH)',
+    sinais: 'Muitas vezes sem sinais até ficar grave. Atenção: respiração acelerada ou pela boca, cansaço, paralisia súbita das patas de trás (emergência).',
+    checar: 'Teste genético (MYBPC3, mutação A31P) e ecocardiograma periódico.',
+    quando: 'Pode surgir a partir de 1 ano.',
+  },
+  'displasia-quadril': {
+    nome: 'Displasia de quadril',
+    sinais: 'Evita pular, rigidez nas patas de trás, anda "rebolando".',
+    checar: 'Raio-x do quadril; manter o peso ideal.',
+    quando: 'Sinais costumam aparecer em adultos.',
+  },
+  'ame-maine': {
+    nome: 'Atrofia muscular espinhal (AME)',
+    sinais: 'Fraqueza e tremores nas patas de trás, postura agachada, dificuldade para pular.',
+    checar: 'Teste genético (gene LIX1). Pergunte ao criador se os pais foram testados.',
+    quando: 'Por volta dos 3–4 meses.',
+  },
+  asma: {
+    nome: 'Asma felina',
+    sinais: 'Tosse agachado com o pescoço esticado (parece querer pôr bola de pelo e não sai nada), chiado, respira pela boca.',
+    checar: 'Evite fumaça, perfumes e areia com pó. Raio-x do tórax se tossir.',
+    quando: 'Geralmente entre 2 e 8 anos.',
+  },
+  amiloidose: {
+    nome: 'Amiloidose',
+    sinais: 'Acúmulo de proteína no fígado ou rins: fraqueza, falta de apetite, gengiva pálida.',
+    checar: 'Exames de sangue de rotina.',
+    quando: 'Adultos jovens e de meia-idade.',
+  },
+  'pra-siames': {
+    nome: 'Atrofia progressiva da retina',
+    sinais: 'Dificuldade para enxergar no escuro, pupilas sempre dilatadas, esbarra em objetos.',
+    checar: 'Teste genético (rdAc) e exame oftalmológico.',
+    quando: 'Começa em jovens e piora com os anos.',
+  },
+  'surdez-branco': {
+    nome: 'Surdez (gatos brancos de olhos azuis)',
+    sinais: 'Não reage a sons fora do campo de visão; mia muito alto.',
+    checar: 'Teste de audição BAER; com surdez, evite acesso à rua.',
+    quando: 'De nascença.',
+  },
+  'bolas-pelo': {
+    nome: 'Bolas de pelo',
+    sinais: 'Vômitos com pelo, ânsia frequente, prisão de ventre.',
+    checar: 'Escovação 2–3 vezes por semana (diária na troca de pelo); veterinário se vomitar com frequência.',
+    quando: 'Qualquer idade.',
+  },
+  // ----- todos os gatos no Brasil -----
+  drc: {
+    nome: 'Doença renal crônica',
+    sinais: 'Bebe e urina mais, emagrece, vomita, mau hálito, pelo sem brilho.',
+    checar: 'Exames de sangue e urina (com SDMA) todo ano a partir dos 7 anos. Estimule a água: fonte, sachê.',
+    quando: 'Principalmente acima dos 7 anos.',
+  },
+  dtuif: {
+    nome: 'Doença do trato urinário (cistite / DTUIF)',
+    sinais: 'Vai várias vezes à caixa e sai pouco xixi, xixi com sangue, faz fora da caixa. Macho sem conseguir urinar é emergência.',
+    checar: 'Mais água (fonte, sachê), caixas sempre limpas (uma por gato + uma), rotina sem estresse.',
+    quando: 'Mais comum entre 2 e 6 anos.',
+  },
+  'dentes-gato': {
+    nome: 'Doença periodontal e reabsorção dentária',
+    sinais: 'Mau hálito, baba, mastiga de um lado só, deixa a comida cair.',
+    checar: 'Avaliação odontológica anual (a reabsorção só aparece no raio-x).',
+    quando: 'A partir dos 3 anos.',
+  },
+  'obesidade-gato': {
+    nome: 'Obesidade e diabetes',
+    sinais: 'Barriga pendurada e sem cintura. Diabetes: bebe e urina muito, come mais e emagrece.',
+    checar: 'ECC a cada 1–2 meses na aba ECC; glicose nos exames anuais.',
+    quando: 'Castrados e gatos de apartamento, a partir dos 5 anos.',
+  },
+  'fiv-felv': {
+    nome: 'FIV e FeLV',
+    sinais: 'Infecções que voltam, gengivite forte, emagrecimento, anemia.',
+    checar: 'Teste rápido para todo gato que chega e antes de juntar gatos; vacina de FeLV conforme o veterinário.',
+    quando: 'Qualquer idade; risco maior com acesso à rua.',
+  },
+  esporotricose: {
+    nome: 'Esporotricose',
+    sinais: 'Feridas que não cicatrizam, principalmente no focinho, cabeça e patas. Passa para pessoas e outros animais.',
+    checar: 'Evitar acesso à rua. Se surgir ferida, use luvas ao manusear e leve ao veterinário logo. Atenção redobrada no RJ, SP e outras regiões com surtos.',
+    quando: 'Qualquer idade; mais em machos com acesso à rua.',
+  },
+  hipertireoidismo: {
+    nome: 'Hipertireoidismo',
+    sinais: 'Emagrece mesmo comendo muito, agitação, vômitos, pelo malcuidado.',
+    checar: 'Dosagem de T4 nos exames anuais a partir dos 10 anos.',
+    quando: 'Idosos, acima de 10 anos.',
+  },
+};
+
+const RACAS = {
+  cao: {
+    'jack-russell': {
+      nome: 'Jack Russell Terrier', apelidos: ['jack russell', 'jack russel', 'jack', 'jrt', 'parson russell'],
+      itens: ['luxacao-patelar', 'luxacao-cristalino', 'perthes', 'surdez-congenita', 'ataxia-jrt', 'atopia', 'periodontal-cao'],
+    },
+    'fox-paulistinha': {
+      nome: 'Fox Paulistinha (Terrier Brasileiro)', apelidos: ['fox paulistinha', 'paulistinha', 'terrier brasileiro', 'fox brasileiro'],
+      nota: 'Raça brasileira com poucos estudos próprios. A lista reúne problemas relatados na raça e comuns em terriers pequenos.',
+      itens: ['luxacao-patelar', 'perthes', 'periodontal-cao', 'atopia', 'valvar-mitral'],
+    },
+    srd: { nome: 'Sem raça definida (SRD)', apelidos: ['srd', 'sem raca', 'vira lata', 'viralata', 'mestico', 'misturado'], itens: [] },
+  },
+  gato: {
+    srd: {
+      nome: 'Sem raça definida (SRD)', apelidos: ['srd', 'sem raca', 'vira lata', 'viralata', 'mestico', 'comum', 'europeu'],
+      nota: 'O gato mais comum no Brasil. Valem os cuidados gerais abaixo.', itens: [],
+    },
+    persa: {
+      nome: 'Persa', apelidos: ['persa', 'persian'],
+      itens: ['pkd', 'braquicefalica', 'olhos-persa', 'dermatofitose', 'bolas-pelo'],
+    },
+    siames: {
+      nome: 'Siamês', apelidos: ['siames', 'siamese', 'siamesa'],
+      itens: ['asma', 'amiloidose', 'pra-siames'],
+    },
+    'maine-coon': {
+      nome: 'Maine Coon', apelidos: ['maine coon', 'maine'],
+      itens: ['cmh-maine', 'displasia-quadril', 'ame-maine', 'bolas-pelo'],
+    },
+    angora: {
+      nome: 'Angorá', apelidos: ['angora', 'angora turco', 'turkish angora'],
+      nota: 'No Brasil, "angorá" muitas vezes é um gato de pelo longo sem raça definida; nesse caso valem os cuidados gerais e as bolas de pelo.',
+      itens: ['surdez-branco', 'cmh', 'bolas-pelo'],
+    },
+  },
+};
+const GERAIS = {
+  cao: { titulo: 'Para todos os cães no Brasil', itens: ['carrapato', 'leishmaniose', 'dirofilariose', 'periodontal-cao', 'obesidade-cao'] },
+  gato: { titulo: 'Para todos os gatos no Brasil', itens: ['drc', 'dtuif', 'dentes-gato', 'obesidade-gato', 'fiv-felv', 'esporotricose', 'hipertireoidismo'] },
+};
+
+const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+// Reconhece a raça pelo texto cadastrado (apelido mais longo vence: "fox paulistinha" antes de "fox")
+function racaReconhecida(p) {
+  const txt = ' ' + normalizar(p.raca) + ' ';
+  if (!txt.trim()) return null;
+  let melhor = null, tam = 0;
+  for (const [chave, r] of Object.entries(RACAS[p.especie])) {
+    for (const a of r.apelidos) {
+      if (txt.includes(' ' + a + ' ') && a.length > tam) { melhor = chave; tam = a.length; }
+    }
+  }
+  return melhor;
+}
+function racaDoGuia(p) {
+  if (p.racaGuia && RACAS[p.especie][p.racaGuia]) return p.racaGuia;
+  return racaReconhecida(p);
+}
+
+function checagemDe(chave) {
+  return estado.checagens.find((c) => c.petId === estado.petAtual && c.chave === chave) || null;
+}
+
+function itemCuidado(chave) {
+  const c = CUIDADOS[chave];
+  const ch = checagemDe(chave);
+  return `
+    <li class="cuidado">
+      <div class="cuidado-nome">${c.nome}</div>
+      <dl class="cuidado-det">
+        <div><dt>Fique de olho</dt><dd>${c.sinais}</dd></div>
+        <div><dt>Como checar</dt><dd>${c.checar}</dd></div>
+        <div><dt>Quando</dt><dd>${c.quando}</dd></div>
+      </dl>
+      <div class="cuidado-rodape">
+        <span class="selo ${ch ? 'ok' : 'neutro'}">${ch ? `✓ Checado em ${fmtData(ch.data)} (${textoHaDias(ch.data)})` : 'Ainda não checado'}</span>
+        <div class="acoes">
+          <button type="button" class="btn pequeno" data-checar="${chave}">${ch ? 'Checado de novo hoje' : 'Checado hoje'}</button>
+          ${ch ? `<button type="button" class="btn pequeno" data-desfazer-checagem="${chave}">Desmarcar</button>` : ''}
+          <button type="button" class="btn pequeno" data-diagnostico="${chave}">Registrar diagnóstico</button>
+        </div>
+      </div>
+    </li>`;
+}
+
+function renderRaca() {
+  const p = petAtual();
+  const chave = racaDoGuia(p);
+  const raca = chave ? RACAS[p.especie][chave] : null;
+  const sel = $('#raca-guia');
+  sel.innerHTML = `<option value="">${racaReconhecida(p) ? 'Pela raça cadastrada' : 'Escolha a raça'}</option>` +
+    Object.entries(RACAS[p.especie]).map(([k, r]) => `<option value="${k}">${r.nome}</option>`).join('');
+  sel.value = p.racaGuia && RACAS[p.especie][p.racaGuia] ? p.racaGuia : '';
+
+  const cab = $('#raca-cabecalho');
+  if (raca) {
+    cab.innerHTML = `<h2>${ESPECIES[p.especie].emoji} ${raca.nome}</h2>
+      ${raca.itens.length ? `<p class="intro">Predisposições da raça: problemas que aparecem com mais frequência nela. Não quer dizer que ${esc(p.nome)} vá ter, mas vale checar.</p>` : ''}
+      ${raca.nota ? `<p class="nota-raca">${raca.nota}</p>` : ''}`;
+  } else {
+    const nomes = Object.values(RACAS[p.especie]).map((r) => r.nome).join(', ');
+    cab.innerHTML = `<h2>Cuidados da raça</h2>
+      <p class="intro">${p.raca ? `Ainda não há guia para "${esc(p.raca)}".` : `A raça de ${esc(p.nome)} não está cadastrada.`}
+      Escolha abaixo uma das raças disponíveis (${nomes}) ou veja os cuidados gerais.</p>`;
+  }
+  $('#lista-raca').innerHTML = raca && raca.itens.length ? raca.itens.map(itemCuidado).join('') : '';
+  $('#lista-raca').hidden = !(raca && raca.itens.length);
+
+  const ger = GERAIS[p.especie];
+  const jaNaRaca = new Set(raca ? raca.itens : []);
+  $('#gerais-titulo').textContent = ger.titulo;
+  $('#lista-gerais').innerHTML = ger.itens.filter((k) => !jaNaRaca.has(k)).map(itemCuidado).join('');
+}
+
+$('#raca-guia').addEventListener('change', (ev) => {
+  const p = petAtual();
+  p.racaGuia = ev.target.value || '';
+  salvar();
+  renderRaca();
+});
+
+$('#saude-raca').addEventListener('click', (ev) => {
+  let b;
+  if ((b = ev.target.closest('[data-checar]'))) {
+    const chave = b.dataset.checar;
+    const ch = checagemDe(chave);
+    if (ch) ch.data = hojeISO();
+    else estado.checagens.push({ id: novoId(), petId: estado.petAtual, chave, data: hojeISO() });
+    salvar();
+    renderRaca();
+  }
+  if ((b = ev.target.closest('[data-desfazer-checagem]'))) {
+    const chave = b.dataset.desfazerChecagem;
+    estado.checagens = estado.checagens.filter((c) => !(c.petId === estado.petAtual && c.chave === chave));
+    salvar();
+    renderRaca();
+  }
+  if ((b = ev.target.closest('[data-diagnostico]'))) {
+    limparFormDoenca();
+    mostrarSubaba('clinico');
+    $('#doenca-nome').value = CUIDADOS[b.dataset.diagnostico].nome;
+    $('#doenca-situacao').value = 'tratamento';
+    $('#form-doenca').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#doenca-data').focus({ preventScroll: true });
+  }
+});
+
+// Sugestões de raça no cadastro do pet, conforme a espécie
+function atualizarSugestoesRaca() {
+  const esp = $('#pet-especie').value;
+  $('#sugestoes-raca').innerHTML = Object.values(RACAS[esp] || {})
+    .map((r) => `<option value="${r.nome}"></option>`).join('');
+}
+$('#pet-especie').addEventListener('change', atualizarSugestoesRaca);
 
 /* ---------- Calculadora ECC (escore de condição corporal 1–9) ---------- */
 // Referências: diretrizes nutricionais WSAVA; RER = 70 × peso^0,75;
@@ -1549,7 +1915,7 @@ function renderTudo() {
   if (abaAtual === 'peso') renderPeso();
   else if (abaAtual === 'racao') renderRacao();
   else if (abaAtual === 'ecc') { renderEcc(); renderListaEcc(); }
-  else { renderSaude(); renderClinico(); }
+  else { renderSaude(); renderClinico(); renderRaca(); }
 }
 
 $('#peso-data').value = hojeISO();

@@ -9,6 +9,7 @@ App web (pt-BR, mobile-first) para acompanhar a saúde de cães e gatos. Abra `i
 - [x] Último banho
 - [x] Vacinas, vermífugo e antipulgas com avisos (15 dias antes e atrasadas)
 - [x] Doenças e remédios em uso
+- [x] Guia de cuidados por raça (Jack Russell, Fox Paulistinha, SRD; gatos SRD, Persa, Siamês, Maine Coon, Angorá) + cuidados gerais no Brasil
 - [x] Calculadora ECC: peso ideal, meta calórica e gramas de ração (WSAVA)
 - [x] Lembrete na agenda: arquivo .ics (agenda nativa do celular) e link do Google Agenda
 - [ ] Exportar/importar backup
