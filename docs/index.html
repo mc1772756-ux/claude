@@ -9,6 +9,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Diário do Pet">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>
+  // Aplica o tema escolhido antes de desenhar a página (evita piscar)
+  try {
+    var temaSalvo = localStorage.getItem('diario-pet-tema');
+    if (temaSalvo === 'claro') document.documentElement.dataset.theme = 'light';
+    else if (temaSalvo === 'escuro') document.documentElement.dataset.theme = 'dark';
+  } catch (e) { /* sem armazenamento: segue o celular */ }
+</script>
 </head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -456,7 +464,7 @@ fieldset { min-width: 0; }
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
-      <button type="button" class="btn icone" id="btn-pets" aria-label="Gerenciar pets">⚙️</button>
+      <button type="button" class="btn icone" id="btn-pets" aria-label="Pets e configurações">⚙️</button>
     </div>
   </header>
 
@@ -523,6 +531,15 @@ fieldset { min-width: 0; }
           <button type="button" class="btn" id="btn-cancelar-pet" hidden>Cancelar</button>
         </div>
       </form>
+      <div class="backup">
+        <h3>Aparência</h3>
+        <div class="segmentos" role="radiogroup" aria-label="Tema do app">
+          <label class="seg"><input type="radio" name="tema" value="auto"><span>📱 Automático</span></label>
+          <label class="seg"><input type="radio" name="tema" value="claro"><span>☀️ Claro</span></label>
+          <label class="seg"><input type="radio" name="tema" value="escuro"><span>🌙 Escuro</span></label>
+        </div>
+        <p class="dica-campo">Automático segue o modo claro/escuro do celular.</p>
+      </div>
       <div class="backup">
         <h3>Backup</h3>
         <p class="dica-campo">Seus dados ficam só neste aparelho. Exporte um backup de vez em quando (ou antes de trocar de celular) e guarde no Drive, e-mail ou WhatsApp.</p>
@@ -4865,6 +4882,25 @@ $('#backup-status').addEventListener('click', async (ev) => {
   aoTrocarPet();
   renderListaPets();
   statusBackup(`Backup restaurado ✓ (${plural(estado.pets.length, 'pet', 'pets')}).`, 'ok-leitura');
+});
+
+/* ---------- Tema: automático, claro ou escuro ---------- */
+function aplicarTema(t) {
+  const raiz = document.documentElement;
+  if (t === 'claro') raiz.dataset.theme = 'light';
+  else if (t === 'escuro') raiz.dataset.theme = 'dark';
+  else delete raiz.dataset.theme;
+}
+let tema = 'auto';
+try { const t = localStorage.getItem('diario-pet-tema'); if (t === 'claro' || t === 'escuro') tema = t; } catch (e) { /* ignora */ }
+aplicarTema(tema);
+document.querySelectorAll('input[name="tema"]').forEach((el) => {
+  el.checked = el.value === tema;
+  el.addEventListener('change', () => {
+    tema = el.value;
+    try { localStorage.setItem('diario-pet-tema', tema); } catch (e) { /* ignora */ }
+    aplicarTema(tema);
+  });
 });
 
 /* ---------- App instalável (PWA) ---------- */
