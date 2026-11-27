@@ -590,6 +590,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 #embalagem-resultado .linha-botoes { margin-top: 10px; }
 #embalagem-resultado pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.78rem; background: var(--fundo); border-radius: 8px; padding: 8px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; }
 .check { display: flex; gap: 8px; align-items: center; color: var(--texto); }
+.carteira-item { border: 1px solid var(--borda); border-radius: 12px; padding: 8px 10px; margin: 8px 0; }
+.carteira-item.desmarcado { opacity: .55; }
+.carteira-item .check { font-weight: 600; }
+.carteira-item .dica-campo { margin: 4px 0 0; }
 .check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
 .itens-nota li { padding: 6px 0; }
 .itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
@@ -1033,6 +1037,20 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
           <summary>Banhos anteriores</summary>
           <ul id="lista-banho" class="lista"></ul>
         </details>
+      </div>
+
+      <div class="cartao" id="cartao-carteira">
+        <h2><i data-ic="camera"></i>Ler carteira de vacinação</h2>
+        <details class="ajuda" data-ajuda="carteira"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Fotografe uma página da carteira, reta e com boa luz. O app lê no próprio aparelho as etiquetas das vacinas (V10, V4, antirrábica, Vanguard, Nobivac, Rabisin…) e as datas, e monta a lista para você conferir. Datas escritas à mão nem sempre são lidas: confira e corrija antes de salvar. Doses já registradas vêm desmarcadas.</p>
+        </details>
+        <div class="linha-botoes" id="carteira-botoes">
+          <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="carteira-camera" accept="image/*" capture="environment"></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="carteira-galeria" accept="image/*"></label>
+        </div>
+        <div class="fotos-emb" id="carteira-fotos"></div>
+        <div class="leitura-status" id="carteira-status" role="status" aria-live="polite" hidden></div>
+        <div id="carteira-resultado" hidden></div>
       </div>
 
       <div class="cartao">
@@ -2610,6 +2628,247 @@ $('#plano-vacinas').addEventListener('click', (ev) => {
     $('#form-saude').scrollIntoView({ behavior: 'smooth', block: 'center' });
     $('#saude-data').focus({ preventScroll: true });
   }
+});
+
+/* ---------- Carteira de vacinação por foto (OCR no aparelho) ---------- */
+// Marcas e nomes comuns nas etiquetas. cat = id em VACINAS_PLANO; nome = como fica registrado.
+const CARTEIRA_TERMOS = {
+  cao: [
+    { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|rabguard|imrab|rabvac|rai[\s-]?vac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
+    { cat: 'gripe', re: /gripe|tosse|bordetel|bronchi|pneumodog|nobivac\s*kc|\bkc\b|intrac/i },
+    { cat: 'giardia', re: /gi[aá]rdia/i },
+    { cat: 'leish', re: /leish/i },
+    { cat: 'multipla', re: /\bv\s?(?:6|7|8|10|11|12)\b|polivalente|m[uú]ltipla|[oó]ctupla|d[eé]ctupla|vanguard|duramune|recombitek|canigen|eurican|biocan|nobivac\s*(?:dhp|puppy|lepto)|vencomax|cinomose|parvo|leptospir/i },
+  ],
+  gato: [
+    { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|imrab|rabvac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
+    { cat: 'felv', re: /felv|leucemia|leucogen/i },
+    { cat: 'multipla', re: /\bv\s?[345]\b|tr[ií]plice|qu[aá]drupla|qu[ií]ntupla|polivalente|m[uú]ltipla|felocell|fel[\s-]?o[\s-]?vax|purevax|feligen|tricat|quatricat|panleuco|rinotraq|calici/i },
+  ],
+};
+const ROTULOS_DATA_PROX = /revac|pr[oó]x|retorno|refor[cç]o|validade\s+da\s+vac|repetir/i;
+
+function nomeVacinaCarteira(cat, linha, especie) {
+  const n = (linha.match(/\bv\s?(\d{1,2})\b/i) || [])[1];
+  if (cat === 'raiva') return 'Antirrábica';
+  if (cat === 'gripe') return 'Gripe canina (tosse dos canis)';
+  if (cat === 'giardia') return 'Giárdia';
+  if (cat === 'leish') return 'Leishmaniose';
+  if (cat === 'felv') return 'FeLV';
+  if (especie === 'cao') return n && /^(6|7|8|10|11|12)$/.test(n) ? 'V' + n : 'V10';
+  if (n && /^[345]$/.test(n)) return 'V' + n;
+  return /felv|leucemia/i.test(linha) ? 'V5' : 'V4';
+}
+
+// Datas dd/mm/aa(aa) de até 25 anos atrás e até 3 anos à frente
+function datasDaLinha(l) {
+  const hoje = hojeISO();
+  const out = [];
+  const re = /(\d{1,2})\s?[\/.\-]\s?(\d{1,2})\s?[\/.\-]\s?(\d{4}|\d{2})(?!\d)/g;
+  let m;
+  while ((m = re.exec(l))) {
+    const d = Number(m[1]), mes = Number(m[2]);
+    const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    if (d < 1 || d > 31 || mes < 1 || mes > 12) continue;
+    const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (iso > somarDias(hoje, 3 * 365) || iso < somarDias(hoje, -25 * 365)) continue;
+    out.push({ iso, prox: ROTULOS_DATA_PROX.test(l.slice(Math.max(0, m.index - 25), m.index)) });
+  }
+  return out;
+}
+
+function extrairCarteira(texto, p) {
+  const termos = CARTEIRA_TERMOS[p.especie] || CARTEIRA_TERMOS.cao;
+  const linhas = limparTextoOcr(texto).split('\n').map((l) => l.trim()).filter(Boolean);
+  const itens = [];
+  let atual = null;
+  let soltas = []; // datas lidas antes de achar a etiqueta
+  for (const l of linhas) {
+    const achou = termos.find((t) => t.re.test(l));
+    const datas = datasDaLinha(l);
+    if (achou) {
+      // a etiqueta da múltipla lista várias doenças: continua o mesmo item enquanto não aparece data
+      const mesmo = atual && !atual.datas.length && (atual.cat === achou.cat || (atual.cat === 'multipla' && achou.cat !== 'raiva'));
+      if (mesmo) {
+        if (p.especie === 'gato' && achou.cat === 'felv' && atual.cat === 'multipla') atual.nome = 'V5';
+        atual.texto += ' ' + l;
+        if (atual.cat === 'multipla' && /\bv\s?\d{1,2}\b/i.test(l)) atual.nome = nomeVacinaCarteira('multipla', l, p.especie);
+      } else {
+        atual = { cat: achou.cat, nome: nomeVacinaCarteira(achou.cat, l, p.especie), texto: l, datas: [...soltas] };
+        soltas = [];
+        itens.push(atual);
+      }
+      atual.datas.push(...datas);
+    } else if (datas.length) {
+      if (atual && atual.datas.length < 2) atual.datas.push(...datas);
+      else soltas.push(...datas);
+    }
+  }
+  const hoje = hojeISO();
+  return itens.map((it) => {
+    const aplic = it.datas.filter((d) => !d.prox && d.iso <= hoje).map((d) => d.iso);
+    const data = aplic[0] || '';
+    const prox = it.datas.find((d) => d.prox && (!data || d.iso > data)) || it.datas.find((d) => data && d.iso > data);
+    return { cat: it.cat, nome: it.nome, data, proxima: prox ? prox.iso : '' };
+  });
+}
+
+let lendoCarteira = false;
+let arquivoCarteira = null;
+function statusCarteira(html, classe = '') {
+  const el = $('#carteira-status');
+  el.className = 'leitura-status' + (classe ? ' ' + classe : '');
+  el.innerHTML = html;
+  el.hidden = !html;
+}
+function limparCarteira() {
+  arquivoCarteira = null;
+  $('#carteira-fotos').innerHTML = '';
+  $('#carteira-resultado').hidden = true;
+  $('#carteira-resultado').innerHTML = '';
+  statusCarteira('');
+}
+
+async function lerCarteira(arquivo) {
+  if (lendoCarteira) return;
+  const p = petAtual();
+  if (!p) return;
+  lendoCarteira = true;
+  arquivoCarteira = arquivo;
+  $('#carteira-fotos').innerHTML = `<img src="${URL.createObjectURL(arquivo)}" alt="Foto da carteira">`;
+  $('#carteira-resultado').hidden = true;
+  $('#carteira-botoes').querySelectorAll('input').forEach((i) => { i.disabled = true; });
+  const progresso = (pct, txt) => statusCarteira(`${esc(txt)}<div class="progresso-ocr"><span style="width:${Math.round(pct * 100)}%"></span></div>`);
+  let etapa = 'Lendo a carteira…';
+  aoProgressoOcr = (m) => {
+    if (m.status === 'recognizing text') progresso(0.05 + m.progress * 0.9, etapa);
+    else if (/load|initializ/i.test(m.status)) progresso(0.02, 'Preparando o leitor (só na primeira vez demora um pouco)…');
+  };
+  progresso(0.01, 'Preparando o leitor…');
+  try {
+    const leitor = await obterLeitor();
+    const canvas = await prepararFoto(arquivo, 3000, 1500);
+    await leitor.setParameters({ tessedit_pageseg_mode: '4' });
+    let texto = (await leitor.recognize(canvas)).data.text;
+    let itens = extrairCarteira(texto, p);
+    if (!itens.length || itens.some((x) => !x.data)) {
+      etapa = 'Procurando mais detalhes…';
+      await leitor.setParameters({ tessedit_pageseg_mode: '11' });
+      const t2 = (await leitor.recognize(canvas)).data.text;
+      const i2 = extrairCarteira(t2, p);
+      if (i2.filter((x) => x.data).length > itens.filter((x) => x.data).length) itens = i2;
+      texto += '\n----\n' + t2;
+    }
+    await leitor.setParameters({ tessedit_pageseg_mode: '6' });
+    mostrarCarteira(itens, texto.trim(), p);
+    marcarAjuda('carteira');
+  } catch (e) {
+    console.warn('OCR da carteira falhou', e);
+    statusCarteira('Não foi possível carregar o leitor de fotos. Verifique a internet na primeira vez que usar e tente de novo.', 'erro-leitura');
+  } finally {
+    lendoCarteira = false;
+    aoProgressoOcr = () => {};
+    $('#carteira-botoes').querySelectorAll('input').forEach((i) => { i.disabled = false; });
+  }
+}
+for (const sel of ['#carteira-camera', '#carteira-galeria']) {
+  $(sel).addEventListener('change', (ev) => {
+    const arq = ev.target.files[0];
+    ev.target.value = '';
+    if (arq && arq.type.startsWith('image/')) lerCarteira(arq);
+  });
+}
+
+function jaRegistrada(p, cat, nome, data) {
+  if (!data) return false;
+  const v = VACINAS_PLANO[p.especie].find((x) => x.id === cat);
+  return estado.saude.some((r) => r.petId === p.id && r.tipo === 'vacina' && r.data === data
+    && (v ? v.re.test(r.nome) : normalizar(r.nome) === normalizar(nome)));
+}
+
+function linhaCarteira(it, i, p) {
+  const dup = jaRegistrada(p, it.cat, it.nome, it.data);
+  const hoje = hojeISO();
+  return `<div class="carteira-item${dup ? ' desmarcado' : ''}" data-carteira-item="${i}">
+    <label class="check"><input type="checkbox" data-carteira-ok${dup ? '' : ' checked'}> Registrar esta dose</label>
+    <label>Vacina<input type="text" data-c="nome" maxlength="60" list="sugestoes-saude" value="${esc(it.nome || '')}" placeholder="ex.: V10, Antirrábica"></label>
+    <div class="linha">
+      <label>Data aplicada<input type="date" data-c="data" max="${hoje}" value="${it.data || ''}"></label>
+      <label>Próxima dose<input type="date" data-c="proxima" value="${it.proxima || ''}"></label>
+    </div>
+    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida: preencha olhando a carteira.</p>' : ''}
+  </div>`;
+}
+
+function mostrarCarteira(itens, texto, p) {
+  const box = $('#carteira-resultado');
+  if (!itens.length) {
+    statusCarteira(texto.replace(/\W/g, '').length < 10
+      ? 'Não consegui ler texto nessa foto. Tente de novo com a carteira reta, perto e com boa luz.'
+      : 'Li o texto, mas não reconheci as vacinas. Adicione as doses abaixo olhando a carteira.', 'erro-leitura');
+    itens = [{ cat: '', nome: '', data: '', proxima: '' }];
+  } else {
+    const comData = itens.filter((x) => x.data).length;
+    statusCarteira(`Encontrei <strong>${plural(itens.length, 'vacina', 'vacinas')}</strong>${comData < itens.length ? ` (${comData} com data)` : ''}. Confira antes de salvar.`, 'ok-leitura');
+  }
+  box.innerHTML = `<div id="carteira-itens">${itens.map((it, i) => linhaCarteira(it, i, p)).join('')}</div>
+    <p class="nota">A próxima dose vazia é preenchida pelo plano de vacinação ao salvar.</p>
+    <p class="erro" id="carteira-erro" role="alert" hidden></p>
+    <div class="linha-botoes">
+      <button type="button" class="btn primario" id="btn-carteira-salvar">Salvar doses marcadas</button>
+      <button type="button" class="btn" id="btn-carteira-mais">Adicionar dose</button>
+      <button type="button" class="btn" id="btn-carteira-descartar">Descartar</button>
+    </div>
+    <details class="historico"><summary>Ver texto lido</summary><pre id="carteira-texto"></pre></details>`;
+  $('#carteira-texto').textContent = texto;
+  box.hidden = false;
+}
+
+function salvarCarteira() {
+  const p = petAtual();
+  const erro = $('#carteira-erro');
+  const hoje = hojeISO();
+  const linhas = [...document.querySelectorAll('#carteira-itens [data-carteira-item]')]
+    .filter((el) => el.querySelector('[data-carteira-ok]').checked)
+    .map((el) => ({ nome: el.querySelector('[data-c="nome"]').value.trim(), data: el.querySelector('[data-c="data"]').value, proxima: el.querySelector('[data-c="proxima"]').value }));
+  let msg = '';
+  if (!linhas.length) msg = 'Marque pelo menos uma dose.';
+  else if (linhas.some((l) => !l.nome)) msg = 'Informe o nome de todas as vacinas marcadas.';
+  else if (linhas.some((l) => !l.data)) msg = 'Informe a data aplicada de todas as vacinas marcadas.';
+  else if (linhas.some((l) => l.data > hoje)) msg = 'A data aplicada não pode estar no futuro.';
+  else if (linhas.some((l) => l.proxima && l.proxima <= l.data)) msg = 'A próxima dose precisa ser depois da data aplicada.';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  linhas.sort((a, b) => a.data.localeCompare(b.data));
+  let n = 0;
+  for (const l of linhas) {
+    let proxima = l.proxima;
+    const v = VACINAS_PLANO[p.especie].find((x) => x.re.test(l.nome));
+    if (!proxima && v) {
+      const regs = [...dosesDaVacina(v, p.id).filter((r) => r.data <= l.data), { data: l.data, criado: Date.now() }]
+        .sort((a, b) => a.data.localeCompare(b.data));
+      const sug = planejarVacina(v, p, regs.map((r) => ({ data: r.data, criado: r.criado })));
+      if (sug.proxima && sug.proxima > l.data) proxima = sug.proxima;
+    }
+    estado.saude.push({ id: novoId(), petId: p.id, tipo: 'vacina', nome: l.nome, data: l.data, proxima: proxima || '', obs: 'Lida da carteira de vacinação', criado: Date.now() + n++ });
+  }
+  salvar();
+  limparCarteira();
+  statusCarteira(`${plural(n, 'dose salva', 'doses salvas')} nas vacinas de ${esc(p.nome)}.`, 'ok-leitura');
+  renderTudo();
+}
+
+$('#carteira-resultado').addEventListener('click', (ev) => {
+  if (ev.target.closest('#btn-carteira-descartar')) { limparCarteira(); return; }
+  if (ev.target.closest('#btn-carteira-salvar')) salvarCarteira();
+  if (ev.target.closest('#btn-carteira-mais')) {
+    const cx = $('#carteira-itens');
+    cx.insertAdjacentHTML('beforeend', linhaCarteira({ cat: '', nome: '', data: '', proxima: '' }, cx.children.length, petAtual()));
+    cx.lastElementChild.querySelector('[data-c="nome"]').focus();
+  }
+});
+$('#carteira-resultado').addEventListener('change', (ev) => {
+  const ok = ev.target.closest('[data-carteira-ok]');
+  if (ok) ok.closest('.carteira-item').classList.toggle('desmarcado', !ok.checked);
 });
 
 /* ---------- Banho ---------- */
