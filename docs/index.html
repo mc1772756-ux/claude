@@ -1843,6 +1843,10 @@ const ID_SEGURO = { test: (x) => typeof x === 'string' && RE_ID_SEGURO.test(x) }
 const FOTO_SEGURA = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
 function sanearEstado(e) {
   normalizarEstado(e);
+  // registros antigos sem id ganham o mesmo id que ganhariam em qualquer aparelho
+  if (typeof idDeterministico === 'function') {
+    for (const k of COLECOES) for (const r of e[k]) if (r && typeof r === 'object' && r.id === undefined) r.id = idDeterministico(k, r);
+  }
   e.pets = e.pets.filter((p) => p && typeof p === 'object' && ID_SEGURO.test(p.id) && typeof p.nome === 'string');
   for (const p of e.pets) {
     if (!ESPECIES[p.especie]) p.especie = 'cao';
@@ -1857,7 +1861,13 @@ function sanearEstado(e) {
   }
   // campos de lista fechada entram em HTML e em buscas por tabela
   for (const g of e.gastos) if (!Object.prototype.hasOwnProperty.call(CATEGORIAS, g.categoria)) g.categoria = 'outros';
-  e.saude = e.saude.filter((r) => Object.prototype.hasOwnProperty.call(TIPOS, r.tipo));
+  // tipo desconhecido (ex.: versão mais nova do app): não descarta, guarda como vacina e anota
+  for (const r of e.saude) {
+    if (Object.prototype.hasOwnProperty.call(TIPOS, r.tipo)) continue;
+    r.obs = [r.obs, `(tipo original: ${String(r.tipo || '?').slice(0, 30)})`].filter(Boolean).join(' ');
+    r.tipo = 'vacina';
+    if (typeof r.nome !== 'string') r.nome = '?';
+  }
   for (const sx of e.sintomas) if (!Object.prototype.hasOwnProperty.call(SINTOMAS, sx.tipo)) sx.tipo = 'outro';
   if (e.petAtual && !petsOk.has(e.petAtual)) e.petAtual = e.pets[0]?.id || null;
   return e;
@@ -3170,7 +3180,10 @@ $('#form-remedio').addEventListener('submit', (ev) => {
   if (estoque !== null) marcarAjuda('estoque-remedio');
   // Término alterado para hoje ou depois (ou em branco) num remédio encerrado: volta a ficar em uso
   if (existente && existente.encerrado && fim !== existente.fim && (!fim || fim >= hojeISO())) dados.encerrado = '';
-  if (existente) { Object.assign(existente, dados); delete existente.fimAntes; } // a data digitada vale mais que a guardada
+  if (existente) {
+    if (fim !== existente.fim) delete existente.fimAntes; // a data digitada vale mais que a guardada
+    Object.assign(existente, dados);
+  }
   else estado.remedios.push({ id: novoId(), petId: estado.petAtual, ...dados, criado: Date.now() });
   salvar();
   limparFormRemedio();
@@ -5844,7 +5857,8 @@ async function lerNota(arquivo) {
       r = { ...r2, ...Object.fromEntries(Object.entries(r1).filter(([, v]) => v && (!Array.isArray(v) || v.length))) };
       // itens, categorias e "dá para separar" vêm sempre juntos da mesma leitura
       const fonte = r1.itens.length || !r2.itens.length ? r1 : r2;
-      Object.assign(r, { itens: fonte.itens, porCat: fonte.porCat, separavel: fonte.separavel, categoria: fonte.categoria, racaoItem: fonte.racaoItem });
+      Object.assign(r, { itens: fonte.itens, porCat: fonte.porCat, separavel: fonte.separavel, racaoItem: fonte.racaoItem });
+      if (fonte.categoria && fonte.categoria !== 'outros') r.categoria = fonte.categoria; // senão fica a da loja
       r.texto = limparTextoNota(texto).trim();
     }
     mostrarNota(r);
@@ -7477,8 +7491,9 @@ function anotarTrocaDeRacao(antes, depois) {
   if (!de || !para || normalizar(de) === normalizar(para)) return;
   estado.mudancasRacao.push({ id: novoId(), petId: depois.petId, data: hojeISO(), de, para, criado: Date.now() });
 }
+sanearEstado(estado); // mesmas regras para os dados daqui e os que vêm de fora
 tirarFotografia();
-window.addEventListener('storage', (ev) => { if (ev.key === CHAVE) { tirarFotografia(); if (typeof versaoDados === 'number') versaoDados++; } });
+window.addEventListener('storage', (ev) => { if (ev.key === CHAVE) { sanearEstado(estado); tirarFotografia(); if (typeof versaoDados === 'number') versaoDados++; } });
 
 /* ---------- Juntar dois estados ---------- */
 function venceRemoto(r, l) {

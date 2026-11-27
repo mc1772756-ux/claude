@@ -59,9 +59,8 @@ self.addEventListener('fetch', (ev) => {
   })));
   // registrado já (e não depois da resposta), para o navegador esperar a gravação terminar
   ev.waitUntil(redeP.then(() => gravar).catch(() => {}));
-  ev.respondWith(guardadoP.then((guardado) => guardado || redeP).catch(() => guardadoP));
+  ev.respondWith(guardadoP.then((guardado) => guardado || redeP).catch(() => guardadoP.then((g) => g || Response.error())));
 });
-
 
 /* ---------- Avisos de lembretes com o app fechado (Android/Chrome com o app instalado) ----------
    A página guarda em CACHE_LEMBRETES um resumo dos próximos lembretes de todos os pets.
