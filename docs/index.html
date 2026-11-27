@@ -15,6 +15,8 @@
     var temaSalvo = localStorage.getItem('diario-pet-tema');
     if (temaSalvo === 'claro') document.documentElement.dataset.theme = 'light';
     else if (temaSalvo === 'escuro') document.documentElement.dataset.theme = 'dark';
+    var corSalva = localStorage.getItem('diario-pet-cor');
+    if (corSalva && corSalva !== 'padrao') document.documentElement.dataset.cor = corSalva;
   } catch (e) { /* sem armazenamento: segue o celular */ }
 </script>
 </head><body>
@@ -483,6 +485,43 @@ details.ajuda p { margin: 0 0 4px; }
 .cal-legenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 0.75rem; color: var(--texto-2); }
 .cal-legenda i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
 
+
+/* ---------- Cores de fundo (Configurações) ---------- */
+:root[data-cor="azul"] { --fundo: #e6f0fb; --cartao: #ffffff; --borda: #c9dbf2; --neutro-fundo: #dbe8f8; --primaria: #1f6fd1; --serie: #1f6fd1; --primaria-texto: #ffffff; }
+:root[data-cor="amarelo"] { --fundo: #fbf3d5; --cartao: #fffdf3; --borda: #eadcaa; --neutro-fundo: #f3e8c0; --primaria: #8a5a00; --serie: #8a5a00; --primaria-texto: #ffffff; }
+:root[data-cor="verde"] { --fundo: #e5f3e8; --cartao: #ffffff; --borda: #c4e2cb; --neutro-fundo: #d5ebda; --primaria: #1d7a3a; --serie: #1d7a3a; --primaria-texto: #ffffff; }
+:root[data-cor="vermelho"] { --fundo: #fbe7e5; --cartao: #ffffff; --borda: #f0c6c1; --neutro-fundo: #f5d7d3; --primaria: #b3261e; --serie: #b3261e; --primaria-texto: #ffffff; }
+:root[data-cor="roxo"] { --fundo: #ece6f8; --cartao: #ffffff; --borda: #d3c7ee; --neutro-fundo: #e0d7f4; --primaria: #5e35b1; --serie: #5e35b1; --primaria-texto: #ffffff; }
+:root[data-cor="lilas"] { --fundo: #f5ecfa; --cartao: #ffffff; --borda: #e3cdee; --neutro-fundo: #eddcf5; --primaria: #8e44ad; --serie: #8e44ad; --primaria-texto: #ffffff; }
+:root[data-cor="laranja"] { --fundo: #fdeedd; --cartao: #ffffff; --borda: #f3d2ad; --neutro-fundo: #f8e0c4; --primaria: #a84f00; --serie: #a84f00; --primaria-texto: #ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root[data-cor="azul"]:not([data-theme="light"]) { --fundo: #0e1622; --cartao: #16202f; --borda: #26364d; --neutro-fundo: #1f2c3f; --primaria: #5aa0f0; --serie: #5aa0f0; --primaria-texto: #0b1220; }
+  :root[data-cor="amarelo"]:not([data-theme="light"]) { --fundo: #1a170d; --cartao: #25210f; --borda: #3d3619; --neutro-fundo: #302a14; --primaria: #f2c14e; --serie: #f2c14e; --primaria-texto: #1a1405; }
+  :root[data-cor="verde"]:not([data-theme="light"]) { --fundo: #0d1a12; --cartao: #14261a; --borda: #22402b; --neutro-fundo: #1b3322; --primaria: #5cc77a; --serie: #5cc77a; --primaria-texto: #06140b; }
+  :root[data-cor="vermelho"]:not([data-theme="light"]) { --fundo: #1e1011; --cartao: #2b1718; --borda: #47282a; --neutro-fundo: #3a2022; --primaria: #f08a80; --serie: #f08a80; --primaria-texto: #1e0807; }
+  :root[data-cor="roxo"]:not([data-theme="light"]) { --fundo: #15111f; --cartao: #1f182d; --borda: #352a4c; --neutro-fundo: #2a213d; --primaria: #a98ae8; --serie: #a98ae8; --primaria-texto: #120a22; }
+  :root[data-cor="lilas"]:not([data-theme="light"]) { --fundo: #1a1320; --cartao: #261c2e; --borda: #3f2f4b; --neutro-fundo: #33253d; --primaria: #d3a6ea; --serie: #d3a6ea; --primaria-texto: #1a0a22; }
+  :root[data-cor="laranja"]:not([data-theme="light"]) { --fundo: #1e140c; --cartao: #2b1e12; --borda: #47321f; --neutro-fundo: #3a2918; --primaria: #f39c4a; --serie: #f39c4a; --primaria-texto: #1e0e02; }
+}
+:root[data-cor="azul"][data-theme="dark"] { --fundo: #0e1622; --cartao: #16202f; --borda: #26364d; --neutro-fundo: #1f2c3f; --primaria: #5aa0f0; --serie: #5aa0f0; --primaria-texto: #0b1220; }
+:root[data-cor="amarelo"][data-theme="dark"] { --fundo: #1a170d; --cartao: #25210f; --borda: #3d3619; --neutro-fundo: #302a14; --primaria: #f2c14e; --serie: #f2c14e; --primaria-texto: #1a1405; }
+:root[data-cor="verde"][data-theme="dark"] { --fundo: #0d1a12; --cartao: #14261a; --borda: #22402b; --neutro-fundo: #1b3322; --primaria: #5cc77a; --serie: #5cc77a; --primaria-texto: #06140b; }
+:root[data-cor="vermelho"][data-theme="dark"] { --fundo: #1e1011; --cartao: #2b1718; --borda: #47282a; --neutro-fundo: #3a2022; --primaria: #f08a80; --serie: #f08a80; --primaria-texto: #1e0807; }
+:root[data-cor="roxo"][data-theme="dark"] { --fundo: #15111f; --cartao: #1f182d; --borda: #352a4c; --neutro-fundo: #2a213d; --primaria: #a98ae8; --serie: #a98ae8; --primaria-texto: #120a22; }
+:root[data-cor="lilas"][data-theme="dark"] { --fundo: #1a1320; --cartao: #261c2e; --borda: #3f2f4b; --neutro-fundo: #33253d; --primaria: #d3a6ea; --serie: #d3a6ea; --primaria-texto: #1a0a22; }
+:root[data-cor="laranja"][data-theme="dark"] { --fundo: #1e140c; --cartao: #2b1e12; --borda: #47321f; --neutro-fundo: #3a2918; --primaria: #f39c4a; --serie: #f39c4a; --primaria-texto: #1e0e02; }
+body::before, .topo, .abas { transition: background-color .2s; }
+.cores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+.cor-opcao { display: flex; flex-direction: column; align-items: center; gap: 4px; font: inherit; font-size: 0.78rem; color: var(--texto); background: none; border: 2px solid transparent; border-radius: 12px; padding: 6px 2px; cursor: pointer; min-height: 44px; }
+.cor-opcao[aria-checked="true"] { border-color: var(--primaria); font-weight: 700; }
+.cor-amostra { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); position: relative; overflow: hidden; }
+.cor-amostra::after { content: ""; position: absolute; right: 4px; bottom: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--amostra-pri); border: 2px solid #fff; }
+/* Letra 10% maior em todo o app */
+html { font-size: 110%; }
+body { font-size: 0.875rem; }
+input, select, textarea { font-size: max(16px, 1rem) !important; }
+.grafico .eixo { font-size: 12px; }
+
 /* ---------- App instalável e backup ---------- */
 .banner-app { display: flex; gap: 10px; align-items: center; background: var(--cartao); border: 1px solid var(--primaria); border-radius: var(--raio); padding: 10px 12px; margin-bottom: 12px; font-size: 0.9rem; }
 .banner-app p { margin: 0; flex: 1; }
@@ -505,6 +544,16 @@ details.ajuda p { margin: 0 0 4px; }
 .check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
 .itens-nota li { padding: 6px 0; }
 .itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
+.seg span { font-size: 0.8rem; padding: 6px 2px; }
+.seg span svg.ic { margin-right: 4px; width: 1em; height: 1em; }
+.alim-abas { flex-wrap: wrap; }
+.alim-abas .subaba { flex: 1 1 30%; font-size: 0.8rem; min-height: 38px; }
+.lista-alim li { align-items: flex-start; }
+.lista-alim .qtd-alim { text-align: right; font-weight: 700; font-size: 0.9rem; white-space: nowrap; color: var(--primaria); }
+.lista-alim .qtd-alim small { display: block; font-weight: 400; color: var(--texto-2); font-size: 0.75rem; }
+.lista-alim li.evitar .principal { color: var(--texto-2); text-decoration: line-through; }
+.lista-alim li.evitar .qtd-alim { color: var(--erro); }
+.lista-alim li.toxico .ic-lista { background: var(--perigo-fundo); color: var(--erro); }
 .tabela-emb { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .tabela-emb th, .tabela-emb td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--borda); }
 .tabela-emb th:first-child, .tabela-emb td:first-child { text-align: left; }
@@ -520,7 +569,8 @@ details.ajuda p { margin: 0 0 4px; }
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
-      <button type="button" class="btn icone" id="btn-pets" aria-label="Pets e configurações"><i data-ic="config"></i></button>
+      <button type="button" class="btn icone" id="btn-pets" aria-label="Meus pets"><i data-ic="pata"></i></button>
+      <button type="button" class="btn icone" id="btn-config" aria-label="Configurações"><i data-ic="config"></i></button>
     </div>
   </header>
 
@@ -587,8 +637,18 @@ details.ajuda p { margin: 0 0 4px; }
           <button type="button" class="btn" id="btn-cancelar-pet" hidden>Cancelar</button>
         </div>
       </form>
+      <button type="button" class="btn" id="btn-fechar-pets">Fechar</button>
+    </section>
+
+    <!-- ===================== CONFIGURAÇÕES ===================== -->
+    <section id="painel-config" class="cartao" hidden>
+      <h2><i data-ic="config"></i>Configurações</h2>
+      <div class="backup" style="border-top:0;margin-top:0;padding-top:0">
+        <h3>Cor de fundo</h3>
+        <div class="cores" id="cores" role="radiogroup" aria-label="Cor de fundo"></div>
+      </div>
       <div class="backup">
-        <h3>Aparência</h3>
+        <h3>Tema</h3>
         <div class="segmentos" role="radiogroup" aria-label="Tema do app">
           <label class="seg"><input type="radio" name="tema" value="auto"><span><i data-ic="celular"></i>Automático</span></label>
           <label class="seg"><input type="radio" name="tema" value="claro"><span><i data-ic="sol"></i>Claro</span></label>
@@ -604,7 +664,7 @@ details.ajuda p { margin: 0 0 4px; }
         </div>
         <div id="backup-status" class="leitura-status" role="status" aria-live="polite" hidden></div>
       </div>
-      <button type="button" class="btn" id="btn-fechar-pets">Fechar</button>
+      <button type="button" class="btn" id="btn-fechar-config" style="width:100%;margin-top:12px">Fechar</button>
     </section>
 
     <!-- Aviso quando não há pets -->
@@ -1026,6 +1086,11 @@ details.ajuda p { margin: 0 0 4px; }
               <input type="date" id="saco-validade">
             </label>
           </div>
+          <fieldset class="grupo" id="saco-dividir" hidden>
+            <legend>Dividir este saco com outros pets</legend>
+            <div id="saco-dividir-lista"></div>
+            <p class="dica-campo">Os pets marcados comem do mesmo saco, cada um na sua quantidade (configure o alimentador de cada pet). O estoque desconta o consumo de todos.</p>
+          </fieldset>
           <details class="ajuda" data-ajuda="saco"><summary><i data-ic="info"></i>Como funciona</summary><p>Com o preço, o saco entra sozinho nos gastos. O app calcula quando a ração acaba e avisa no Início e no calendário, junto com a validade.</p></details>
           <p class="erro" id="saco-erro" role="alert" hidden></p>
           <button type="submit" class="btn primario" id="btn-salvar-saco">Salvar saco</button>
@@ -1050,6 +1115,24 @@ details.ajuda p { margin: 0 0 4px; }
           <p class="erro" id="racao-erro" role="alert" hidden></p>
           <button type="submit" class="btn primario">Salvar alimentação</button>
         </form>
+      </div>
+
+      <div class="cartao" id="cartao-alimentos">
+        <h2><i data-ic="tigela"></i>Alimentos que pode comer</h2>
+        <details class="ajuda" data-ajuda="alimentos"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Lista feita para o seu pet (espécie, idade, raça, peso e saúde cadastrada). A quantidade é o máximo por dia de cada item, sozinho: somando tudo, petiscos e extras não devem passar do limite de calorias mostrado, para não desequilibrar a ração.</p>
+        </details>
+        <ul class="perfil" id="alim-perfil"></ul>
+        <div id="alim-avisos"></div>
+        <div class="subabas alim-abas" id="alim-abas" role="tablist" aria-label="Grupos de alimentos">
+          <button type="button" class="subaba" data-alim="frutas" aria-selected="true" role="tab">Frutas</button>
+          <button type="button" class="subaba" data-alim="verduras" aria-selected="false" role="tab">Verduras</button>
+          <button type="button" class="subaba" data-alim="petiscos" aria-selected="false" role="tab">Petiscos</button>
+          <button type="button" class="subaba" data-alim="outros" aria-selected="false" role="tab">Outros</button>
+          <button type="button" class="subaba" data-alim="nunca" aria-selected="false" role="tab">Nunca dar</button>
+        </div>
+        <ul class="lista lista-alim" id="alim-lista"></ul>
+        <p class="nota">Ofereça um alimento novo por vez, em pouca quantidade, e observe por 24 h. Sem sal, açúcar, tempero, óleo, cebola ou alho. Quantidades são orientação geral: confirme com o veterinário.</p>
       </div>
     </section>
 
@@ -1280,6 +1363,8 @@ const IC = {
   'retorno': '<path d="M20 12a8 8 0 1 1-2.4-5.7L20 8.5M20 3.5v5h-5"/>',
   'tigela': '<path d="M3 11.5h18a9 7 0 0 1-18 0z"/><path d="M9 7l6 3M15 7l-6 3"/>',
   'pulmao': '<path d="M12 4v7M12 9c1 2 3 2 3 2"/><path d="M12 9c-1 2-3 2-3 2"/><path d="M15 11c3-3 6-1 6 3v4a3 3 0 0 1-4 2.8L15 20z"/><path d="M9 11c-3-3-6-1-6 3v4a3 3 0 0 0 4 2.8L9 20z"/>',
+  'fruta': '<path d="M12 7.5c-1.6-1.2-4-1.3-5.6-.1C4.2 9 4 11.9 4.8 14.6 5.8 18 8.1 21 10.3 21c.9 0 1.1-.5 1.7-.5s.8.5 1.7.5c2.2 0 4.5-3 5.5-6.4.8-2.7.6-5.6-1.6-7.2-1.6-1.2-4-1.1-5.6.1z"/><path d="M12 7.5c0-2 .9-3.6 3-4.5"/>',
+  'folha': '<path d="M5 19.5C5 10.5 10 5 20 4c0 9.5-5.5 15.5-15 15.5z"/><path d="M5 19.5l8.5-8.5"/>',
   'coceira': '<circle cx="7" cy="8.5" r="1.6"/><circle cx="10.5" cy="5" r="1.6"/><circle cx="15" cy="5.3" r="1.6"/><path d="M11.5 10c-2.5 0-5 3.6-4.2 5.6.8 1.7 2.5 1.2 4.2 1.2"/><path d="M15 12l5-1M15.5 15.5l4.5 1M14.5 18.5l3.5 2.5"/>',
 };
 function ic(nome, classe = '') {
@@ -1612,6 +1697,7 @@ function renderListaPets() {
 }
 
 function abrirPainelPets() {
+  if ($('#painel-config')) $('#painel-config').hidden = true;
   $('#painel-pets').hidden = false;
   limparFormPet();
   renderListaPets();
@@ -1660,6 +1746,13 @@ function removerPet(id, btn) {
   if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
   if ($('#pet-id').value === id) limparFormPet();
   for (const r of [...estado.sintomas, ...estado.consultas, ...estado.gastos]) if (r.petId === id && r.fotoId) FotosDB.apagar(r.fotoId);
+  const seguidores = estado.pets.filter((x) => x.sacoDe === id);
+  if (seguidores.length) {
+    const novoDono = seguidores[0];
+    delete novoDono.sacoDe;
+    if (p.saco) novoDono.saco = p.saco;
+    for (const x of seguidores.slice(1)) x.sacoDe = novoDono.id;
+  }
   estado.pets = estado.pets.filter((x) => x.id !== id);
   for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) estado[k] = estado[k].filter((r) => r.petId !== id);
   const eraAtual = estado.petAtual === id;
@@ -1725,6 +1818,15 @@ $('#lista-pets').addEventListener('click', (ev) => {
 });
 $('#btn-cancelar-pet').addEventListener('click', limparFormPet);
 $('#btn-pets').addEventListener('click', () => ($('#painel-pets').hidden ? abrirPainelPets() : fecharPainelPets()));
+function abrirConfig() {
+  fecharPainelPets();
+  $('#painel-config').hidden = false;
+  renderCores();
+  $('#painel-config').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fecharConfig() { $('#painel-config').hidden = true; }
+$('#btn-config').addEventListener('click', () => ($('#painel-config').hidden ? abrirConfig() : fecharConfig()));
+$('#btn-fechar-config').addEventListener('click', fecharConfig);
 $('#btn-fechar-pets').addEventListener('click', fecharPainelPets);
 $('#btn-primeiro-pet').addEventListener('click', abrirPainelPets);
 $('#pet-atual').addEventListener('change', (ev) => {
@@ -3935,17 +4037,25 @@ function eventosRemedio(r) {
   }));
 }
 
-/* ---------- Estoque de ração ---------- */
+/* ---------- Estoque de ração (um saco pode ser dividido entre pets) ---------- */
+// Quem guarda o saco: o próprio pet, ou o pet com quem ele divide
+function sacoDono(p) {
+  if (p?.sacoDe) { const d = estado.pets.find((x) => x.id === p.sacoDe); if (d) return d; }
+  return p;
+}
+function petsDoSaco(dono) { return [dono, ...estado.pets.filter((x) => x.id !== dono.id && x.sacoDe === dono.id)]; }
+function consumoDoPet(id) { const r = racaoDoPet(id); return r && r.refeicoes.length ? totalDia(r.refeicoes) : 0; }
 function estoqueRacao(p) {
-  const s = p.saco;
+  const dono = sacoDono(p);
+  const s = dono?.saco;
   if (!s || !(s.kg > 0)) return null;
-  const r = racaoDoPet(p.id);
-  const consumo = r && r.refeicoes.length ? totalDia(r.refeicoes) : 0;
+  const partes = petsDoSaco(dono).map((x) => ({ pet: x, g: consumoDoPet(x.id) }));
+  const consumo = Math.round(partes.reduce((t, x) => t + x.g, 0) * 10) / 10;
   const total = s.kg * 1000;
   const restanteG = Math.max(0, total - consumo * Math.max(0, diasEntre(s.abertura, hojeISO())));
   const diasRestantes = consumo ? Math.floor(restanteG / consumo) : null;
   return {
-    consumo, restanteG, diasRestantes, pct: restanteG / total,
+    consumo, partes, dono, restanteG, diasRestantes, pct: restanteG / total,
     acaba: diasRestantes !== null ? somarDias(hojeISO(), diasRestantes) : null,
     duracao: consumo ? Math.floor(total / consumo) : null,
     custoDia: s.preco && consumo ? s.preco / (total / consumo) : null,
@@ -3955,7 +4065,12 @@ function estoqueRacao(p) {
 function preencherFormSaco() {
   const p = petAtual();
   if (!p) return;
-  const s = p.saco;
+  const dono = sacoDono(p);
+  const s = dono.saco;
+  // Dividir com outros pets
+  const outros = estado.pets.filter((x) => x.id !== dono.id);
+  $('#saco-dividir').hidden = !outros.length;
+  $('#saco-dividir-lista').innerHTML = outros.map((x) => `<label class="check"><input type="checkbox" data-dividir="${x.id}"${x.sacoDe === dono.id ? ' checked' : ''}> ${esc(x.nome)}${x.saco && x.sacoDe !== dono.id ? ' <small class="dica-campo">(deixa de usar o saco próprio)</small>' : ''}</label>`).join('');
   $('#saco-kg').value = s ? String(s.kg).replace('.', ',') : '';
   $('#saco-abertura').value = s ? s.abertura : hojeISO();
   $('#saco-abertura').max = hojeISO();
@@ -3985,7 +4100,17 @@ $('#form-saco').addEventListener('submit', (ev) => {
   else if (abertura > hojeISO()) msg = 'A data de abertura não pode estar no futuro.';
   else if (precoTxt && !(preco > 0)) msg = 'Preço inválido (ex.: 189,90).';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
-  salvarSaco(p, kg, abertura, preco, false, $('#saco-validade').value);
+  const dono = sacoDono(p);
+  salvarSaco(dono, kg, abertura, preco, false, $('#saco-validade').value);
+  // quem divide o saco
+  document.querySelectorAll('#saco-dividir-lista [data-dividir]').forEach((cb) => {
+    const outro = estado.pets.find((x) => x.id === cb.dataset.dividir);
+    if (!outro) return;
+    if (cb.checked && outro.sacoDe !== dono.id) {
+      for (const seg of estado.pets.filter((x) => x.sacoDe === outro.id)) seg.sacoDe = dono.id; // quem dividia com ele vem junto
+      outro.sacoDe = dono.id;
+    } else if (!cb.checked && outro.sacoDe === dono.id) delete outro.sacoDe;
+  });
   marcarAjuda('saco');
   salvar();
   preencherFormSaco();
@@ -3995,7 +4120,7 @@ $('#form-saco').addEventListener('submit', (ev) => {
 $('#saco-resumo').addEventListener('click', (ev) => {
   const b = ev.target.closest('#btn-saco-novo');
   if (!b || !pedeConfirmacao(b, 'Abri hoje um saco igual?')) return;
-  const p = petAtual();
+  const p = sacoDono(petAtual());
   salvarSaco(p, p.saco.kg, hojeISO(), p.saco.preco, true, '');
   salvar();
   preencherFormSaco();
@@ -4007,7 +4132,9 @@ function renderSaco() {
   const el = $('#saco-resumo');
   const e = estoqueRacao(p);
   if (!e) { el.innerHTML = '<p class="vazio-texto">Informe o saco de ração aberto para saber quando vai acabar.</p>'; return; }
-  const s = p.saco;
+  const s = e.dono.saco;
+  const dividido = e.partes.length > 1
+    ? `<p class="em-uso">${ic('pata')}<span><strong>Saco dividido:</strong> ${e.partes.map((x) => `${esc(x.pet.nome)} ${x.g ? fmtG(x.g) : '(sem alimentador)'}`).join(' + ')} = <strong>${fmtG(e.consumo)}/dia</strong>${e.dono.id !== p.id ? ` · o saco está cadastrado em ${esc(e.dono.nome)}` : ''}</span></p>` : '';
   let linha;
   if (!e.consumo) linha = 'Configure os horários do alimentador abaixo para calcular quando a ração acaba.';
   else if (e.diasRestantes <= 0) linha = '<strong>A ração deste saco já deve ter acabado.</strong> Abriu outro? Toque em "Abri um saco novo".';
@@ -4016,9 +4143,152 @@ function renderSaco() {
   el.innerHTML = `
     <div class="barra-estoque ${nivel}" role="img" aria-label="Estoque: ${Math.round(e.pct * 100)}%"><span style="width:${Math.max(2, Math.round(e.pct * 100))}%"></span></div>
     <p class="estoque-txt">${linha}</p>
+    ${dividido}
     <p class="nota">Saco de ${fmtNum(s.kg, s.kg % 1 ? 1 : 0)} kg aberto em ${fmtData(s.abertura)}${e.duracao ? ` · dura ~${plural(e.duracao, 'dia', 'dias')}` : ''}${e.custoDia ? ` · ≈ ${fmtReais(e.custoDia)} por dia` : ''}</p>
     <button type="button" class="btn" id="btn-saco-novo">Abri um saco novo hoje</button>`;
 }
+
+
+/* ---------- Alimentos que o pet pode comer (e quanto) ---------- */
+// kcal por 100 g (referência USDA/TACO para alimentos in natura; média de mercado para petiscos)
+const ALIMENTOS = [
+  // frutas
+  { id: 'maca', g: 'frutas', nome: 'Maçã', cao: 1, gato: 0, kcal: 52, un: ['fatia fina', 15, 'fatias finas'], prep: 'sem sementes e sem o miolo', acucar: 1 },
+  { id: 'banana', g: 'frutas', nome: 'Banana', cao: 1, gato: 1, kcal: 89, un: ['rodela', 8, 'rodelas'], prep: 'sem casca', acucar: 1 },
+  { id: 'melancia', g: 'frutas', nome: 'Melancia', cao: 1, gato: 1, kcal: 30, un: ['cubo de 2 cm', 10, 'cubos de 2 cm'], prep: 'sem sementes e sem casca' },
+  { id: 'melao', g: 'frutas', nome: 'Melão', cao: 1, gato: 1, kcal: 34, un: ['cubo de 2 cm', 10, 'cubos de 2 cm'], prep: 'sem sementes e sem casca' },
+  { id: 'mamao', g: 'frutas', nome: 'Mamão', cao: 1, gato: 0, kcal: 43, un: ['cubo de 2 cm', 10, 'cubos de 2 cm'], prep: 'sem sementes e sem casca' },
+  { id: 'manga', g: 'frutas', nome: 'Manga', cao: 1, gato: 0, kcal: 60, un: ['cubo de 2 cm', 10, 'cubos de 2 cm'], prep: 'sem casca e sem caroço (o caroço engasga)', acucar: 1 },
+  { id: 'pera', g: 'frutas', nome: 'Pera', cao: 1, gato: 0, kcal: 57, un: ['fatia fina', 15, 'fatias finas'], prep: 'sem sementes e sem o miolo', acucar: 1 },
+  { id: 'morango', g: 'frutas', nome: 'Morango', cao: 1, gato: 1, kcal: 32, un: ['morango', 12, 'morangos'], prep: 'lavado, sem as folhas' },
+  { id: 'mirtilo', g: 'frutas', nome: 'Mirtilo (blueberry)', cao: 1, gato: 1, kcal: 57, un: ['frutinha', 1.5, 'frutinhas'], prep: 'lavado' },
+  // verduras e legumes
+  { id: 'cenoura', g: 'verduras', nome: 'Cenoura', cao: 1, gato: 1, kcal: 41, un: ['rodela', 5, 'rodelas'], prep: 'crua em palitos (cão) ou cozida e amassada (gato)' },
+  { id: 'abobrinha', g: 'verduras', nome: 'Abobrinha', cao: 1, gato: 1, kcal: 17, un: ['rodela', 8, 'rodelas'], prep: 'cozida, sem tempero' },
+  { id: 'abobora', g: 'verduras', nome: 'Abóbora', cao: 1, gato: 1, kcal: 26, un: ['colher de sopa', 15, 'colheres de sopa'], prep: 'cozida e amassada, sem casca e sem sementes' },
+  { id: 'vagem', g: 'verduras', nome: 'Vagem', cao: 1, gato: 1, kcal: 31, un: ['vagem', 5, 'vagens'], prep: 'cozida, em pedaços' },
+  { id: 'brocolis', g: 'verduras', nome: 'Brócolis', cao: 1, gato: 0, kcal: 35, un: ['buquê pequeno', 10, 'buquês pequenos'], prep: 'cozido; pouca quantidade (em excesso irrita o intestino)', capKg: 2 },
+  { id: 'pepino', g: 'verduras', nome: 'Pepino', cao: 1, gato: 0, kcal: 15, un: ['rodela', 7, 'rodelas'], prep: 'cru, sem casca' },
+  { id: 'chuchu', g: 'verduras', nome: 'Chuchu', cao: 1, gato: 0, kcal: 19, un: ['cubo de 2 cm', 8, 'cubos de 2 cm'], prep: 'cozido' },
+  { id: 'batatadoce', g: 'verduras', nome: 'Batata-doce', cao: 1, gato: 0, kcal: 86, un: ['colher de sopa', 20, 'colheres de sopa'], prep: 'cozida, sem casca (nunca crua)', acucar: 1 },
+  { id: 'ervilha', g: 'verduras', nome: 'Ervilha', cao: 1, gato: 1, kcal: 81, un: ['colher de chá', 5, 'colheres de chá'], prep: 'cozida, sem sal (não use a de lata com salmoura)' },
+  // petiscos industrializados
+  { id: 'bifinho', g: 'petiscos', nome: 'Bifinho / palitinho de carne', cao: 1, gato: 0, kcal: 300, un: ['bifinho', 7, 'bifinhos'], prep: 'próprio para cães', gordura: 1 },
+  { id: 'biscoito', g: 'petiscos', nome: 'Biscoito para cães', cao: 1, gato: 0, kcal: 350, un: ['biscoito', 5, 'biscoitos'], prep: 'próprio para cães' },
+  { id: 'dental', g: 'petiscos', nome: 'Petisco dental (tipo dental stick)', cao: 1, gato: 0, kcal: 280, un: ['palito do tamanho do porte', 15, 'palitos do tamanho do porte'], prep: 'do tamanho certo para o porte; sempre com alguém olhando', duro: 1 },
+  { id: 'liofilizado', g: 'petiscos', nome: 'Petisco liofilizado (carne pura)', cao: 1, gato: 1, kcal: 350, un: ['pedacinho', 1, 'pedacinhos'], prep: 'sem tempero', proteina: 1 },
+  { id: 'crocante-gato', g: 'petiscos', nome: 'Petisco crocante para gatos', cao: 0, gato: 1, kcal: 400, un: ['petisco', 0.6, 'petiscos'], prep: 'próprio para gatos', gordura: 1 },
+  { id: 'cremoso-gato', g: 'petiscos', nome: 'Petisco cremoso em sachê (tubinho)', cao: 0, gato: 1, kcal: 50, un: ['tubinho', 14, 'tubinhos'], prep: 'próprio para gatos' },
+  // outros
+  { id: 'frango', g: 'outros', nome: 'Frango cozido', cao: 1, gato: 1, kcal: 165, un: ['colher de sopa desfiada', 15, 'colheres de sopa (desfiado)'], prep: 'peito sem pele, sem osso e sem tempero', proteina: 1 },
+  { id: 'carne', g: 'outros', nome: 'Carne magra cozida', cao: 1, gato: 1, kcal: 190, un: ['colher de sopa', 15, 'colheres de sopa'], prep: 'patinho ou músculo, sem gordura e sem tempero', proteina: 1, gordura: 1 },
+  { id: 'peixe', g: 'outros', nome: 'Peixe cozido', cao: 1, gato: 1, kcal: 120, un: ['colher de sopa', 15, 'colheres de sopa'], prep: 'tilápia ou merluza, sem espinhas e sem tempero', proteina: 1 },
+  { id: 'ovo', g: 'outros', nome: 'Ovo cozido', cao: 1, gato: 1, kcal: 155, un: ['ovo inteiro', 50, 'ovos inteiros'], prep: 'bem cozido (nunca cru)', proteina: 1, gordura: 1 },
+  { id: 'arroz', g: 'outros', nome: 'Arroz cozido', cao: 1, gato: 0, kcal: 130, un: ['colher de sopa', 25, 'colheres de sopa'], prep: 'sem sal e sem óleo' },
+  { id: 'iogurte', g: 'outros', nome: 'Iogurte natural', cao: 1, gato: 0, kcal: 61, un: ['colher de sopa', 15, 'colheres de sopa'], prep: 'sem açúcar e sem adoçante (xilitol é veneno)', gordura: 1 },
+  { id: 'sache', g: 'outros', nome: 'Sachê / ração úmida', cao: 1, gato: 1, kcal: 85, un: ['sachê', 85, 'sachês'], prep: 'conta como refeição: desconte da ração seca' },
+];
+const NUNCA_DAR = [
+  ['Uva e uva-passa', 'lesão nos rins, mesmo em pouca quantidade', 'cao gato'],
+  ['Chocolate, café e energéticos', 'cafeína e teobromina: tremores, arritmia', 'cao gato'],
+  ['Cebola, alho, alho-poró e cebolinha', 'destroem as hemácias (anemia), cru ou cozido', 'cao gato'],
+  ['Xilitol (adoçante de chiclete, bala, pasta de dente)', 'hipoglicemia e lesão no fígado', 'cao gato'],
+  ['Macadâmia', 'fraqueza e tremores', 'cao'],
+  ['Abacate', 'caroço engasga e obstrui; casca e folhas fazem mal', 'cao gato'],
+  ['Ossos cozidos', 'lascam e perfuram o intestino', 'cao gato'],
+  ['Massa crua de pão ou pizza', 'fermenta no estômago', 'cao gato'],
+  ['Bebida alcoólica', 'intoxicação grave', 'cao gato'],
+  ['Comida temperada, salgada ou gordurosa (churrasco, frituras)', 'pancreatite e vômito', 'cao gato'],
+  ['Leite de vaca', 'a maioria dos gatos adultos não digere a lactose', 'gato'],
+  ['Atum de lata com frequência', 'sal e mercúrio; vicia o gato', 'gato'],
+  ['Lírios (planta)', 'insuficiência renal em gatos, até o pólen', 'gato'],
+  ['Carne ou peixe crus', 'bactérias e parasitas', 'cao gato'],
+];
+const RACAS_ENGORDAM = ['labrador', 'golden', 'pug', 'bulldog-frances', 'dachshund', 'beagle', 'shih-tzu'];
+const RACAS_BRAQUI = ['pug', 'bulldog-frances', 'shih-tzu', 'persa'];
+let grupoAlim = 'frutas';
+
+function perfilAlimentar(p) {
+  const meses = idadeEmMeses(p.nascimento);
+  const pesos = pesosDoPet();
+  const kg = pesos.length ? pesos[pesos.length - 1].kg : null;
+  const raca = racaDoGuia(p);
+  const ecc = ultimaAvaliacao()?.escore ?? null;
+  const filhote = meses !== null && meses < 12;
+  const idoso = meses !== null && meses >= (p.especie === 'gato' ? 120 : 84);
+  const doencas = estado.doencas.filter((d) => d.petId === p.id && d.situacao !== 'curada').map((d) => normalizar(d.nome)).join(' ');
+  const carac = racaoDoPet()?.caracteristicas || [];
+  const veterinaria = carac.includes('veterinaria');
+  const poucaGordura = carac.includes('lowfat') || /pancreat|hiperlip|gastro|colite|enterit/.test(doencas);
+  const diabetes = /diabet/.test(doencas);
+  const renal = carac.includes('renal') || /renal|rim/.test(doencas);
+  const engorda = RACAS_ENGORDAM.includes(raca) || (ecc !== null && ecc >= 6);
+  const braqui = RACAS_BRAQUI.includes(raca);
+  // calorias do dia: meta da avaliação ECC ou estimativa pela fórmula de energia
+  let kcalDia = ultimaAvaliacao()?.kcalMeta || null;
+  if (!kcalDia && kg) kcalDia = RER(kg) * fatorManutencao(p.especie, faseSugerida(p), p.nutri?.castrado !== false, p.nutri?.atividade || 'normal');
+  const pct = filhote || engorda || veterinaria ? 0.05 : 0.10;
+  return { kg, meses, filhote, idoso, raca, ecc, veterinaria, poucaGordura, diabetes, renal, engorda, braqui, kcalDia, pct, limite: kcalDia ? kcalDia * pct : null };
+}
+
+function quantidadeMax(item, pf, especie) {
+  if (!pf.limite || !pf.kg) return null;
+  let g = (pf.limite / item.kcal) * 100;
+  const capPorKg = item.capKg ?? (item.g === 'frutas' ? (especie === 'gato' ? 1.5 : 4) : item.g === 'verduras' ? (especie === 'gato' ? 2.5 : 8) : item.g === 'outros' ? (especie === 'gato' ? 6 : 10) : 99);
+  g = Math.min(g, capPorKg * pf.kg);
+  if (item.id === 'sache') g = Math.min(g * 2, 85 * Math.max(1, Math.round(pf.kg / 4))); // é comida, não petisco
+  return g < 20 ? Math.max(1, Math.round(g)) : Math.round(g / 5) * 5;
+}
+
+function renderAlimentos() {
+  const p = petAtual();
+  if (!p) return;
+  const pf = perfilAlimentar(p);
+  const fase = pf.filhote ? 'filhote' : pf.idoso ? 'idoso' : pf.meses !== null ? 'adulto' : 'idade não informada';
+  $('#alim-perfil').innerHTML = [ESPECIES[p.especie].nome, pf.kg ? fmtKg(pf.kg) : 'sem peso', fase, pf.raca ? RACAS[p.especie][pf.raca]?.nome : p.raca || '', pf.limite ? `extras até ${Math.round(pf.limite)} kcal/dia` : '']
+    .filter(Boolean).map((t) => `<li>${esc(t)}</li>`).join('');
+  const avisos = [];
+  if (pf.veterinaria) avisos.push(`${ic('alerta')} Está em <strong>ração veterinária</strong>: qualquer alimento extra deve ser combinado com o veterinário. As quantidades abaixo já estão reduzidas pela metade.`);
+  if (pf.poucaGordura) avisos.push(`${ic('alerta')} Dieta com <strong>pouca gordura</strong>: os itens gordurosos foram marcados para evitar.`);
+  if (pf.diabetes) avisos.push(`${ic('alerta')} <strong>Diabetes</strong>: frutas doces e batata-doce foram marcadas para evitar.`);
+  if (pf.renal) avisos.push(`${ic('alerta')} <strong>Rins</strong>: carnes, ovo e petiscos de carne só com orientação do veterinário (controle de proteína e fósforo).`);
+  if (pf.filhote) avisos.push(`${ic('info')} <strong>Filhote</strong>: a ração de crescimento tem que ser quase tudo; extras só 5% das calorias, um de cada vez.`);
+  else if (pf.engorda) avisos.push(`${ic('info')} ${pf.ecc >= 6 ? `ECC ${pf.ecc}: acima do peso` : 'Raça com tendência a engordar'}: extras limitados a 5% das calorias. Prefira verduras.`);
+  if (pf.braqui) avisos.push(`${ic('info')} Focinho achatado: corte tudo em pedaços bem pequenos para não engasgar.`);
+  if (pf.idoso) avisos.push(`${ic('info')} Idoso: prefira alimentos macios e cozidos.`);
+  if (!pf.kg) avisos.push(`${ic('info')} Registre o peso (aba Peso) para ver as quantidades.`);
+  if (p.especie === 'gato') avisos.push(`${ic('info')} Gatos são carnívoros: frutas e verduras são opcionais e em quantidade bem pequena.`);
+  $('#alim-avisos').innerHTML = avisos.map((a) => `<p class="nota-raca">${a}</p>`).join('');
+  document.querySelectorAll('[data-alim]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.alim === grupoAlim)));
+  if (grupoAlim === 'nunca') {
+    $('#alim-lista').innerHTML = NUNCA_DAR.filter(([, , esp]) => esp.includes(p.especie)).map(([nome, porque]) => `
+      <li class="toxico"><span class="ic-lista">${ic('urgente')}</span><div class="info"><div class="principal">${esc(nome)}</div><div class="secundario">${esc(porque)}</div></div></li>`).join('');
+    return;
+  }
+  const itens = ALIMENTOS.filter((a) => a.g === grupoAlim && a[p.especie]);
+  $('#alim-lista').innerHTML = itens.map((a) => {
+    let evitar = '';
+    if (pf.poucaGordura && a.gordura) evitar = 'evite: tem gordura';
+    else if (pf.diabetes && a.acucar) evitar = 'evite: tem açúcar';
+    else if (pf.filhote && a.duro && pf.meses < 6) evitar = 'só depois dos 6 meses';
+    else if (pf.renal && a.proteina) evitar = 'só com orientação';
+    const g = evitar ? null : quantidadeMax(a, pf, p.especie);
+    const n = g ? Math.floor((g / a.un[1]) * 2) / 2 : 0; // arredonda para baixo, de meia em meia unidade
+    const un = g ? (n >= 1 ? `≈ ${fmtNum(n, n % 1 ? 1 : 0)} ${n >= 2 ? a.un[2] : a.un[0]}` : n === 0.5 ? `≈ meia ${a.un[0].split(' ')[0] === 'ovo' ? 'unidade' : a.un[0]}` : `menos de 1 ${a.un[0]}`) : '';
+    return `
+      <li class="${evitar ? 'evitar' : ''}">
+        <span class="ic-lista">${ic({ frutas: 'fruta', verduras: 'folha', petiscos: 'osso', outros: 'tigela' }[a.g])}</span>
+        <div class="info"><div class="principal">${esc(a.nome)}</div><div class="secundario">${esc(a.prep)}</div></div>
+        <div class="qtd-alim">${evitar ? esc(evitar) : g ? `até ${g} g/dia<small>${esc(un)}</small>` : '—'}</div>
+      </li>`;
+  }).join('') || '<li class="vazio">Nada neste grupo para a espécie.</li>';
+}
+$('#alim-abas').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-alim]');
+  if (!b) return;
+  grupoAlim = b.dataset.alim;
+  renderAlimentos();
+});
 
 /* ---------- Ler embalagem da ração (OCR no próprio aparelho) ---------- */
 // Tesseract.js e o idioma português ficam hospedados junto do app (pasta ocr/):
@@ -4991,7 +5261,7 @@ async function lancarNota(separar) {
   let racaoPeloSaco = 0;
   if ($('#nota-saco')?.checked && r.racaoItem) {
     racaoPeloSaco = r.racaoItem.valor;
-    salvarSaco(p, r.racaoItem.kg, hojeISO(), r.racaoItem.valor, true, '');
+    salvarSaco(sacoDono(p), r.racaoItem.kg, hojeISO(), r.racaoItem.valor, true, '');
   }
   const novos = [];
   if (separar && r.separavel) {
@@ -5519,10 +5789,11 @@ function avisosDoPet(petId) {
       html: er.diasRestantes <= 0 ? '<strong>Ração</strong> — o saco já deve ter acabado: registre o novo'
         : `<strong>Ração</strong> — acaba em ~${plural(er.diasRestantes, 'dia', 'dias')} (${fmtData(er.acaba)})` });
   }
-  if (p.saco?.validade) {
-    const d = diasEntre(hoje, p.saco.validade);
+  const sacoAv = sacoDono(p).saco;
+  if (sacoAv?.validade) {
+    const d = diasEntre(hoje, sacoAv.validade);
     if (d <= 15) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: 'saco', aba: 'racao', ordem: d,
-      html: `<strong>Validade da ração</strong> — ${d < 0 ? `venceu em ${fmtData(p.saco.validade)}` : d === 0 ? 'vence hoje' : `vence em ${plural(d, 'dia', 'dias')} (${fmtData(p.saco.validade)})`}` });
+      html: `<strong>Validade da ração</strong> — ${d < 0 ? `venceu em ${fmtData(sacoAv.validade)}` : d === 0 ? 'vence hoje' : `vence em ${plural(d, 'dia', 'dias')} (${fmtData(sacoAv.validade)})`}` });
   }
   for (const c of consultasDoPet(petId).filter(retornoPendente)) {
     const d = diasEntre(hoje, c.retorno);
@@ -5673,9 +5944,10 @@ function eventosDoPet(petId, ini, fim) {
     ev.push({ chave: 'rac-fim', data: er.acaba, ic: 'racao', titulo: 'Ração deve acabar', detalhe: `${racaoDoPet(petId)?.marca || 'saco atual'} · ${fmtG(er.consumo)}/dia`,
       nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'racao' });
   }
-  if (p.saco?.validade && dentro(p.saco.validade)) {
-    ev.push({ chave: 'rac-val', data: p.saco.validade, ic: 'saco', titulo: 'Validade da ração', detalhe: racaoDoPet(petId)?.marca || '',
-      nivel: p.saco.validade < hoje ? 'alerta' : diasEntre(hoje, p.saco.validade) <= 15 ? 'perto' : '', aba: 'racao' });
+  const sacoP = sacoDono(p).saco;
+  if (sacoP?.validade && dentro(sacoP.validade)) {
+    ev.push({ chave: 'rac-val', data: sacoP.validade, ic: 'saco', titulo: 'Validade da ração', detalhe: racaoDoPet(petId)?.marca || '',
+      nivel: sacoP.validade < hoje ? 'alerta' : diasEntre(hoje, sacoP.validade) <= 15 ? 'perto' : '', aba: 'racao' });
   }
   // Remédios: último dia e fim do estoque
   for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x))) {
@@ -5962,7 +6234,7 @@ function renderTudo() {
   if (abaAtual === 'inicio') renderProximos();
   else if (abaAtual === 'agenda') renderAgenda();
   else if (abaAtual === 'peso') { renderPeso(); renderEcc(); renderListaEcc(); }
-  else if (abaAtual === 'racao') { renderRacao(); renderSaco(); }
+  else if (abaAtual === 'racao') { renderRacao(); renderSaco(); renderAlimentos(); }
   else if (abaAtual === 'diario') renderDiario();
   else { renderSaude(); renderClinico(); renderRaca(); }
 }
@@ -6072,6 +6344,35 @@ document.querySelectorAll('input[name="tema"]').forEach((el) => {
     aplicarTema(tema);
   });
 });
+
+
+/* ---------- Cor de fundo (Configurações) ---------- */
+const CORES_FUNDO = {
+  padrao: ['Padrão', '#f3f4f6', '#257de0'], azul: ['Azul', '#e6f0fb', '#1f6fd1'], amarelo: ['Amarelo', '#fbf3d5', '#8a5a00'],
+  verde: ['Verde', '#e5f3e8', '#1d7a3a'], vermelho: ['Vermelho', '#fbe7e5', '#b3261e'], roxo: ['Roxo', '#ece6f8', '#5e35b1'],
+  lilas: ['Lilás', '#f5ecfa', '#8e44ad'], laranja: ['Laranja', '#fdeedd', '#a84f00'],
+};
+let corFundo = 'padrao';
+try { const c = localStorage.getItem('diario-pet-cor'); if (CORES_FUNDO[c]) corFundo = c; } catch (e) { /* ignora */ }
+function aplicarCor(c) {
+  if (c && c !== 'padrao') document.documentElement.dataset.cor = c;
+  else delete document.documentElement.dataset.cor;
+}
+function renderCores() {
+  $('#cores').innerHTML = Object.entries(CORES_FUNDO).map(([k, [nome, fundo, pri]]) => `
+    <button type="button" class="cor-opcao" role="radio" aria-checked="${k === corFundo}" data-cor="${k}">
+      <span class="cor-amostra" style="background:${fundo};--amostra-pri:${pri}"></span>${nome}
+    </button>`).join('');
+}
+$('#cores').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-cor]');
+  if (!b) return;
+  corFundo = b.dataset.cor;
+  try { localStorage.setItem('diario-pet-cor', corFundo); } catch (e) { /* ignora */ }
+  aplicarCor(corFundo);
+  renderCores();
+});
+aplicarCor(corFundo);
 
 /* ---------- App instalável (PWA) ---------- */
 const MODO_APP = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
