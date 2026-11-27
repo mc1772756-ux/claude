@@ -4,7 +4,7 @@
    Leitor de fotos (ocr/, ~10 MB): só é baixado na primeira vez que alguém usa o leitor
    e depois sai sempre do guardado (sem baixar de novo a cada uso).
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v7';
+const VERSAO = 'diario-pet-v8';
 const ARQUIVOS = [
   './',
   './index.html',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', (ev) => {
 
   if (req.mode === 'navigate') {
     ev.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' }) // confere sempre no servidor (o GitHub Pages guarda a página por 10 min)
         .then((resp) => {
           if (resp.ok) { const copia = resp.clone(); caches.open(VERSAO).then((c) => c.put('./index.html', copia)); }
           return resp;
