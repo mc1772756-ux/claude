@@ -1,4 +1,9 @@
-<!doctype html><html lang="pt-BR"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
 <title>Diário do Pet</title>
 <meta name="description" content="Peso, vacinas, remédios, ração e diário de saúde do seu cão ou gato. Funciona offline.">
 <meta name="theme-color" content="#257de0">
@@ -19,11 +24,11 @@
     if (corSalva && corSalva !== 'padrao') document.documentElement.dataset.cor = corSalva;
   } catch (e) { /* sem armazenamento: segue o celular */ }
 </script>
-</head><body>
-<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root {
   color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   --fundo: #f3f4f6;
   --cartao: #ffffff;
   --texto: #191919;
@@ -84,7 +89,8 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 section, form { scroll-margin-top: 130px; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+img { max-width: 100%; }
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -204,7 +210,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 .resumo-cab { display: flex; gap: 12px; align-items: center; }
 .avatar {
-  width: 48px; height: 48px; border-radius: 50%;
+  width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
   display: grid; place-items: center; font-size: 1.6rem;
   background: var(--neutro-fundo); flex: none;
 }
@@ -249,8 +255,8 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
 .seg span {
   display: flex; align-items: center; justify-content: center; text-align: center;
-  min-height: 44px; padding: 6px 4px; border-radius: 10px;
-  border: 1px solid var(--borda); background: var(--fundo); font-size: 0.85rem; cursor: pointer;
+  min-height: 44px; padding: 6px 2px; border-radius: 10px;
+  border: 1px solid var(--borda); background: var(--fundo); font-size: 0.8rem; cursor: pointer;
 }
 .seg input:checked + span { background: var(--primaria); color: var(--primaria-texto); border-color: transparent; font-weight: 600; }
 .seg input:focus-visible + span { outline: 2px solid var(--primaria); outline-offset: 2px; }
@@ -303,7 +309,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* ---------- Sub-abas da Saúde ---------- */
 .subabas { display: flex; gap: 6px; margin-bottom: 12px; background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 4px; }
-.subaba { flex: 1; position: relative; font: inherit; font-size: 0.9rem; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--texto-2); cursor: pointer; }
+.subaba { flex: 1; position: relative; font: inherit; font-size: 0.85rem; padding: 4px 6px; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--texto-2); cursor: pointer; }
 .subaba[aria-selected="true"] { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; }
 .subaba:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
 .contador-mini { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; background: var(--neutro-fundo); color: var(--texto); font-size: 0.7rem; font-weight: 700; vertical-align: middle; }
@@ -337,7 +343,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .grafico .rotulo-ideal { fill: var(--ok); font-weight: 600; }
 
 /* ---------- Guia por raça ---------- */
-.subaba { font-size: 0.85rem; padding: 4px 6px; }
 .lista-cuidados { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .lista-cuidados:not(:empty) { margin-top: 12px; }
 .cuidado { border: 1px solid var(--borda); border-radius: 12px; padding: 12px; background: var(--fundo); }
@@ -366,7 +371,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .grupo-risco h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding-left: 10px; border-left: 4px solid var(--borda); }
 .risco-agora h3 { border-left-color: var(--erro); }
 .risco-olho h3 { border-left-color: var(--aviso); }
-.risco-depois h3 { border-left-color: var(--texto-2); }
 .grupo-risco .qtd { font-size: 0.75rem; background: var(--neutro-fundo); border-radius: 999px; padding: 1px 8px; }
 .grupo-risco details summary { cursor: pointer; color: var(--primaria); font-size: 0.9rem; padding: 4px 0 8px; }
 .grupo-risco .lista-cuidados { margin-top: 0; }
@@ -384,7 +388,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 
 /* ---------- Avatar e ícones ---------- */
-.avatar { overflow: hidden; }
 .avatar svg, .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .avatar.pequeno { width: 36px; height: 36px; flex: none; border-radius: 50%; }
 .avatar.grande { width: 72px; height: 72px; border-radius: 50%; flex: none; background: var(--neutro-fundo); }
@@ -403,7 +406,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .barra-estoque.baixo span { background: var(--erro); }
 .estoque-txt { margin: 0 0 6px; }
 #saco-resumo .btn { margin: 10px 0 14px; }
-.horas-lembrete label { min-width: 0; }
 
 /* ---------- Diário ---------- */
 .item-sintoma, .item-consulta { align-items: flex-start; }
@@ -421,7 +423,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 .segmentos.compacto { margin: 0; }
 .segmentos.compacto .seg span { min-height: 36px; padding: 4px 12px; }
 .barras { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.barras li { display: grid; grid-template-columns: 3.4em 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.barras li { display: grid; grid-template-columns: 4.2em 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .barras.categorias li { grid-template-columns: minmax(0, 9em) 1fr auto; }
 .barras .rot { color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .barras li.atual .rot { color: var(--texto); font-weight: 700; }
@@ -431,12 +433,10 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 #gastos-resumo h3 { font-size: 0.9rem; margin: 14px 0 8px; }
 .visor { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); }
 .visor img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
-.abas .aba-btn { font-size: 0.72rem; padding: 6px 2px; }
 fieldset { min-width: 0; }
 .horas-lembrete { flex-wrap: wrap; }
-.horas-lembrete label { flex: 1 1 96px; }
+.horas-lembrete label { flex: 1 1 96px; min-width: 0; }
 .foto-campo .botao-arquivo { flex: none; width: auto; }
-.barras li { grid-template-columns: 4.2em 1fr auto; }
 
 /* ---------- Ícones desenhados ---------- */
 svg.ic { width: 1.15em; height: 1.15em; flex: none; display: inline-block; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -544,7 +544,6 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 .check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
 .itens-nota li { padding: 6px 0; }
 .itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
-.seg span { font-size: 0.8rem; padding: 6px 2px; }
 .seg span svg.ic { margin-right: 4px; width: 1em; height: 1em; }
 .alim-abas { flex-wrap: wrap; }
 .alim-abas .subaba { flex: 1 1 30%; font-size: 0.8rem; min-height: 38px; }
@@ -563,7 +562,8 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 .progresso-ocr span { display: block; height: 100%; width: 0; background: var(--primaria); transition: width .2s; }
 
 </style>
-
+</head>
+<body>
   <header class="topo">
     <h1><i data-ic="pata"></i>Diário do Pet</h1>
     <div class="seletor-pet">
@@ -3809,7 +3809,6 @@ const mesDe = (iso) => iso.slice(0, 7);
 function somarDias(iso, n) { const d = dataLocal(iso); d.setDate(d.getDate() + n); return paraISO(d); }
 const NOMES_MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const fmtMes = (ym) => `${NOMES_MES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(2, 4)}`;
-function agoraHM() { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 
 /* ---------- Fotos (IndexedDB: cabe muito mais que o localStorage) ---------- */
 const FotosDB = (() => {
@@ -3834,6 +3833,7 @@ const FotosDB = (() => {
       const req = fn(tx.objectStore('fotos'));
       tx.oncomplete = () => ok(req ? req.result : undefined);
       tx.onerror = () => falha(tx.error);
+      tx.onabort = () => falha(tx.error || new Error('abortada'));
     });
   }
   return {
@@ -4760,7 +4760,6 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
     let texto = '';
     let linhas = [];
     const canvases = [];
-    let etapa = 'Lendo';
     // 1ª leitura: bloco único (mantém as linhas da tabela inteiras)
     await leitor.setParameters({ tessedit_pageseg_mode: '6' });
     for (fotoAtual = 0; fotoAtual < total; fotoAtual++) {
@@ -4901,7 +4900,6 @@ function mostrarLeituraEmb(l) {
   box.hidden = false;
 }
 
-let feitoValidade = false;
 function guardarCaracteristicas(lista) {
   caracteristicasForm = lista;
   const r = racaoDoPet();
@@ -4910,9 +4908,12 @@ function guardarCaracteristicas(lista) {
 $('#embalagem-resultado').addEventListener('click', (ev) => {
   if (ev.target.closest('#btn-descartar-embalagem')) { limparEmbalagem(); return; }
   if (ev.target.closest('#btn-usar-gramas') && leituraEmb?.gramasPet) {
-    const campos = [...document.querySelectorAll('#racao-refeicoes li')];
-    if (!campos.length) { $('#racao-refeicoes').appendChild(linhaRefeicao('08:00')); $('#racao-refeicoes').appendChild(linhaRefeicao('18:00')); }
-    const lis = [...document.querySelectorAll('#racao-refeicoes li')].filter((li) => li.querySelector('.ref-hora').value);
+    const comHora = () => [...document.querySelectorAll('#racao-refeicoes li')].filter((li) => li.querySelector('.ref-hora').value);
+    if (!comHora().length) {
+      $('#racao-refeicoes').innerHTML = '';
+      for (const h of ['08:00', '18:00']) $('#racao-refeicoes').appendChild(linhaRefeicao(h));
+    }
+    const lis = comHora();
     const por = Math.round((leituraEmb.gramasPet / lis.length) * 10) / 10;
     lis.forEach((li) => { li.querySelector('.ref-g').value = String(por).replace('.', ','); });
     atualizarTotalVivo();
@@ -4936,7 +4937,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
   else if (!marca && !kgTxt && !kcalTxt && !validade) msg = 'Preencha pelo menos um dos campos.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   const p = petAtual();
-  if (validade) { $('#saco-validade').value = validade; feitoValidade = true; }
+  if (validade) $('#saco-validade').value = validade;
   const feito = [];
   if (marca) { $('#racao-marca').value = marca; feito.push('marca'); }
   if (leituraEmb?.caracteristicas?.length) { guardarCaracteristicas(leituraEmb.caracteristicas); feito.push('características'); }
@@ -4945,7 +4946,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
     if (!$('#saco-abertura').value) $('#saco-abertura').value = hojeISO();
     feito.push('tamanho do saco');
   }
-  if (feitoValidade) { feito.push('validade'); feitoValidade = false; }
+  if (validade) feito.push('validade');
   if (kcal) {
     p.nutri = { castrado: p.nutri?.castrado ?? true, atividade: p.nutri?.atividade || 'normal', kcalKg: Math.round(kcal) };
     salvar();
@@ -5235,7 +5236,13 @@ function mostrarNota(r) {
   box.hidden = false;
 }
 
+let lancandoNota = false;
 async function lancarNota(separar) {
+  if (lancandoNota) return;
+  lancandoNota = true;
+  try { await lancarNotaAgora(separar); } finally { lancandoNota = false; }
+}
+async function lancarNotaAgora(separar) {
   const erro = $('#nota-erro');
   const data = $('#nota-data').value;
   const valor = lerValor($('#nota-valor').value);
@@ -5463,7 +5470,7 @@ function limparFormSintoma() {
   $('#sintoma-tipo').innerHTML = Object.entries(SINTOMAS).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
   $('#sintoma-data').value = hojeISO();
   $('#sintoma-data').max = hojeISO();
-  $('#sintoma-hora').value = agoraHM();
+  $('#sintoma-hora').value = agoraHHMM();
   $('#sintoma-foto-nome').textContent = '';
   $('#form-sintoma-titulo').textContent = 'Registrar sintoma';
   $('#btn-salvar-sintoma').textContent = 'Registrar';
@@ -5775,7 +5782,7 @@ function avisosDoPet(petId) {
     const e = estoqueRemedio(r);
     if (e && e.diasRestantes <= 3 && (!r.fim || e.acaba < r.fim)) {
       lista.push({ nivel: e.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'pilula', aba: 'saude', ordem: e.diasRestantes,
-        html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
+        html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : e.diasRestantes === 0 ? 'acaba hoje' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
     }
     if (r.fim) {
       const d = diasEntre(hoje, r.fim);
