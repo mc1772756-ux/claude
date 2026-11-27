@@ -1,4 +1,9 @@
-<!doctype html><html lang="pt-BR"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
 <title>Diário do Pet</title>
 <meta name="description" content="Peso, vacinas, remédios, ração e diário de saúde do seu cão ou gato. Funciona offline.">
 <meta name="theme-color" content="#257de0">
@@ -19,11 +24,11 @@
     if (corSalva && corSalva !== 'padrao') document.documentElement.dataset.cor = corSalva;
   } catch (e) { /* sem armazenamento: segue o celular */ }
 </script>
-</head><body>
-<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root {
   color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   --fundo: #f3f4f6;
   --cartao: #ffffff;
   --texto: #191919;
@@ -84,7 +89,8 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 section, form { scroll-margin-top: 130px; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+img { max-width: 100%; }
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -204,7 +210,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 .resumo-cab { display: flex; gap: 12px; align-items: center; }
 .avatar {
-  width: 48px; height: 48px; border-radius: 50%;
+  width: 48px; height: 48px; border-radius: 50%; overflow: hidden;
   display: grid; place-items: center; font-size: 1.6rem;
   background: var(--neutro-fundo); flex: none;
 }
@@ -230,6 +236,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .selo.perto { background: var(--aviso-fundo); color: var(--aviso); }
 .selo.atrasada { background: var(--perigo-fundo); color: var(--erro); }
 .selo.neutro { background: var(--neutro-fundo); color: var(--texto-2); }
+.plano-txt { margin: 6px 0 0; }
 .item-saude.antigo .principal { font-weight: 500; color: var(--texto-2); }
 .acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
@@ -249,8 +256,8 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
 .seg span {
   display: flex; align-items: center; justify-content: center; text-align: center;
-  min-height: 44px; padding: 6px 4px; border-radius: 10px;
-  border: 1px solid var(--borda); background: var(--fundo); font-size: 0.85rem; cursor: pointer;
+  min-height: 44px; padding: 6px 2px; border-radius: 10px;
+  border: 1px solid var(--borda); background: var(--fundo); font-size: 0.8rem; cursor: pointer;
 }
 .seg input:checked + span { background: var(--primaria); color: var(--primaria-texto); border-color: transparent; font-weight: 600; }
 .seg input:focus-visible + span { outline: 2px solid var(--primaria); outline-offset: 2px; }
@@ -303,9 +310,11 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* ---------- Sub-abas da Saúde ---------- */
 .subabas { display: flex; gap: 6px; margin-bottom: 12px; background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 4px; }
-.subaba { flex: 1; position: relative; font: inherit; font-size: 0.9rem; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--texto-2); cursor: pointer; }
+.subaba { flex: 1; position: relative; font: inherit; font-size: 0.85rem; padding: 4px 6px; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--texto-2); cursor: pointer; }
 .subaba[aria-selected="true"] { background: var(--primaria); color: var(--primaria-texto); font-weight: 600; }
 .subaba:focus-visible { outline: 2px solid var(--primaria); outline-offset: 2px; }
+.subabas-4 { gap: 3px; }
+.subabas-4 .subaba { font-size: 0.8rem; padding: 4px 2px; }
 .contador-mini { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; background: var(--neutro-fundo); color: var(--texto); font-size: 0.7rem; font-weight: 700; vertical-align: middle; }
 .dica-campo { font-size: 0.8rem; color: var(--texto-2); margin: -4px 0 10px; }
 .intro { color: var(--texto-2); font-size: 0.9rem; margin: -4px 0 12px; }
@@ -337,7 +346,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .grafico .rotulo-ideal { fill: var(--ok); font-weight: 600; }
 
 /* ---------- Guia por raça ---------- */
-.subaba { font-size: 0.85rem; padding: 4px 6px; }
 .lista-cuidados { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .lista-cuidados:not(:empty) { margin-top: 12px; }
 .cuidado { border: 1px solid var(--borda); border-radius: 12px; padding: 12px; background: var(--fundo); }
@@ -366,7 +374,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .grupo-risco h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding-left: 10px; border-left: 4px solid var(--borda); }
 .risco-agora h3 { border-left-color: var(--erro); }
 .risco-olho h3 { border-left-color: var(--aviso); }
-.risco-depois h3 { border-left-color: var(--texto-2); }
 .grupo-risco .qtd { font-size: 0.75rem; background: var(--neutro-fundo); border-radius: 999px; padding: 1px 8px; }
 .grupo-risco details summary { cursor: pointer; color: var(--primaria); font-size: 0.9rem; padding: 4px 0 8px; }
 .grupo-risco .lista-cuidados { margin-top: 0; }
@@ -384,7 +391,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 
 /* ---------- Avatar e ícones ---------- */
-.avatar { overflow: hidden; }
 .avatar svg, .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .avatar.pequeno { width: 36px; height: 36px; flex: none; border-radius: 50%; }
 .avatar.grande { width: 72px; height: 72px; border-radius: 50%; flex: none; background: var(--neutro-fundo); }
@@ -403,7 +409,6 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .barra-estoque.baixo span { background: var(--erro); }
 .estoque-txt { margin: 0 0 6px; }
 #saco-resumo .btn { margin: 10px 0 14px; }
-.horas-lembrete label { min-width: 0; }
 
 /* ---------- Diário ---------- */
 .item-sintoma, .item-consulta { align-items: flex-start; }
@@ -421,7 +426,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 .segmentos.compacto { margin: 0; }
 .segmentos.compacto .seg span { min-height: 36px; padding: 4px 12px; }
 .barras { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.barras li { display: grid; grid-template-columns: 3.4em 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.barras li { display: grid; grid-template-columns: 4.2em 1fr auto; gap: 8px; align-items: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .barras.categorias li { grid-template-columns: minmax(0, 9em) 1fr auto; }
 .barras .rot { color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .barras li.atual .rot { color: var(--texto); font-weight: 700; }
@@ -431,12 +436,10 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 #gastos-resumo h3 { font-size: 0.9rem; margin: 14px 0 8px; }
 .visor { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); }
 .visor img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
-.abas .aba-btn { font-size: 0.72rem; padding: 6px 2px; }
 fieldset { min-width: 0; }
 .horas-lembrete { flex-wrap: wrap; }
-.horas-lembrete label { flex: 1 1 96px; }
+.horas-lembrete label { flex: 1 1 96px; min-width: 0; }
 .foto-campo .botao-arquivo { flex: none; width: auto; }
-.barras li { grid-template-columns: 4.2em 1fr auto; }
 
 /* ---------- Ícones desenhados ---------- */
 svg.ic { width: 1.15em; height: 1.15em; flex: none; display: inline-block; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -529,6 +532,32 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 .backup { margin-top: 16px; border-top: 1px solid var(--borda); padding-top: 12px; }
 .backup .linha-botoes { margin-bottom: 8px; }
 
+
+/* ---------- Tutorial (primeira vez) ---------- */
+.tutorial { position: fixed; inset: 0; z-index: 50; }
+.tutorial-fundo { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); }
+.tutorial.com-alvo .tutorial-fundo { background: transparent; }
+.tutorial-alvo { position: relative; z-index: 7; border-radius: 12px; box-shadow: 0 0 0 4px var(--primaria), 0 0 0 9999px rgba(0, 0, 0, .55) !important; }
+.tutorial-cartao {
+  position: absolute; left: 50%; transform: translateX(-50%); width: min(440px, calc(100% - 32px));
+  top: 50%; translate: 0 -50%;
+  background: var(--cartao); color: var(--texto); border: 1px solid var(--borda); border-radius: var(--raio);
+  padding: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, .35); max-height: calc(100vh - 32px); overflow-y: auto;
+}
+.tutorial.cartao-cima .tutorial-cartao { top: 16px; translate: 0 0; }
+.tutorial.cartao-baixo .tutorial-cartao { top: auto; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); translate: 0 0; }
+.tutorial-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tutorial-cab h2 { margin: 0; font-size: 1.1rem; }
+.tutorial-ic { display: inline-flex; width: 40px; height: 40px; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: var(--neutro-fundo); color: var(--primaria); }
+.tutorial-ic svg.ic { width: 24px; height: 24px; margin: 0; }
+.tutorial-texto p { margin: 0 0 8px; }
+.tutorial-texto ul { margin: 0 0 8px; padding-left: 20px; }
+.tutorial-texto li { margin-bottom: 4px; }
+.tutorial-pontos { display: flex; justify-content: center; gap: 6px; margin: 10px 0; }
+.tutorial-pontos span { width: 8px; height: 8px; border-radius: 50%; background: var(--borda); }
+.tutorial-pontos span.atual { background: var(--primaria); }
+.tutorial-botoes { display: flex; align-items: center; gap: 6px; }
+.tutorial-passo { flex: 1; white-space: nowrap; text-align: center; font-size: 0.8rem; color: var(--texto-2); }
 /* ---------- Ler embalagem por foto ---------- */
 .fotos-emb { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
 .fotos-emb:empty { display: none; }
@@ -544,7 +573,6 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 .check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
 .itens-nota li { padding: 6px 0; }
 .itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
-.seg span { font-size: 0.8rem; padding: 6px 2px; }
 .seg span svg.ic { margin-right: 4px; width: 1em; height: 1em; }
 .alim-abas { flex-wrap: wrap; }
 .alim-abas .subaba { flex: 1 1 30%; font-size: 0.8rem; min-height: 38px; }
@@ -563,7 +591,8 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 .progresso-ocr span { display: block; height: 100%; width: 0; background: var(--primaria); transition: width .2s; }
 
 </style>
-
+</head>
+<body>
   <header class="topo">
     <h1><i data-ic="pata"></i>Diário do Pet</h1>
     <div class="seletor-pet">
@@ -604,6 +633,21 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
             <datalist id="sugestoes-raca"></datalist>
           </label>
         </div>
+        <fieldset class="grupo">
+          <legend>Sexo</legend>
+          <div class="segmentos" role="radiogroup" aria-label="Sexo">
+            <label class="seg"><input type="radio" name="pet-sexo" value="macho"><span>♂ Macho</span></label>
+            <label class="seg"><input type="radio" name="pet-sexo" value="femea"><span>♀ Fêmea</span></label>
+          </div>
+          <label><span id="pet-castrado-rot">Castrado(a)?</span>
+            <select id="pet-castrado">
+              <option value="">Não sei</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </label>
+          <p class="dica-campo">O sexo e a castração ajustam as calorias, os riscos de saúde, os sintomas e os cuidados com as vacinas.</p>
+        </fieldset>
         <fieldset class="grupo">
           <legend>Foto ou ícone</legend>
           <div class="avatar-escolha">
@@ -663,6 +707,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
           <label class="btn pequeno botao-arquivo"><i data-ic="enviar"></i>Importar backup<input type="file" id="arquivo-backup" accept=".json,application/json"></label>
         </div>
         <div id="backup-status" class="leitura-status" role="status" aria-live="polite" hidden></div>
+      </div>
+      <div class="backup">
+        <h3>Ajuda</h3>
+        <button type="button" class="btn pequeno" id="btn-ver-tutorial"><i data-ic="info"></i>Ver o tutorial de novo</button>
       </div>
       <button type="button" class="btn" id="btn-fechar-config" style="width:100%;margin-top:12px">Fechar</button>
     </section>
@@ -749,11 +797,13 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
       </div>
     </section>
 
-    <!-- ===================== PESO E CORPO ===================== -->
+    <!-- ===================== PESO E RAÇÃO (Peso | ECC | Ração | Alimentos) ===================== -->
     <section id="aba-peso" class="aba" hidden>
-      <div class="subabas" id="subabas-peso" role="tablist" aria-label="Peso e corpo">
+      <div class="subabas subabas-4" id="subabas-peso" role="tablist" aria-label="Peso e ração">
         <button type="button" class="subaba" data-subaba-peso="registro" aria-selected="true" role="tab">Peso</button>
         <button type="button" class="subaba" data-subaba-peso="corpo" aria-selected="false" role="tab">Corpo (ECC)</button>
+        <button type="button" class="subaba" data-subaba-peso="racao" aria-selected="false" role="tab">Ração</button>
+        <button type="button" class="subaba" data-subaba-peso="alimentos" aria-selected="false" role="tab">Alimentos</button>
       </div>
       <div id="peso-registro">
       <div class="cartao">
@@ -805,7 +855,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
             <label>Fase de vida
               <select id="ecc-fase"></select>
             </label>
-            <label>Castrado(a)?
+            <label><span id="ecc-castrado-rot">Castrado(a)?</span>
               <select id="ecc-castrado">
                 <option value="sim">Sim</option>
                 <option value="nao">Não</option>
@@ -822,7 +872,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
           <label>Energia da ração (kcal/kg)
             <input type="text" id="ecc-kcal" inputmode="numeric" placeholder="ex.: 3800">
           </label>
-          <details class="ajuda" data-ajuda="kcal"><summary><i data-ic="info"></i>Onde achar</summary><p>Na embalagem, procure "Energia metabolizável" (EM). Se estiver em kcal/100 g, multiplique por 10. A leitura por foto da aba Ração preenche sozinha.</p></details>
+          <details class="ajuda" data-ajuda="kcal"><summary><i data-ic="info"></i>Onde achar</summary><p>Na embalagem, procure "Energia metabolizável" (EM). Se estiver em kcal/100 g, multiplique por 10. A leitura por foto da sub-aba Ração preenche sozinha.</p></details>
         </form>
       </div>
 
@@ -834,6 +884,101 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
       <div class="cartao">
         <h2>Avaliações salvas</h2>
         <ul class="lista" id="lista-ecc"></ul>
+      </div>
+      </div>
+      <div id="peso-racao" hidden>
+      <div class="cartao">
+        <h2><i data-ic="racao"></i>Alimentação</h2>
+        <div id="racao-resumo"></div>
+      </div>
+
+      <div class="cartao" id="cartao-embalagem">
+        <h2><i data-ic="camera"></i>Ler a embalagem</h2>
+        <details class="ajuda" data-ajuda="emb"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Fotografe a frente, o verso (tabela de alimentação) e a lateral (energia metabolizável), de perto e com o pacote inclinado para não refletir a luz. O app lê o texto no próprio aparelho e preenche marca, tamanho do saco, energia, validade, características e as gramas por dia. Até 3 fotos por leitura.</p>
+        </details>
+        <div class="linha-botoes" id="embalagem-botoes">
+          <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="embalagem-camera" accept="image/*" capture="environment"></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="embalagem-galeria" accept="image/*" multiple></label>
+        </div>
+        <div class="fotos-emb" id="embalagem-fotos"></div>
+        <div class="linha-botoes" id="embalagem-acoes" hidden>
+          <button type="button" class="btn primario" id="btn-ler-embalagem">Ler embalagem</button>
+          <button type="button" class="btn" id="btn-limpar-embalagem">Limpar fotos</button>
+        </div>
+        <div class="leitura-status" id="embalagem-status" role="status" aria-live="polite" hidden></div>
+        <div id="embalagem-resultado" hidden></div>
+      </div>
+
+      <div class="cartao">
+        <h2><i data-ic="saco"></i>Estoque de ração</h2>
+        <div id="saco-resumo"></div>
+        <form id="form-saco" novalidate>
+          <div class="linha">
+            <label>Tamanho do saco (kg)
+              <input type="text" id="saco-kg" inputmode="decimal" placeholder="ex.: 10,1">
+            </label>
+            <label>Aberto em
+              <input type="date" id="saco-abertura">
+            </label>
+          </div>
+          <div class="linha">
+            <label>Preço pago (opcional)
+              <input type="text" id="saco-preco" inputmode="decimal" placeholder="ex.: 189,90">
+            </label>
+            <label>Validade (opcional)
+              <input type="date" id="saco-validade">
+            </label>
+          </div>
+          <fieldset class="grupo" id="saco-dividir" hidden>
+            <legend>Dividir este saco com outros pets</legend>
+            <div id="saco-dividir-lista"></div>
+            <p class="dica-campo">Os pets marcados comem do mesmo saco, cada um na sua quantidade (configure o alimentador de cada pet). O estoque desconta o consumo de todos.</p>
+          </fieldset>
+          <details class="ajuda" data-ajuda="saco"><summary><i data-ic="info"></i>Como funciona</summary><p>Com o preço, o saco entra sozinho nos gastos. O app calcula quando a ração acaba e avisa no Início e no calendário, junto com a validade.</p></details>
+          <p class="erro" id="saco-erro" role="alert" hidden></p>
+          <button type="submit" class="btn primario" id="btn-salvar-saco">Salvar saco</button>
+        </form>
+      </div>
+
+      <div class="cartao">
+        <h2>Configurar alimentador</h2>
+        <form id="form-racao" novalidate>
+          <label>Marca / linha da ração
+            <input type="text" id="racao-marca" maxlength="60" placeholder="ex.: Premier Raças Específicas">
+          </label>
+          <fieldset class="grupo">
+            <legend>Horários programados</legend>
+            <ul id="racao-refeicoes" class="refeicoes"></ul>
+            <div class="linha-botoes">
+              <button type="button" class="btn pequeno" id="btn-add-refeicao">+ Adicionar horário</button>
+              <button type="button" class="btn pequeno" id="btn-igualar">Mesma quantidade em todos</button>
+            </div>
+            <p class="total-vivo" id="racao-total" aria-live="polite"></p>
+          </fieldset>
+          <p class="erro" id="racao-erro" role="alert" hidden></p>
+          <button type="submit" class="btn primario">Salvar alimentação</button>
+        </form>
+      </div>
+
+      </div>
+      <div id="peso-alimentos" hidden>
+      <div class="cartao" id="cartao-alimentos">
+        <h2><i data-ic="tigela"></i>Alimentos que pode comer</h2>
+        <details class="ajuda" data-ajuda="alimentos"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Lista feita para o seu pet (espécie, idade, raça, peso e saúde cadastrada). A quantidade é o máximo por dia de cada item, sozinho: somando tudo, petiscos e extras não devem passar do limite de calorias mostrado, para não desequilibrar a ração.</p>
+        </details>
+        <ul class="perfil" id="alim-perfil"></ul>
+        <div id="alim-avisos"></div>
+        <div class="subabas alim-abas" id="alim-abas" role="tablist" aria-label="Grupos de alimentos">
+          <button type="button" class="subaba" data-alim="frutas" aria-selected="true" role="tab">Frutas</button>
+          <button type="button" class="subaba" data-alim="verduras" aria-selected="false" role="tab">Verduras</button>
+          <button type="button" class="subaba" data-alim="petiscos" aria-selected="false" role="tab">Petiscos</button>
+          <button type="button" class="subaba" data-alim="outros" aria-selected="false" role="tab">Outros</button>
+          <button type="button" class="subaba" data-alim="nunca" aria-selected="false" role="tab">Nunca dar</button>
+        </div>
+        <ul class="lista lista-alim" id="alim-lista"></ul>
+        <p class="nota">Ofereça um alimento novo por vez, em pouca quantidade, e observe por 24 h. Sem sal, açúcar, tempero, óleo, cebola ou alho. Quantidades são orientação geral: confirme com o veterinário.</p>
       </div>
       </div>
     </section>
@@ -886,6 +1031,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
               <input type="date" id="saude-proxima">
             </label>
           </div>
+          <p class="dica-campo" id="saude-proxima-dica" hidden></p>
           <label>Observação (opcional)
             <input type="text" id="saude-obs" maxlength="120" placeholder="ex.: clínica, lote, dose">
           </label>
@@ -895,6 +1041,14 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
             <button type="button" class="btn" id="btn-cancelar-saude" hidden>Cancelar</button>
           </div>
         </form>
+      </div>
+
+      <div class="cartao" id="cartao-plano-vacinas">
+        <h2><i data-ic="agenda"></i>Plano de vacinação</h2>
+        <details class="ajuda" data-ajuda="plano-vacinas"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>O app calcula as próximas vacinas pela idade, espécie, raça, sexo e pelas doses que você já registrou: série do filhote, reforço e reforço anual. As datas sugeridas aparecem no calendário e no Início. Ao registrar uma dose, a próxima data já vem preenchida.</p>
+        </details>
+        <div id="plano-vacinas"></div>
       </div>
 
       <div class="cartao" id="cartao-vacina">
@@ -1041,101 +1195,6 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
       </div>
     </section>
 
-    <!-- ===================== RAÇÃO ===================== -->
-    <section id="aba-racao" class="aba" hidden>
-      <div class="cartao">
-        <h2><i data-ic="racao"></i>Alimentação</h2>
-        <div id="racao-resumo"></div>
-      </div>
-
-      <div class="cartao" id="cartao-embalagem">
-        <h2><i data-ic="camera"></i>Ler a embalagem</h2>
-        <details class="ajuda" data-ajuda="emb"><summary><i data-ic="info"></i>Como funciona</summary>
-          <p>Fotografe a frente, o verso (tabela de alimentação) e a lateral (energia metabolizável), de perto e com o pacote inclinado para não refletir a luz. O app lê o texto no próprio aparelho e preenche marca, tamanho do saco, energia, validade, características e as gramas por dia. Até 3 fotos por leitura.</p>
-        </details>
-        <div class="linha-botoes" id="embalagem-botoes">
-          <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="embalagem-camera" accept="image/*" capture="environment"></label>
-          <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="embalagem-galeria" accept="image/*" multiple></label>
-        </div>
-        <div class="fotos-emb" id="embalagem-fotos"></div>
-        <div class="linha-botoes" id="embalagem-acoes" hidden>
-          <button type="button" class="btn primario" id="btn-ler-embalagem">Ler embalagem</button>
-          <button type="button" class="btn" id="btn-limpar-embalagem">Limpar fotos</button>
-        </div>
-        <div class="leitura-status" id="embalagem-status" role="status" aria-live="polite" hidden></div>
-        <div id="embalagem-resultado" hidden></div>
-      </div>
-
-      <div class="cartao">
-        <h2><i data-ic="saco"></i>Estoque de ração</h2>
-        <div id="saco-resumo"></div>
-        <form id="form-saco" novalidate>
-          <div class="linha">
-            <label>Tamanho do saco (kg)
-              <input type="text" id="saco-kg" inputmode="decimal" placeholder="ex.: 10,1">
-            </label>
-            <label>Aberto em
-              <input type="date" id="saco-abertura">
-            </label>
-          </div>
-          <div class="linha">
-            <label>Preço pago (opcional)
-              <input type="text" id="saco-preco" inputmode="decimal" placeholder="ex.: 189,90">
-            </label>
-            <label>Validade (opcional)
-              <input type="date" id="saco-validade">
-            </label>
-          </div>
-          <fieldset class="grupo" id="saco-dividir" hidden>
-            <legend>Dividir este saco com outros pets</legend>
-            <div id="saco-dividir-lista"></div>
-            <p class="dica-campo">Os pets marcados comem do mesmo saco, cada um na sua quantidade (configure o alimentador de cada pet). O estoque desconta o consumo de todos.</p>
-          </fieldset>
-          <details class="ajuda" data-ajuda="saco"><summary><i data-ic="info"></i>Como funciona</summary><p>Com o preço, o saco entra sozinho nos gastos. O app calcula quando a ração acaba e avisa no Início e no calendário, junto com a validade.</p></details>
-          <p class="erro" id="saco-erro" role="alert" hidden></p>
-          <button type="submit" class="btn primario" id="btn-salvar-saco">Salvar saco</button>
-        </form>
-      </div>
-
-      <div class="cartao">
-        <h2>Configurar alimentador</h2>
-        <form id="form-racao" novalidate>
-          <label>Marca / linha da ração
-            <input type="text" id="racao-marca" maxlength="60" placeholder="ex.: Premier Raças Específicas">
-          </label>
-          <fieldset class="grupo">
-            <legend>Horários programados</legend>
-            <ul id="racao-refeicoes" class="refeicoes"></ul>
-            <div class="linha-botoes">
-              <button type="button" class="btn pequeno" id="btn-add-refeicao">+ Adicionar horário</button>
-              <button type="button" class="btn pequeno" id="btn-igualar">Mesma quantidade em todos</button>
-            </div>
-            <p class="total-vivo" id="racao-total" aria-live="polite"></p>
-          </fieldset>
-          <p class="erro" id="racao-erro" role="alert" hidden></p>
-          <button type="submit" class="btn primario">Salvar alimentação</button>
-        </form>
-      </div>
-
-      <div class="cartao" id="cartao-alimentos">
-        <h2><i data-ic="tigela"></i>Alimentos que pode comer</h2>
-        <details class="ajuda" data-ajuda="alimentos"><summary><i data-ic="info"></i>Como funciona</summary>
-          <p>Lista feita para o seu pet (espécie, idade, raça, peso e saúde cadastrada). A quantidade é o máximo por dia de cada item, sozinho: somando tudo, petiscos e extras não devem passar do limite de calorias mostrado, para não desequilibrar a ração.</p>
-        </details>
-        <ul class="perfil" id="alim-perfil"></ul>
-        <div id="alim-avisos"></div>
-        <div class="subabas alim-abas" id="alim-abas" role="tablist" aria-label="Grupos de alimentos">
-          <button type="button" class="subaba" data-alim="frutas" aria-selected="true" role="tab">Frutas</button>
-          <button type="button" class="subaba" data-alim="verduras" aria-selected="false" role="tab">Verduras</button>
-          <button type="button" class="subaba" data-alim="petiscos" aria-selected="false" role="tab">Petiscos</button>
-          <button type="button" class="subaba" data-alim="outros" aria-selected="false" role="tab">Outros</button>
-          <button type="button" class="subaba" data-alim="nunca" aria-selected="false" role="tab">Nunca dar</button>
-        </div>
-        <ul class="lista lista-alim" id="alim-lista"></ul>
-        <p class="nota">Ofereça um alimento novo por vez, em pouca quantidade, e observe por 24 h. Sem sal, açúcar, tempero, óleo, cebola ou alho. Quantidades são orientação geral: confirme com o veterinário.</p>
-      </div>
-    </section>
-
     <!-- Próxima etapa: Backup -->
     <!-- ===================== DIÁRIO ===================== -->
     <section id="aba-diario" class="aba" hidden>
@@ -1153,6 +1212,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
             <input type="hidden" id="sintoma-id">
             <label>O que aconteceu
               <select id="sintoma-tipo"></select>
+            </label>
+            <label id="sintoma-outro-campo" hidden>Qual sintoma?
+              <input type="text" id="sintoma-outro" maxlength="60" list="sugestoes-sintoma-outro" placeholder="ex.: tremores, queda de pelo, caroço">
+              <datalist id="sugestoes-sintoma-outro"></datalist>
             </label>
             <p class="urgente" id="sintoma-alerta" hidden></p>
             <div class="linha">
@@ -1303,11 +1366,28 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
     <button type="button" class="btn">Fechar</button>
   </div>
 
+  <div class="tutorial" id="tutorial" hidden>
+    <div class="tutorial-fundo" id="tutorial-fundo"></div>
+    <div class="tutorial-cartao" role="dialog" aria-modal="true" aria-labelledby="tutorial-titulo" aria-describedby="tutorial-texto">
+      <div class="tutorial-cab">
+        <span class="tutorial-ic" id="tutorial-ic" aria-hidden="true"></span>
+        <h2 id="tutorial-titulo"></h2>
+      </div>
+      <div id="tutorial-texto" class="tutorial-texto"></div>
+      <div class="tutorial-pontos" id="tutorial-pontos" aria-hidden="true"></div>
+      <div class="tutorial-botoes">
+        <button type="button" class="btn pequeno" id="tutorial-pular">Pular</button>
+        <span class="tutorial-passo" id="tutorial-passo"></span>
+        <button type="button" class="btn pequeno" id="tutorial-voltar">Voltar</button>
+        <button type="button" class="btn pequeno primario" id="tutorial-proximo">Próximo</button>
+      </div>
+    </div>
+  </div>
+
   <nav class="abas" id="abas" aria-label="Seções" hidden>
     <button type="button" class="aba-btn" data-aba="inicio" aria-current="page"><i data-ic="inicio"></i>Início<span class="contador" id="contador-inicio" hidden></span></button>
     <button type="button" class="aba-btn" data-aba="agenda"><i data-ic="agenda"></i>Agenda</button>
-    <button type="button" class="aba-btn" data-aba="peso"><i data-ic="peso"></i>Peso</button>
-    <button type="button" class="aba-btn" data-aba="racao"><i data-ic="racao"></i>Ração</button>
+    <button type="button" class="aba-btn" data-aba="peso"><i data-ic="peso"></i>Peso e ração</button>
     <button type="button" class="aba-btn" data-aba="saude"><i data-ic="saude"></i>Saúde<span class="contador" id="contador-saude" hidden></span></button>
     <button type="button" class="aba-btn" data-aba="diario"><i data-ic="diario"></i>Diário<span class="contador" id="contador-diario" hidden></span></button>
   </nav>
@@ -1559,6 +1639,8 @@ function carregar() {
     if (!bruto) return estadoVazio();
     const e = Object.assign(estadoVazio(), JSON.parse(bruto));
     for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) if (!Array.isArray(e[k])) e[k] = [];
+    // Castração passou a ficar no cadastro do pet (antes só na calculadora ECC)
+    for (const p of e.pets) if (p.castrado === undefined && typeof p.nutri?.castrado === 'boolean') p.castrado = p.nutri.castrado;
     return e;
   } catch (e) {
     console.warn('Falha ao ler dados salvos', e);
@@ -1657,6 +1739,22 @@ function nascimentoEstimado(anos, meses) {
   return paraISO(alvo);
 }
 
+/* ---------- Sexo e castração ---------- */
+const SEXOS = { macho: { nome: 'Macho', simb: '♂' }, femea: { nome: 'Fêmea', simb: '♀' } };
+const oa = (p) => (p?.sexo === 'femea' ? 'a' : p?.sexo === 'macho' ? 'o' : 'o(a)'); // castrad${oa(p)}
+function sexoTexto(p) {
+  if (!SEXOS[p?.sexo]) return '';
+  const c = p.castrado === true ? ` · castrad${oa(p)}` : p.castrado === false ? ` · não castrad${oa(p)}` : '';
+  return `${SEXOS[p.sexo].simb} ${SEXOS[p.sexo].nome}${c}`;
+}
+const femeaInteira = (p) => p?.sexo === 'femea' && p.castrado !== true;
+function sexoDoForm() { return document.querySelector('input[name="pet-sexo"]:checked')?.value || ''; }
+function atualizarRotuloCastrado() {
+  const s = sexoDoForm();
+  $('#pet-castrado-rot').textContent = s === 'femea' ? 'Castrada?' : s === 'macho' ? 'Castrado?' : 'Castrado(a)?';
+}
+document.querySelectorAll('input[name="pet-sexo"]').forEach((el) => el.addEventListener('change', atualizarRotuloCastrado));
+
 /* ---------- Pets ---------- */
 function petAtual() {
   return estado.pets.find((p) => p.id === estado.petAtual) || null;
@@ -1688,7 +1786,7 @@ function renderListaPets() {
         <span class="avatar pequeno" aria-hidden="true">${avatarHTML(p, 36)}</span>
         <div class="info">
           <div class="principal">${esc(p.nome)}</div>
-          <div class="secundario">${ESPECIES[p.especie].nome}${p.raca ? ' · ' + esc(p.raca) : ''}${idadeDoPet(p) ? ' · ' + idadeDoPet(p) : ''}</div>
+          <div class="secundario">${ESPECIES[p.especie].nome}${SEXOS[p.sexo] ? ' · ' + SEXOS[p.sexo].nome.toLowerCase() : ''}${p.raca ? ' · ' + esc(p.raca) : ''}${idadeDoPet(p) ? ' · ' + idadeDoPet(p) : ''}</div>
         </div>
         <button type="button" class="btn pequeno" data-editar-pet="${p.id}">Editar</button>
         <button type="button" class="btn pequeno perigo" data-remover-pet="${p.id}">Excluir</button>
@@ -1718,6 +1816,7 @@ function limparFormPet() {
   fotoForm = '';
   iconeForm = '';
   atualizarPreviaAvatar();
+  atualizarRotuloCastrado();
 }
 
 function editarPet(id) {
@@ -1727,6 +1826,9 @@ function editarPet(id) {
   $('#pet-nome').value = p.nome;
   $('#pet-especie').value = p.especie;
   $('#pet-raca').value = p.raca || '';
+  document.querySelectorAll('input[name="pet-sexo"]').forEach((el) => { el.checked = el.value === p.sexo; });
+  $('#pet-castrado').value = p.castrado === true ? 'sim' : p.castrado === false ? 'nao' : '';
+  atualizarRotuloCastrado();
   atualizarSugestoesRaca();
   fotoForm = p.foto || '';
   iconeForm = p.icone || '';
@@ -1770,6 +1872,10 @@ $('#form-pet').addEventListener('submit', (ev) => {
   const erro = $('#pet-erro');
   if (!nome) { erro.textContent = 'Informe o nome do pet.'; erro.hidden = false; return; }
   if (!ESPECIES[especie]) { erro.textContent = 'Escolha cão ou gato.'; erro.hidden = false; return; }
+  const sexo = sexoDoForm();
+  if (!SEXOS[sexo]) { erro.textContent = 'Escolha se é macho ou fêmea.'; erro.hidden = false; return; }
+  const castradoTxt = $('#pet-castrado').value;
+  const castrado = castradoTxt === 'sim' ? true : castradoTxt === 'nao' ? false : undefined;
   // Idade: anos/meses aproximados têm prioridade se preenchidos; senão, a data exata
   let nascimento = $('#pet-nasc').value || '';
   let nascAprox = false;
@@ -1797,9 +1903,10 @@ $('#form-pet').addEventListener('submit', (ev) => {
   if (id && !existente) { limparFormPet(); erro.textContent = 'Este pet foi excluído. Cadastre de novo, se quiser.'; erro.hidden = false; return; }
   if (existente) {
     if (existente.raca !== raca || existente.especie !== especie) existente.racaGuia = '';
-    Object.assign(existente, { nome, especie, raca, nascimento, nascAprox, foto: fotoForm, icone: iconeForm });
+    Object.assign(existente, { nome, especie, raca, sexo, castrado, nascimento, nascAprox, foto: fotoForm, icone: iconeForm });
+    if (castrado !== undefined && existente.nutri) existente.nutri.castrado = castrado;
   } else {
-    const p = { id: novoId(), nome, especie, raca, nascimento, nascAprox, foto: fotoForm, icone: iconeForm };
+    const p = { id: novoId(), nome, especie, raca, sexo, castrado, nascimento, nascAprox, foto: fotoForm, icone: iconeForm };
     estado.pets.push(p);
     estado.petAtual = p.id;
   }
@@ -1808,6 +1915,7 @@ $('#form-pet').addEventListener('submit', (ev) => {
   renderTudo();
   renderListaPets();
   if (!id) { fecharPainelPets(); aoTrocarPet(); }
+  else if (id === estado.petAtual) { preencherFormEcc(); if (!$('#sintoma-id').value) limparFormSintoma(); }
 });
 
 $('#lista-pets').addEventListener('click', (ev) => {
@@ -2089,6 +2197,9 @@ function limparFormSaude() {
   $('#btn-salvar-saude').textContent = 'Salvar';
   $('#btn-cancelar-saude').hidden = true;
   $('#saude-erro').hidden = true;
+  $('#saude-proxima').dataset.manual = '';
+  $('#saude-proxima').dataset.auto = '';
+  $('#saude-proxima-dica').hidden = true;
   atualizarSugestoes();
 }
 
@@ -2128,6 +2239,8 @@ function editarSaude(id) {
   $('#saude-nome').value = r.nome;
   $('#saude-data').value = r.data;
   $('#saude-proxima').value = r.proxima || '';
+  $('#saude-proxima').dataset.manual = r.proxima ? '1' : '';
+  $('#saude-proxima-dica').hidden = true;
   $('#saude-obs').value = r.obs || '';
   $('#form-saude-titulo').textContent = `Editar ${TIPOS[r.tipo].nome.toLowerCase()}: ${r.nome}`;
   $('#btn-salvar-saude').textContent = 'Salvar alterações';
@@ -2143,6 +2256,7 @@ function novaDose(id) {
   document.querySelector(`input[name="saude-tipo"][value="${r.tipo}"]`).checked = true;
   atualizarSugestoes();
   $('#saude-nome').value = r.nome;
+  sugerirProximaDose();
   $('#form-saude').scrollIntoView({ behavior: 'smooth', block: 'center' });
   $('#saude-proxima').focus({ preventScroll: true });
 }
@@ -2234,7 +2348,236 @@ function renderSaude() {
   }
   renderBanho();
   atualizarSugestoes();
+  renderPlanoVacinas();
 }
+
+/* ---------- Plano de vacinação (calendário futuro) ---------- */
+// Baseado nas diretrizes WSAVA 2024 (Squires et al., J Small Anim Pract 65:277–316) e no
+// calendário usual no Brasil (reforço anual das múltiplas e da antirrábica; Ministério da Saúde).
+// Filhotes: doses a cada 3–4 semanas a partir de 6–8 semanas, até uma dose com 16 semanas ou mais;
+// reforço entre 6 meses (26 semanas, WSAVA) e 1 ano; depois anual. Adultos sem histórico: 2 doses
+// com 3–4 semanas (as múltiplas brasileiras têm leptospirose, que precisa de 2 doses iniciais).
+// A data marcada pelo veterinário no registro sempre vale mais que a sugestão.
+const VACINAS_PLANO = {
+  cao: [
+    { id: 'multipla', nome: 'Múltipla (V8 / V10)', sugestao: 'V10', essencial: true, serie: 'filhote', re: /\bv\s?(6|7|8|10|11|12)\b|polivalente|m[uú]ltipla|[oó]ctupla|d[eé]ctupla/i,
+      inicioSem: 6, intervalo: 21, serieAte: 16, adultoDoses: 2, reiniciaDias: 548,
+      txt: 'Cinomose, parvovirose, hepatite, leptospirose e outras. Essencial para todos os cães.' },
+    { id: 'raiva', nome: 'Antirrábica', sugestao: 'Antirrábica', essencial: true, serie: 'doses', re: /raiva|r[aá]bica/i,
+      inicioSem: 12, intervalo: 0, doses: 1,
+      txt: 'Obrigatória por lei. A partir de 12 semanas (3 meses), com reforço anual (há campanhas gratuitas).' },
+    { id: 'gripe', nome: 'Gripe / tosse dos canis', sugestao: 'Gripe canina (tosse dos canis)', serie: 'doses', re: /gripe|tosse|bordetel|\bkc\b|pneumo|bronchi|parainfl/i,
+      inicioSem: 8, intervalo: 21, doses: 2, reiniciaDias: 548,
+      txt: 'Para quem frequenta creche, hotel, banho e tosa, parques ou convive com muitos cães. Injetável: 2 doses; oral ou nasal: 1 dose (siga a bula). Reforço anual.' },
+    { id: 'giardia', nome: 'Giárdia', sugestao: 'Giárdia', serie: 'doses', re: /gi[aá]rdia/i,
+      inicioSem: 8, intervalo: 21, doses: 2, reiniciaDias: 548,
+      txt: 'Opcional, para cães em canis, creches ou com giardíase repetida. 2 doses com 2–4 semanas e reforço anual.' },
+    { id: 'leish', nome: 'Leishmaniose', sugestao: 'Leishmaniose', serie: 'doses', re: /leish/i,
+      inicioSem: 17, intervalo: 21, doses: 3, reiniciaDias: 400,
+      txt: 'Para regiões com leishmaniose. A partir de 4 meses, só com teste negativo antes: 3 doses com 21 dias e reforço anual. Não substitui a coleira repelente. Confira com o veterinário se a vacina está disponível.' },
+  ],
+  gato: [
+    { id: 'multipla', nome: 'Múltipla (V3 / V4 / V5)', sugestao: 'V4', essencial: true, serie: 'filhote', re: /\bv\s?(3|4|5)\b|tr[ií]plice|qu[aá]drupla|qu[ií]ntupla|polivalente|m[uú]ltipla/i,
+      inicioSem: 8, intervalo: 21, serieAte: 16, adultoDoses: 2, reiniciaDias: 730,
+      txt: 'Panleucopenia, rinotraqueíte e calicivirose (a V4 inclui clamidiose; a V5, também a FeLV). Essencial para todos os gatos.' },
+    { id: 'raiva', nome: 'Antirrábica', sugestao: 'Antirrábica', essencial: true, serie: 'doses', re: /raiva|r[aá]bica/i,
+      inicioSem: 12, intervalo: 0, doses: 1,
+      txt: 'Obrigatória por lei, também para gatos que não saem de casa. A partir de 12–16 semanas, com reforço anual.' },
+    { id: 'felv', nome: 'Leucemia felina (FeLV)', sugestao: 'FeLV', serie: 'doses', re: /felv|leucemia|\bv\s?5\b|qu[ií]ntupla/i,
+      inicioSem: 8, intervalo: 21, doses: 2, reiniciaDias: 730, essencialSe: (p, meses) => meses !== null && meses < 12,
+      txt: 'Faça o teste de FeLV antes. Indicada para gatos com menos de 1 ano e para os que saem de casa ou convivem com gatos que saem. 2 doses com 3–4 semanas, reforço com 1 ano e depois conforme o risco.' },
+  ],
+};
+const RACAS_PEQUENAS = ['jack-russell', 'fox-paulistinha', 'yorkshire', 'shih-tzu', 'spitz-alemao', 'pinscher', 'bulldog-frances', 'maltes', 'lhasa-apso', 'dachshund', 'pug'];
+const RE_RISCO_PARVO = /rottweiler|dobermann?|pit ?bull|staff|pastor alem|labrador/i;
+
+function dosesDaVacina(v, petId) {
+  return estado.saude.filter((r) => r.petId === petId && r.tipo === 'vacina' && v.re.test(r.nome))
+    .sort((a, b) => a.data.localeCompare(b.data) || a.criado - b.criado);
+}
+
+// Calcula a próxima dose. regs: registros dessa vacina em ordem de data. Devolve
+// { proxima, rotulo, fonte: 'registro' | 'plano' | null, situacao: 'sem-registro' | 'agenda' | 'atrasada-reinicia' }
+function planejarVacina(v, p, regs) {
+  const hoje = hojeISO();
+  const nasc = p.nascimento || '';
+  const sem = (iso) => (nasc ? diasEntre(nasc, iso) / 7 : 999);
+  const datas = regs.map((r) => r.data);
+  const n = datas.length;
+  const ult = datas[n - 1];
+  const idadeHoje = sem(hoje);
+  const inicio = nasc ? somarDias(nasc, v.inicioSem * 7) : hoje;
+  const ultReg = regs[n - 1];
+  if (ultReg?.proxima) return { proxima: ultReg.proxima, rotulo: 'data marcada no registro', fonte: 'registro' };
+  if (!n) {
+    if (!nasc) return { proxima: null, rotulo: 'sem registro: informe a idade ou registre a última dose', fonte: null, situacao: 'sem-registro' };
+    if (idadeHoje < v.inicioSem) return { proxima: inicio, rotulo: `1ª dose (com ${v.inicioSem} semanas)`, fonte: 'plano' };
+    if (idadeHoje < 26) return { proxima: hoje, rotulo: '1ª dose: já pode tomar', fonte: 'plano' };
+    const qtd = v.serie === 'filhote' ? v.adultoDoses : v.doses;
+    return { proxima: null, rotulo: `sem registro. Se nunca tomou: ${qtd > 1 ? `${qtd} doses com 3–4 semanas de intervalo` : '1 dose'}, depois reforço anual`, fonte: null, situacao: 'sem-registro' };
+  }
+  // Atrasada há muito tempo: recomeçar o esquema inicial
+  if (v.reiniciaDias && diasEntre(ult, hoje) > v.reiniciaDias && idadeHoje >= 26) {
+    const qtd = v.serie === 'filhote' ? v.adultoDoses : v.doses;
+    return { proxima: somarDias(ult, 365), rotulo: `reforço atrasado: ${qtd > 1 ? `pode ser preciso recomeçar com ${qtd} doses` : 'aplicar assim que possível'}`, fonte: 'plano', situacao: 'atrasada-reinicia' };
+  }
+  if (v.serie === 'filhote') {
+    const serieAte = v.serieAte + (v.id === 'multipla' && p.especie === 'cao' && RE_RISCO_PARVO.test(p.raca || '') ? 2 : 0);
+    const deFilhote = datas.filter((d) => sem(d) < serieAte);
+    const depois = datas.filter((d) => sem(d) >= serieAte);
+    if (!depois.length) {
+      // série do filhote em andamento
+      const prox = [somarDias(ult, v.intervalo), inicio].sort().pop();
+      return { proxima: prox, rotulo: sem(prox) >= serieAte ? `${n + 1}ª dose: última da série (com ${serieAte} semanas ou mais)` : `${n + 1}ª dose do filhote`, fonte: 'plano' };
+    }
+    if (deFilhote.length && depois.length === 1 && sem(ult) < 26) {
+      const prox = [somarDias(ult, 28), somarDias(nasc, 26 * 7)].sort().pop();
+      return { proxima: prox, rotulo: 'reforço entre 6 meses e 1 ano de idade', fonte: 'plano' };
+    }
+    // Adulto com uma dose só: na maioria das vezes é o último reforço anual registrado
+    const talvezPrimeira = !deFilhote.length && n === 1 && diasEntre(ult, hoje) <= 60;
+    return { proxima: somarDias(ult, 365), rotulo: talvezPrimeira ? `reforço anual (se foi a 1ª vacina da vida, faça a 2ª dose ${v.intervalo / 7 + 1}–4 semanas depois)` : 'reforço anual', fonte: 'plano' };
+  }
+  // Vacinas de N doses iniciais e reforço anual
+  let serie = 1;
+  for (let i = n - 1; i > 0 && diasEntre(datas[i - 1], datas[i]) <= 60; i--) serie++;
+  if (serie < v.doses) return { proxima: somarDias(ult, v.intervalo), rotulo: `${serie + 1}ª dose do esquema inicial`, fonte: 'plano' };
+  return { proxima: somarDias(ult, 365), rotulo: 'reforço anual', fonte: 'plano' };
+}
+
+function planoVacinas(p) {
+  const meses = idadeEmMeses(p.nascimento);
+  return VACINAS_PLANO[p.especie].map((v) => {
+    const regs = dosesDaVacina(v, p.id);
+    const essencial = v.essencial || !!v.essencialSe?.(p, meses);
+    const plano = planejarVacina(v, p, regs);
+    const st = plano.proxima ? statusDose(plano.proxima) : null;
+    // Dose sugerida ainda não tomada: "em X dias" em vez de "vence"
+    if (st && plano.fonte === 'plano' && st.dias >= 0) st.texto = st.dias === 0 ? 'Hoje' : st.nivel === 'ok' ? 'Programada' : `Em ${plural(st.dias, 'dia', 'dias')}`;
+    return { v, regs, essencial, ...plano, st };
+  });
+}
+
+// Cuidados conforme espécie, raça, porte, idade e sexo
+function notasVacina(p) {
+  const meses = idadeEmMeses(p.nascimento);
+  const pesos = estado.pesos.filter((r) => r.petId === p.id).sort((a, b) => a.data.localeCompare(b.data));
+  const kg = pesos.length ? pesos[pesos.length - 1].kg : null;
+  const raca = racaDoGuia(p);
+  const notas = [];
+  if (meses !== null && meses < 5) notas.push('Até 1 a 2 semanas depois da última dose do filhote, evite chão de rua, parques e animais desconhecidos.');
+  if (p.especie === 'cao' && RE_RISCO_PARVO.test(p.raca || '') && (meses === null || meses < 12)) notas.push('Raça com mais risco de parvovirose: a última dose do filhote foi calculada para 18 semanas ou mais (pergunte ao veterinário sobre uma dose extra).');
+  if (p.especie === 'cao' && (RACAS_PEQUENAS.includes(raca) || (kg && kg < 10))) notas.push('Cães pequenos têm um pouco mais de chance de reação: prefira poucas vacinas por visita e observe por 24–48 h (inchaço no rosto, vômito, coceira ou apatia: volte ao veterinário).');
+  if (p.especie === 'gato') notas.push('Se surgir um caroço no local da vacina que dure mais de 3 meses, passe de 2 cm ou cresça 1 mês depois, mostre ao veterinário.');
+  if (femeaInteira(p) && (meses === null || meses >= 6)) notas.push(`${p.nome} não é castrada: vacinas de vírus vivo não devem ser dadas durante a gestação. O ideal é deixar as vacinas em dia antes do cio ou do cruzamento: a mãe vacinada passa anticorpos aos filhotes pelo colostro.`);
+  if (meses !== null && meses >= (p.especie === 'gato' ? 120 : 84)) notas.push('Idosos continuam precisando das vacinas. Aproveite a visita para o check-up anual.');
+  const doencas = estado.doencas.filter((d) => d.petId === p.id && d.situacao !== 'curada' && d.situacao !== 'controlada');
+  if (doencas.length || estado.remedios.some((r) => r.petId === p.id && remedioAtivo(r) && /pred|cortic|dexa|ciclospor|apoquel|oclacitinib|quimio/i.test(r.nome))) notas.push('Com doença em tratamento ou remédio que baixa a imunidade (corticoide, ciclosporina, quimioterapia), pergunte ao veterinário se é hora de vacinar.');
+  return notas;
+}
+
+function renderPlanoVacinas() {
+  const p = petAtual();
+  const el = $('#plano-vacinas');
+  if (!p || !el) return;
+  const itens = planoVacinas(p);
+  const principais = itens.filter((x) => x.essencial || x.regs.length);
+  const opcionais = itens.filter((x) => !x.essencial && !x.regs.length);
+  const item = (x) => {
+    const selo = x.situacao === 'sem-registro' ? '<span class="selo neutro">Sem registro</span>'
+      : x.situacao === 'atrasada-reinicia' ? `<span class="selo atrasada">${ic('urgente')} Atrasada</span>` : seloStatus(x.st);
+    const ev = x.proxima && x.fonte === 'plano' && x.proxima >= hojeISO() ? eventoPlano(p, x) : null;
+    return `
+      <li class="item-saude">
+        <div class="info">
+          <div class="principal">${x.v.nome} ${x.essencial ? '<span class="delta">essencial</span>' : '<span class="delta">opcional</span>'}</div>
+          <div class="secundario">${x.proxima ? `Próxima: <strong>${fmtData(x.proxima)}</strong> · ` : ''}${esc(x.rotulo)}${x.regs.length ? ` · ${plural(x.regs.length, 'dose registrada', 'doses registradas')} (última ${fmtData(x.regs[x.regs.length - 1].data)})` : ''}</div>
+          ${selo}
+          <p class="dica-campo plano-txt">${x.v.txt}</p>
+          <div class="acoes">
+            <button type="button" class="btn pequeno" data-plano-registrar="${x.v.id}">+ Registrar dose</button>
+            ${ev ? botaoAgenda('plano-' + x.v.id, ev) : ''}
+          </div>
+        </div>
+      </li>`;
+  };
+  const notas = notasVacina(p);
+  el.innerHTML = `
+    <ul class="perfil">${[ESPECIES[p.especie].nome, idadeDoPet(p) || 'idade não informada', SEXOS[p.sexo] ? sexoTexto(p) : 'sexo não informado', p.raca || 'raça não informada'].map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+    ${notas.map((t) => `<p class="nota-raca">${esc(t)}</p>`).join('')}
+    <ul class="lista">${principais.map(item).join('')}</ul>
+    ${opcionais.length ? `<details class="historico"><summary>Vacinas opcionais (conforme o estilo de vida e a região)</summary><ul class="lista">${opcionais.map(item).join('')}</ul></details>` : ''}
+    <p class="nota">Sugestão calculada pela idade, espécie, raça, sexo e doses já registradas, seguindo as diretrizes WSAVA 2024 e o calendário usual no Brasil. Cada vacina tem a sua bula: o veterinário pode ajustar as datas. Quando você registra uma dose com a próxima data, vale a data do registro.</p>
+    <p class="fontes">Fontes: <a href="https://wsava.org/wp-content/uploads/2024/05/2024-Guidelines-for-the-Vaccination-of-Dogs-and-Cats.pdf" target="_blank" rel="noopener">WSAVA 2024 (vacinação de cães e gatos)</a> · <a href="https://www.leishvet.org/vaccines/" target="_blank" rel="noopener">LeishVet (vacinas)</a></p>`;
+}
+
+function eventoPlano(p, x) {
+  return {
+    uid: `plano-${p.id}-${x.v.id}-${compacto(x.proxima)}`,
+    titulo: `${p.nome}: vacina ${x.v.nome}`,
+    detalhes: `${x.v.nome} (${x.rotulo}) de ${p.nome}, sugerida pelo plano de vacinação.\nConfirme a data com o veterinário.\nRegistrado no Diário do Pet.`,
+    data: x.proxima,
+    alarmes: ['-P2DT15H', 'PT9H'],
+  };
+}
+
+// Plano → eventos do calendário (só as datas calculadas: as do registro já entram pelo próprio registro)
+function eventosPlano(p, dentro) {
+  const meses = idadeEmMeses(p.nascimento);
+  return planoVacinas(p)
+    .filter((x) => x.fonte === 'plano' && x.proxima && dentro(x.proxima) && (x.regs.length || (x.essencial && meses !== null && meses < 6)))
+    .map((x) => ({ chave: 'plano-' + x.v.id, data: x.proxima, ic: 'vacina', titulo: `Vacina: ${x.v.nome}`, detalhe: x.rotulo + ' (sugestão)',
+      nivel: x.st?.nivel === 'atrasada' ? 'alerta' : x.st?.nivel === 'perto' ? 'perto' : '', aba: 'saude', sub: 'prevencao', google: eventoPlano(p, x) }));
+}
+
+// Plano → avisos (só para vacinas com dose registrada ou filhotes)
+function avisosPlano(p) {
+  const meses = idadeEmMeses(p.nascimento);
+  return planoVacinas(p)
+    .filter((x) => x.fonte === 'plano' && x.st && x.st.nivel !== 'ok' && (x.regs.length || (x.essencial && meses !== null && meses < 6)))
+    .map((x) => ({ nivel: x.st.nivel, icone: x.st.icone, aba: 'saude', ordem: x.st.dias,
+      html: `<strong>Vacina: ${esc(x.v.nome)}</strong> — ${esc(x.rotulo)}: ${x.st.texto.toLowerCase()} (${fmtData(x.proxima)})` }));
+}
+
+// No formulário: sugere a próxima dose pelo plano ao digitar o nome e a data
+function sugerirProximaDose() {
+  const p = petAtual();
+  const dica = $('#saude-proxima-dica');
+  const campo = $('#saude-proxima');
+  if (!p || tipoSelecionado() !== 'vacina') { dica.hidden = true; return; }
+  const nome = $('#saude-nome').value.trim();
+  const data = $('#saude-data').value;
+  const v = VACINAS_PLANO[p.especie].find((x) => nome && x.re.test(nome));
+  if (!v || !data || campo.dataset.manual === '1') { if (!v) dica.hidden = true; if (!v && campo.dataset.auto === '1') { campo.value = ''; campo.dataset.auto = ''; } return; }
+  const id = $('#saude-id').value;
+  const regs = [...dosesDaVacina(v, p.id).filter((r) => r.id !== id && r.data <= data), { data, criado: Date.now() }]
+    .sort((a, b) => a.data.localeCompare(b.data));
+  const sug = planejarVacina(v, p, regs.map((r) => ({ data: r.data, criado: r.criado })));
+  if (!sug.proxima || sug.proxima <= data) { dica.hidden = true; return; }
+  campo.value = sug.proxima;
+  campo.dataset.auto = '1';
+  dica.textContent = `Sugerido pelo plano: ${sug.rotulo}. Se o veterinário marcou outra data, troque.`;
+  dica.hidden = false;
+}
+for (const id of ['#saude-nome', '#saude-data']) $(id).addEventListener('input', sugerirProximaDose);
+document.querySelectorAll('input[name="saude-tipo"]').forEach((el) => el.addEventListener('change', sugerirProximaDose));
+$('#saude-proxima').addEventListener('input', () => { $('#saude-proxima').dataset.manual = '1'; $('#saude-proxima').dataset.auto = ''; $('#saude-proxima-dica').hidden = true; });
+
+$('#plano-vacinas').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-plano-registrar]');
+  if (b) {
+    const p = petAtual();
+    const v = VACINAS_PLANO[p.especie].find((x) => x.id === b.dataset.planoRegistrar);
+    limparFormSaude();
+    document.querySelector('input[name="saude-tipo"][value="vacina"]').checked = true;
+    atualizarSugestoes();
+    const ultimo = dosesDaVacina(v, p.id).pop();
+    $('#saude-nome').value = ultimo ? ultimo.nome : v.sugestao;
+    sugerirProximaDose();
+    $('#form-saude').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('#saude-data').focus({ preventScroll: true });
+  }
+});
 
 /* ---------- Banho ---------- */
 function banhosDoPet() {
@@ -2888,8 +3231,8 @@ const CUIDADOS = {
     idade: [12, Infinity], obesidade: true,
     nome: 'Sobrepeso e obesidade',
     sinais: ['Fica difícil sentir as costelas', 'Some a "cintura" vista de cima', 'Cansa mais nos passeios'],
-    prevenir: 'Pese a ração na balança (copo medidor engana). Petiscos até 10% das calorias. Faça passeios diários e reavalie o ECC na aba ECC.',
-    inicial: 'Reduza aos poucos, seguindo a meta da aba ECC. Não faça jejum nem corte brusco. Troque petiscos por pedaços de cenoura ou da própria ração.',
+    prevenir: 'Pese a ração na balança (copo medidor engana). Petiscos até 10% das calorias. Faça passeios diários e reavalie o ECC em Peso e ração → Corpo (ECC).',
+    inicial: 'Reduza aos poucos, seguindo a meta de Peso e ração → Corpo (ECC). Não faça jejum nem corte brusco. Troque petiscos por pedaços de cenoura ou da própria ração.',
     quando: 'Mais comum após a castração e na meia-idade.',
     fontes: [F.aaha],
   },
@@ -3175,7 +3518,7 @@ const CUIDADOS = {
     idade: [24, 72], peso: true,
     nome: 'Cistite e problemas urinários (DTUIF)',
     sinais: ['Vai várias vezes à caixa e sai pouco xixi', 'Xixi com sangue', 'Faz xixi fora da caixa', 'Lambe muito a região genital'],
-    urgente: 'Gato macho que vai à caixa e não sai xixi é emergência: pode ser obstrução.',
+    urgente: 'Gato macho que vai à caixa e não sai xixi é emergência: pode ser obstrução.', machoMaisRisco: 'machos têm mais risco de entupir a uretra',
     prevenir: 'Mais água (fonte, sachê). Caixas limpas todo dia, uma por gato e mais uma. Rotina estável e peso ideal.',
     inicial: 'Se for macho e não sair xixi: emergência, vá agora (risco de vida em horas). Com sangue ou idas frequentes, mantenha o gato calmo, ofereça água e marque consulta no mesmo dia.',
     quando: 'Mais comum entre 2 e 6 anos.',
@@ -3196,7 +3539,7 @@ const CUIDADOS = {
     nome: 'Obesidade e diabetes',
     sinais: ['Barriga pendurada, sem cintura', 'Dificuldade para se limpar nas costas', 'Diabetes: bebe e urina muito, come mais e emagrece'],
     prevenir: 'Porções medidas na balança e brincadeiras diárias (varinha, bolinha). Comedouros interativos ajudam.',
-    inicial: 'Reduza só um pouco por vez, seguindo a meta da aba ECC. Nunca deixe sem comer: o jejum causa lipidose hepática. Se ele parar de comer por 1–2 dias, vá ao veterinário.',
+    inicial: 'Reduza só um pouco por vez, seguindo a meta de Peso e ração → Corpo (ECC). Nunca deixe sem comer: o jejum causa lipidose hepática. Se ele parar de comer por 1–2 dias, vá ao veterinário.',
     quando: 'Castrados e gatos de apartamento, a partir dos 5 anos.',
     fontes: [F.aaha],
   },
@@ -3216,8 +3559,41 @@ const CUIDADOS = {
     urgente: 'Passa para pessoas e outros animais por arranhão e mordida: use luvas ao manusear e leve ao veterinário logo.',
     prevenir: 'Gato dentro de casa e castrado. Telas nas janelas.',
     inicial: 'Use luvas sempre. Separe o gato num cômodo e não deixe a ferida em contato com outras pessoas e animais. Não aperte nem esprema a ferida. Leve ao veterinário em caixa de transporte. Se alguém for arranhado, procure um posto de saúde.',
-    quando: 'Qualquer idade; mais em machos com acesso à rua.',
+    quando: 'Qualquer idade; mais em machos com acesso à rua.', machoMaisRisco: 'mais comum em machos (brigas)',
     fontes: [F.esporotricose, F.esporotricoseSP],
+  },
+  piometra: {
+    sexo: 'femea', soInteiro: true,
+    idade: [12, Infinity],
+    nome: 'Piometra (infecção no útero)',
+    sinais: ['Bebe muita água e faz muito xixi', 'Secreção com pus ou sangue na vulva (pode não aparecer)', 'Apatia, falta de apetite, vômito', 'Barriga inchada', 'Costuma aparecer 1 a 2 meses depois do cio'],
+    urgente: 'Fêmea não castrada com sede, apatia e barriga inchada depois do cio: procure o veterinário hoje. A piometra pode matar em poucos dias.',
+    prevenir: 'A castração elimina o risco. Evite anticoncepcional injetável ("injeção para não dar cio"): aumenta muito o risco.',
+    inicial: 'Não espere melhorar sozinha e não dê remédio por conta própria. Ofereça água e leve ao veterinário no mesmo dia.',
+    quando: 'Fêmeas não castradas, mais a partir da meia-idade.',
+    fontes: [],
+  },
+  'tumor-mama': {
+    sexo: 'femea',
+    idade: [48, Infinity],
+    nome: 'Tumor de mama',
+    sinais: ['Caroço ou bolinha nas mamas (passe a mão uma vez por mês)', 'Mama inchada, vermelha ou com ferida', 'Secreção no bico do peito fora da gestação'],
+    urgente: 'Em gatas, a maioria dos tumores de mama é maligna: qualquer caroço precisa de consulta logo.',
+    prevenir: 'Castração cedo reduz muito o risco (em cadelas, antes do 1º ou 2º cio; em gatas, antes de 1 ano). Não use anticoncepcional injetável.',
+    inicial: 'Anote o tamanho e o local do caroço e tire uma foto. Marque consulta sem esperar ele crescer.',
+    quando: 'Mais comum acima dos 6 anos; o risco é bem maior em fêmeas não castradas ou castradas tarde.',
+    fontes: [],
+  },
+  prostata: {
+    sexo: 'macho', soInteiro: true, especie: 'cao',
+    idade: [60, Infinity], comumNaIdade: true,
+    nome: 'Aumento da próstata',
+    sinais: ['Força para fazer cocô; fezes finas, em fita', 'Gotas de sangue no xixi ou saindo do pênis', 'Xixi em pouca quantidade e muitas vezes', 'Andar duro ou dor na barriga'],
+    urgente: 'Febre, dor forte ou não conseguir fazer xixi: procure o veterinário hoje.',
+    prevenir: 'A castração previne e trata a maioria dos casos. Exame da próstata no check-up anual de machos inteiros acima de 5 anos.',
+    inicial: 'Ofereça água à vontade e comida úmida para amolecer as fezes. Marque consulta.',
+    quando: 'Machos não castrados a partir dos 5 anos (muito comum depois dos 6).',
+    fontes: [],
   },
   hipertireoidismo: {
     comumNaIdade: true,
@@ -3329,8 +3705,8 @@ const RACAS = {
   },
 };
 const GERAIS = {
-  cao: { titulo: 'Para todos os cães no Brasil', itens: ['carrapato', 'leishmaniose', 'dirofilariose', 'periodontal-cao', 'obesidade-cao'] },
-  gato: { titulo: 'Para todos os gatos no Brasil', itens: ['drc', 'dtuif', 'dentes-gato', 'obesidade-gato', 'fiv-felv', 'esporotricose', 'hipertireoidismo'] },
+  cao: { titulo: 'Para todos os cães no Brasil', itens: ['carrapato', 'leishmaniose', 'dirofilariose', 'periodontal-cao', 'obesidade-cao', 'piometra', 'tumor-mama', 'prostata'] },
+  gato: { titulo: 'Para todos os gatos no Brasil', itens: ['drc', 'dtuif', 'dentes-gato', 'obesidade-gato', 'fiv-felv', 'esporotricose', 'hipertireoidismo', 'piometra', 'tumor-mama'] },
 };
 
 const normalizar = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -3385,11 +3761,26 @@ function itemCuidado(chave, origem = null, motivos = []) {
 
 const fmtMeses = (m) => (m < 12 ? plural(m, 'mês', 'meses') : plural(Math.round(m / 12), 'ano', 'anos'));
 
-// Pontua cada cuidado para este pet: raça + faixa de idade + ECC
-function avaliarCuidado(chave, daRaca, meses, ecc) {
+// Vale para este pet? (riscos só de fêmeas, só de machos ou só de não castrados)
+function cuidadoAplicavel(chave, p) {
+  const c = CUIDADOS[chave];
+  if (c.especie && c.especie !== p.especie) return false;
+  if (c.sexo && p.sexo && c.sexo !== p.sexo) return false;
+  if (c.soInteiro && p.castrado === true) return false;
+  return true;
+}
+// Pontua cada cuidado para este pet: raça + faixa de idade + ECC + sexo/castração
+function avaliarCuidado(chave, daRaca, meses, ecc, p = null) {
   const c = CUIDADOS[chave];
   let pontos = daRaca ? 3 : 1;
   const motivos = [daRaca ? 'predisposição da raça' : null];
+  if (p && c.sexo) {
+    if (!p.sexo) { pontos -= 1; motivos.push(c.sexo === 'femea' ? 'só se for fêmea' : 'só se for macho'); }
+    else if (p.castrado === false) { pontos += 2; motivos.push(c.sexo === 'femea' ? 'fêmea não castrada' : 'macho não castrado'); }
+    else if (p.castrado === true) { pontos -= 2; motivos.push('castrada: risco bem menor'); }
+    else motivos.push(c.sexo === 'femea' ? 'fêmea (castração não informada)' : 'macho (castração não informada)');
+  }
+  if (p && c.machoMaisRisco && p.sexo === 'macho') { pontos += 1; motivos.push(c.machoMaisRisco); }
   if (meses === null) {
     pontos += daRaca ? 1 : 2; // sem idade não dá para descartar: tudo fica em "fique de olho"
   } else {
@@ -3427,16 +3818,18 @@ function renderRaca() {
   // Perfil usado na personalização
   const perfil = [
     raca ? raca.nome : (p.raca ? `${esc(p.raca)} (sem guia)` : 'raça não informada'),
+    SEXOS[p.sexo] ? esc(sexoTexto(p)) : 'sexo não informado',
     meses !== null ? (p.nascAprox ? '≈ ' : '') + idadeTexto(p.nascimento) : 'idade não informada',
     ecc !== null ? `ECC ${ecc}/9 (${ECC_DESC[ecc][0].toLowerCase()})` : 'sem avaliação de ECC',
   ];
   const faltando = [];
   if (meses === null) faltando.push('<button type="button" class="link" data-informar-idade-raca>informe a idade</button>');
   if (ecc === null) faltando.push('<button type="button" class="link" data-ir-ecc>faça a avaliação de ECC</button>');
+  if (!SEXOS[p.sexo] || p.castrado === undefined) faltando.push('<button type="button" class="link" data-informar-idade-raca>informe o sexo e a castração</button>');
 
   $('#raca-cabecalho').innerHTML = `
     <h2>Riscos para ${esc(p.nome)}</h2>
-    <p class="intro">Ordenado pelo que é mais provável agora, cruzando raça, idade e peso.</p>
+    <p class="intro">Ordenado pelo que é mais provável agora, cruzando raça, idade, peso, sexo e castração.</p>
     <ul class="perfil">${perfil.map((t) => `<li>${t}</li>`).join('')}</ul>
     ${faltando.length ? `<p class="dica-campo">Para personalizar melhor, ${faltando.join(' e ')}.</p>` : ''}
     ${!raca ? `<p class="dica-campo">${p.raca ? `Ainda não há guia para "${esc(p.raca)}".` : 'Raça não informada.'} Escolha abaixo ou veja só os riscos gerais.</p>` : ''}
@@ -3444,8 +3837,8 @@ function renderRaca() {
 
   const itensRaca = raca ? raca.itens : [];
   const todos = [
-    ...itensRaca.map((k) => avaliarCuidado(k, true, meses, ecc)),
-    ...GERAIS[p.especie].itens.filter((k) => !itensRaca.includes(k)).map((k) => avaliarCuidado(k, false, meses, ecc)),
+    ...itensRaca.filter((k) => cuidadoAplicavel(k, p)).map((k) => avaliarCuidado(k, true, meses, ecc, p)),
+    ...GERAIS[p.especie].itens.filter((k) => !itensRaca.includes(k) && cuidadoAplicavel(k, p)).map((k) => avaliarCuidado(k, false, meses, ecc, p)),
   ].sort((a, b) => b.pontos - a.pontos || (b.daRaca - a.daRaca));
 
   const grupos = [
@@ -3547,6 +3940,9 @@ function faseSugerida(p) {
 const RER = (kg) => 70 * Math.pow(kg, 0.75);
 
 function fatorManutencao(especie, fase, castrado, atividade) {
+  // Fêmeas: fim da gestação e amamentação (varia com o tamanho da ninhada)
+  if (fase === 'gestante') return especie === 'cao' ? 3.0 : 2.0;
+  if (fase === 'lactante') return 4.0;
   if (especie === 'cao') {
     if (fase === 'filhote4') return 3.0;
     if (fase === 'filhote12') return 2.0;
@@ -3566,7 +3962,7 @@ function calcularNutricao({ especie, peso, ecc, fase, castrado, atividade, kcalK
   const fator = fatorManutencao(especie, fase, castrado, atividade);
   const r = { filhote, fator };
   if (filhote) {
-    r.objetivo = 'crescer';
+    r.objetivo = fase === 'gestante' ? 'gestacao' : fase === 'lactante' ? 'lactacao' : 'crescer';
     r.kcalMeta = r.kcalManter = RER(peso) * fator;
   } else {
     r.pesoIdeal = peso / (1 + (ecc - 5) * 0.1);
@@ -3623,9 +4019,12 @@ function preencherFormEcc() {
   const pesos = pesosDoPet();
   $('#ecc-peso').value = pesos.length ? String(pesos[pesos.length - 1].kg).replace('.', ',') : '';
   eccEscolhido = ultimaAvaliacao()?.escore || 5;
-  $('#ecc-fase').innerHTML = FASES[p.especie].map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+  const meses = idadeEmMeses(p.nascimento);
+  const fases = [...FASES[p.especie], ...(femeaInteira(p) && (meses === null || meses >= 6) ? [['gestante', 'Gestante (último terço)'], ['lactante', 'Amamentando filhotes']] : [])];
+  $('#ecc-fase').innerHTML = fases.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
   $('#ecc-fase').value = faseSugerida(p);
-  $('#ecc-castrado').value = nutri.castrado === false ? 'nao' : 'sim';
+  $('#ecc-castrado').value = (p.castrado ?? nutri.castrado) === false ? 'nao' : 'sim';
+  $('#ecc-castrado-rot').textContent = p.sexo === 'femea' ? 'Castrada?' : p.sexo === 'macho' ? 'Castrado?' : 'Castrado(a)?';
   $('#ecc-atividade').value = nutri.atividade || 'normal';
   $('#ecc-kcal').value = nutri.kcalKg ? String(nutri.kcalKg) : '';
   renderEscala();
@@ -3656,8 +4055,9 @@ function salvarPreferenciasNutri() {
   if (!p) return;
   const kcalTxt = $('#ecc-kcal').value.trim();
   const kcal = kcalTxt ? lerKcal(kcalTxt) : null;
+  p.castrado = $('#ecc-castrado').value === 'sim';
   p.nutri = {
-    castrado: $('#ecc-castrado').value === 'sim',
+    castrado: p.castrado,
     atividade: $('#ecc-atividade').value,
     kcalKg: kcal >= 500 && kcal <= 6000 ? Math.round(kcal) : (p.nutri?.kcalKg || null),
   };
@@ -3691,9 +4091,9 @@ function renderEcc() {
   const nRef = racao?.refeicoes.length || 2;
   const temKcal = !!entrada.kcalKg;
 
-  const objetivoTxt = { perder: 'para emagrecer', ganhar: 'para ganhar peso', manter: 'para manter', crescer: 'crescimento' }[r.objetivo];
+  const objetivoTxt = { perder: 'para emagrecer', ganhar: 'para ganhar peso', manter: 'para manter', crescer: 'crescimento', gestacao: 'gestação', lactacao: 'amamentação' }[r.objetivo];
   const ideal = r.filhote
-    ? ['Peso ideal', '—', 'filhote em crescimento']
+    ? ['Peso ideal', '—', r.objetivo === 'crescer' ? 'filhote em crescimento' : r.objetivo === 'gestacao' ? 'gestante: não fazer dieta' : 'amamentando: não fazer dieta']
     : ['Peso ideal', fmtKg(r.pesoIdeal), r.difPct > 0 ? `${r.difPct}% acima do ideal` : r.difPct < 0 ? `${-r.difPct}% abaixo do ideal` : 'está no peso ideal'];
   const tiles = [
     ideal,
@@ -3715,6 +4115,12 @@ function renderEcc() {
       <li>Magreza pode ter causa médica (vermes, dentes, doenças). Vale uma consulta.</li>`;
   } else if (r.objetivo === 'manter') {
     plano = `<li><strong>Manter ${fmtKg(r.pesoIdeal)}:</strong> ${fmtKcal(r.kcalManter)}/dia${g(r.gManter)}. Reavalie o ECC a cada 1–2 meses.</li>`;
+  } else if (r.objetivo === 'gestacao') {
+    plano = `<li><strong>Gestação:</strong> ${fmtKcal(r.kcalMeta)}/dia${g(r.gMeta)} nas últimas semanas. Até lá, a quantidade normal de adulta; aumente aos poucos a partir da 2ª metade da gestação.</li>
+      <li>Ofereça ração de filhote (mais energia e cálcio na medida certa) dividida em várias refeições. Não dê suplemento de cálcio por conta própria. Acompanhe com o veterinário.</li>`;
+  } else if (r.objetivo === 'lactacao') {
+    plano = `<li><strong>Amamentação:</strong> cerca de ${fmtKcal(r.kcalMeta)}/dia${g(r.gMeta)}. Com ninhada grande pode precisar de mais: deixe ração de filhote à vontade e água sempre fresca.</li>
+      <li>O pico de necessidade é 3 a 4 semanas após o parto. Se ela emagrecer muito, tremer ou ficar agitada, procure o veterinário (risco de eclampsia).</li>`;
   } else {
     plano = `<li><strong>Crescimento:</strong> ${fmtKcal(r.kcalMeta)}/dia${g(r.gMeta)} com o peso de hoje. Recalcule a cada pesagem: a necessidade muda rápido.</li>
       <li>Use ração própria para filhotes. Para ECC fora de 4–5, converse com o veterinário antes de mudar a quantidade.</li>`;
@@ -3809,7 +4215,6 @@ const mesDe = (iso) => iso.slice(0, 7);
 function somarDias(iso, n) { const d = dataLocal(iso); d.setDate(d.getDate() + n); return paraISO(d); }
 const NOMES_MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const fmtMes = (ym) => `${NOMES_MES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(2, 4)}`;
-function agoraHM() { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 
 /* ---------- Fotos (IndexedDB: cabe muito mais que o localStorage) ---------- */
 const FotosDB = (() => {
@@ -3834,6 +4239,7 @@ const FotosDB = (() => {
       const req = fn(tx.objectStore('fotos'));
       tx.oncomplete = () => ok(req ? req.result : undefined);
       tx.onerror = () => falha(tx.error);
+      tx.onabort = () => falha(tx.error || new Error('abortada'));
     });
   }
   return {
@@ -4226,7 +4632,7 @@ function perfilAlimentar(p) {
   const braqui = RACAS_BRAQUI.includes(raca);
   // calorias do dia: meta da avaliação ECC ou estimativa pela fórmula de energia
   let kcalDia = ultimaAvaliacao()?.kcalMeta || null;
-  if (!kcalDia && kg) kcalDia = RER(kg) * fatorManutencao(p.especie, faseSugerida(p), p.nutri?.castrado !== false, p.nutri?.atividade || 'normal');
+  if (!kcalDia && kg) kcalDia = RER(kg) * fatorManutencao(p.especie, faseSugerida(p), (p.castrado ?? p.nutri?.castrado) !== false, p.nutri?.atividade || 'normal');
   const pct = filhote || engorda || veterinaria ? 0.05 : 0.10;
   return { kg, meses, filhote, idoso, raca, ecc, veterinaria, poucaGordura, diabetes, renal, engorda, braqui, kcalDia, pct, limite: kcalDia ? kcalDia * pct : null };
 }
@@ -4760,7 +5166,6 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
     let texto = '';
     let linhas = [];
     const canvases = [];
-    let etapa = 'Lendo';
     // 1ª leitura: bloco único (mantém as linhas da tabela inteiras)
     await leitor.setParameters({ tessedit_pageseg_mode: '6' });
     for (fotoAtual = 0; fotoAtual < total; fotoAtual++) {
@@ -4901,7 +5306,6 @@ function mostrarLeituraEmb(l) {
   box.hidden = false;
 }
 
-let feitoValidade = false;
 function guardarCaracteristicas(lista) {
   caracteristicasForm = lista;
   const r = racaoDoPet();
@@ -4910,9 +5314,12 @@ function guardarCaracteristicas(lista) {
 $('#embalagem-resultado').addEventListener('click', (ev) => {
   if (ev.target.closest('#btn-descartar-embalagem')) { limparEmbalagem(); return; }
   if (ev.target.closest('#btn-usar-gramas') && leituraEmb?.gramasPet) {
-    const campos = [...document.querySelectorAll('#racao-refeicoes li')];
-    if (!campos.length) { $('#racao-refeicoes').appendChild(linhaRefeicao('08:00')); $('#racao-refeicoes').appendChild(linhaRefeicao('18:00')); }
-    const lis = [...document.querySelectorAll('#racao-refeicoes li')].filter((li) => li.querySelector('.ref-hora').value);
+    const comHora = () => [...document.querySelectorAll('#racao-refeicoes li')].filter((li) => li.querySelector('.ref-hora').value);
+    if (!comHora().length) {
+      $('#racao-refeicoes').innerHTML = '';
+      for (const h of ['08:00', '18:00']) $('#racao-refeicoes').appendChild(linhaRefeicao(h));
+    }
+    const lis = comHora();
     const por = Math.round((leituraEmb.gramasPet / lis.length) * 10) / 10;
     lis.forEach((li) => { li.querySelector('.ref-g').value = String(por).replace('.', ','); });
     atualizarTotalVivo();
@@ -4936,7 +5343,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
   else if (!marca && !kgTxt && !kcalTxt && !validade) msg = 'Preencha pelo menos um dos campos.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   const p = petAtual();
-  if (validade) { $('#saco-validade').value = validade; feitoValidade = true; }
+  if (validade) $('#saco-validade').value = validade;
   const feito = [];
   if (marca) { $('#racao-marca').value = marca; feito.push('marca'); }
   if (leituraEmb?.caracteristicas?.length) { guardarCaracteristicas(leituraEmb.caracteristicas); feito.push('características'); }
@@ -4945,9 +5352,9 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
     if (!$('#saco-abertura').value) $('#saco-abertura').value = hojeISO();
     feito.push('tamanho do saco');
   }
-  if (feitoValidade) { feito.push('validade'); feitoValidade = false; }
+  if (validade) feito.push('validade');
   if (kcal) {
-    p.nutri = { castrado: p.nutri?.castrado ?? true, atividade: p.nutri?.atividade || 'normal', kcalKg: Math.round(kcal) };
+    p.nutri = { castrado: p.castrado ?? p.nutri?.castrado ?? true, atividade: p.nutri?.atividade || 'normal', kcalKg: Math.round(kcal) };
     salvar();
     feito.push('energia (já salva e usada na calculadora ECC)');
     renderTudo();
@@ -5235,7 +5642,13 @@ function mostrarNota(r) {
   box.hidden = false;
 }
 
+let lancandoNota = false;
 async function lancarNota(separar) {
+  if (lancandoNota) return;
+  lancandoNota = true;
+  try { await lancarNotaAgora(separar); } finally { lancandoNota = false; }
+}
+async function lancarNotaAgora(separar) {
   const erro = $('#nota-erro');
   const data = $('#nota-data').value;
   const valor = lerValor($('#nota-valor').value);
@@ -5441,6 +5854,10 @@ const SINTOMAS = {
   mancando: { nome: 'Mancando', ic: 'curativo' },
   olho: { nome: 'Olho vermelho ou com secreção', ic: 'olho' },
   xixi: { nome: 'Xixi alterado', ic: 'gota', urgente: 'Gato macho que tenta urinar e não sai nada é emergência: vá ao veterinário agora.' },
+  cio: { nome: 'Cio (sangramento ou vulva inchada)', ic: 'gota', sexo: 'femea', inteira: true },
+  vulva: { nome: 'Secreção na vulva', ic: 'gota', sexo: 'femea', urgente: 'Secreção com pus ou sangue na vulva (principalmente 1 a 2 meses depois do cio), com sede, apatia ou barriga inchada, pode ser piometra (infecção no útero): procure o veterinário hoje.' },
+  mamas: { nome: 'Caroço ou inchaço nas mamas', ic: 'alerta', sexo: 'femea' },
+  testiculo: { nome: 'Inchaço no testículo ou no pênis', ic: 'alerta', sexo: 'macho' },
   sangue: { nome: 'Sangue nas fezes, urina ou vômito', ic: 'gota', urgente: 'Sangue no vômito, nas fezes ou na urina: procure o veterinário hoje.' },
   convulsao: { nome: 'Convulsão', ic: 'raio', urgente: 'Durante a crise, afaste objetos e não coloque a mão na boca dele. Cronometre. Mais de 5 minutos ou crises seguidas: emergência.' },
   respiracao: { nome: 'Dificuldade para respirar', ic: 'pulmao', urgente: 'Respiração difícil, gato respirando de boca aberta ou gengiva azulada: emergência.' },
@@ -5452,18 +5869,51 @@ function sintomasDoPet(petId = estado.petAtual) {
   return estado.sintomas.filter((s) => s.petId === petId)
     .sort((a, b) => (b.data + (b.hora || '')).localeCompare(a.data + (a.hora || '')) || b.criado - a.criado);
 }
+// Texto de urgência ajustado ao pet (espécie e sexo)
+function urgenteSintoma(tipo, p) {
+  const t = SINTOMAS[tipo];
+  if (!t?.urgente) return '';
+  if (tipo === 'xixi') {
+    if (p?.especie === 'gato' && p.sexo === 'macho') return 'Gato macho que tenta urinar e não sai nada é emergência (obstrução): vá ao veterinário agora.';
+    if (p?.especie === 'gato' && !p.sexo) return t.urgente;
+    if (p?.especie === 'cao' && p.sexo === 'macho' && p.castrado === false) return 'Se fizer força e não sair xixi, ou tiver sangue, procure o veterinário hoje (em machos não castrados a próstata pode ser a causa).';
+    return 'Se fizer força e não sair xixi, ou tiver sangue, procure o veterinário hoje.';
+  }
+  return t.urgente;
+}
+// Sintomas oferecidos para este pet (alguns só para fêmeas, fêmeas não castradas ou machos)
+function sintomasDoSexo(p, atual = '') {
+  return Object.entries(SINTOMAS).filter(([k, v]) => k === atual
+    || ((!v.sexo || !p?.sexo || v.sexo === p.sexo) && !(v.inteira && p?.castrado === true)));
+}
+// Nome exibido: em "Outro", o que foi digitado
+function nomeSintoma(s) {
+  if (s.tipo === 'outro' && s.outroNome) return s.outroNome;
+  return (SINTOMAS[s.tipo] || SINTOMAS.outro).nome;
+}
 function atualizarAlertaSintoma() {
-  const t = SINTOMAS[$('#sintoma-tipo').value];
-  $('#sintoma-alerta').hidden = !t?.urgente;
-  $('#sintoma-alerta').innerHTML = t?.urgente ? ic('urgente') + ' ' + esc(t.urgente) : '';
+  const tipo = $('#sintoma-tipo').value;
+  const txt = urgenteSintoma(tipo, petAtual());
+  $('#sintoma-alerta').hidden = !txt;
+  $('#sintoma-alerta').innerHTML = txt ? ic('urgente') + ' ' + esc(txt) : '';
+  const outro = tipo === 'outro';
+  const campo = $('#sintoma-outro-campo');
+  if (outro && campo.hidden) {
+    const usados = [...new Set(estado.sintomas.filter((s) => s.petId === estado.petAtual && s.tipo === 'outro' && s.outroNome).map((s) => s.outroNome))];
+    $('#sugestoes-sintoma-outro').innerHTML = usados.map((n) => `<option value="${esc(n)}"></option>`).join('');
+  }
+  campo.hidden = !outro;
+}
+function opcoesSintoma(atual = '') {
+  $('#sintoma-tipo').innerHTML = sintomasDoSexo(petAtual(), atual).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
 }
 function limparFormSintoma() {
   $('#form-sintoma').reset();
   $('#sintoma-id').value = '';
-  $('#sintoma-tipo').innerHTML = Object.entries(SINTOMAS).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
+  opcoesSintoma();
   $('#sintoma-data').value = hojeISO();
   $('#sintoma-data').max = hojeISO();
-  $('#sintoma-hora').value = agoraHM();
+  $('#sintoma-hora').value = agoraHHMM();
   $('#sintoma-foto-nome').textContent = '';
   $('#form-sintoma-titulo').textContent = 'Registrar sintoma';
   $('#btn-salvar-sintoma').textContent = 'Registrar';
@@ -5471,7 +5921,10 @@ function limparFormSintoma() {
   $('#sintoma-erro').hidden = true;
   atualizarAlertaSintoma();
 }
-$('#sintoma-tipo').addEventListener('change', atualizarAlertaSintoma);
+$('#sintoma-tipo').addEventListener('change', () => {
+  atualizarAlertaSintoma();
+  if ($('#sintoma-tipo').value === 'outro') $('#sintoma-outro').focus();
+});
 $('#btn-cancelar-sintoma').addEventListener('click', limparFormSintoma);
 for (const campo of ['sintoma', 'consulta']) {
   $(`#${campo}-foto`).addEventListener('change', (ev) => {
@@ -5487,8 +5940,10 @@ $('#form-sintoma').addEventListener('submit', async (ev) => {
   const hora = $('#sintoma-hora').value || '';
   const intensidade = document.querySelector('input[name="sintoma-intensidade"]:checked').value;
   const obs = $('#sintoma-obs').value.trim();
+  const outroNome = tipo === 'outro' ? $('#sintoma-outro').value.trim() : '';
   let msg = '';
   if (!SINTOMAS[tipo]) msg = 'Escolha o sintoma.';
+  else if (tipo === 'outro' && !outroNome) msg = 'Escreva qual é o sintoma.';
   else if (!data) msg = 'Informe a data.';
   else if (data > hojeISO()) msg = 'A data não pode estar no futuro.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
@@ -5506,7 +5961,7 @@ $('#form-sintoma').addEventListener('submit', async (ev) => {
       erro.textContent = 'Não foi possível guardar a foto neste navegador. O sintoma foi salvo sem foto.';
       erro.hidden = false;
     }
-    const dados = { tipo, data, hora, intensidade, obs, fotoId };
+    const dados = { tipo, outroNome, data, hora, intensidade, obs, fotoId };
     if (existente) Object.assign(existente, dados);
     else estado.sintomas.push({ id: novoIdSintoma, petId: estado.petAtual, ...dados, criado: Date.now() });
     salvar();
@@ -5523,7 +5978,9 @@ $('#diario-sintomas').addEventListener('click', (ev) => {
     const s = estado.sintomas.find((x) => x.id === b.dataset.editarSintoma);
     if (!s) return;
     $('#sintoma-id').value = s.id;
+    opcoesSintoma(s.tipo);
     $('#sintoma-tipo').value = s.tipo;
+    $('#sintoma-outro').value = s.outroNome || '';
     $('#sintoma-data').value = s.data;
     $('#sintoma-hora').value = s.hora || '';
     document.querySelector(`input[name="sintoma-intensidade"][value="${s.intensidade}"]`).checked = true;
@@ -5545,11 +6002,16 @@ $('#diario-sintomas').addEventListener('click', (ev) => {
   }
 });
 
-// Sintomas repetidos nos últimos 7 dias
+// Sintomas repetidos nos últimos 7 dias ("Outro" conta separado pelo que foi digitado)
 function repeticoesSintomas(petId) {
   const limite = somarDias(hojeISO(), -6);
   const cont = {};
-  for (const s of estado.sintomas) if (s.petId === petId && s.data >= limite) cont[s.tipo] = (cont[s.tipo] || 0) + 1;
+  for (const s of estado.sintomas) {
+    if (s.petId !== petId || s.data < limite || s.tipo === 'cio') continue;
+    const k = s.tipo === 'outro' && s.outroNome ? 'outro:' + normalizar(s.outroNome) : s.tipo;
+    if (!cont[k]) cont[k] = { nome: nomeSintoma(s), ic: (SINTOMAS[s.tipo] || SINTOMAS.outro).ic, n: 0 };
+    cont[k].n++;
+  }
   return cont;
 }
 
@@ -5559,18 +6021,18 @@ function renderSintomas() {
   const recentes = regs.filter((s) => s.data >= limite30);
   const antigos = regs.filter((s) => s.data < limite30);
   const cont = repeticoesSintomas(estado.petAtual);
-  const chips = Object.entries(cont).sort((a, b) => b[1] - a[1]);
+  const chips = Object.values(cont).sort((a, b) => b.n - a.n);
   $('#sintomas-resumo').innerHTML = chips.length ? `
     <p class="dica-campo">Últimos 7 dias:</p>
-    <ul class="motivos chips-sintomas">${chips.map(([k, n]) => `<li class="${n >= 3 ? 'repetido' : ''}">${SINTOMAS[k].nome} ×${n}</li>`).join('')}</ul>
-    ${chips.some(([, n]) => n >= 3) ? '<p class="nota-raca">Sintoma repetido 3 vezes ou mais em uma semana: vale marcar uma consulta. Mostre este diário ao veterinário.</p>' : ''}` : '';
+    <ul class="motivos chips-sintomas">${chips.map((c) => `<li class="${c.n >= 3 ? 'repetido' : ''}">${esc(c.nome)} ×${c.n}</li>`).join('')}</ul>
+    ${chips.some((c) => c.n >= 3) ? '<p class="nota-raca">Sintoma repetido 3 vezes ou mais em uma semana: vale marcar uma consulta. Mostre este diário ao veterinário.</p>' : ''}` : '';
   const item = (s) => {
     const t = SINTOMAS[s.tipo] || SINTOMAS.outro;
     return `
       <li class="item-sintoma">
         <span class="ic-lista">${ic(t.ic)}</span>
         <div class="info">
-          <div class="principal">${t.nome} <span class="delta">${INTENSIDADES[s.intensidade] || ''}</span></div>
+          <div class="principal">${esc(nomeSintoma(s))} <span class="delta">${INTENSIDADES[s.intensidade] || ''}</span></div>
           <div class="secundario">${fmtData(s.data)}${s.hora ? ' às ' + s.hora : ''}${s.obs ? ' · ' + esc(s.obs) : ''}</div>
           <div class="acoes">
             <button type="button" class="btn pequeno" data-editar-sintoma="${s.id}">Editar</button>
@@ -5771,11 +6233,12 @@ function avisosDoPet(petId) {
     nivel: st.nivel, icone: st.icone, aba: 'saude', ordem: st.dias,
     html: `<strong>${TIPOS[r.tipo].nome}: ${esc(r.nome)}</strong> — ${st.texto.toLowerCase()} (${fmtData(r.proxima)})`,
   }));
+  lista.push(...avisosPlano(p));
   for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x) && x.inicio <= hoje)) {
     const e = estoqueRemedio(r);
     if (e && e.diasRestantes <= 3 && (!r.fim || e.acaba < r.fim)) {
       lista.push({ nivel: e.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'pilula', aba: 'saude', ordem: e.diasRestantes,
-        html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
+        html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : e.diasRestantes === 0 ? 'acaba hoje' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
     }
     if (r.fim) {
       const d = diasEntre(hoje, r.fim);
@@ -5785,14 +6248,14 @@ function avisosDoPet(petId) {
   }
   const er = estoqueRacao(p);
   if (er && er.diasRestantes !== null && er.diasRestantes <= 5) {
-    lista.push({ nivel: er.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'racao', aba: 'racao', ordem: er.diasRestantes,
+    lista.push({ nivel: er.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'racao', aba: 'peso', sub: 'racao', ordem: er.diasRestantes,
       html: er.diasRestantes <= 0 ? '<strong>Ração</strong> — o saco já deve ter acabado: registre o novo'
         : `<strong>Ração</strong> — acaba em ~${plural(er.diasRestantes, 'dia', 'dias')} (${fmtData(er.acaba)})` });
   }
   const sacoAv = sacoDono(p).saco;
   if (sacoAv?.validade) {
     const d = diasEntre(hoje, sacoAv.validade);
-    if (d <= 15) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: 'saco', aba: 'racao', ordem: d,
+    if (d <= 15) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: 'saco', aba: 'peso', sub: 'racao', ordem: d,
       html: `<strong>Validade da ração</strong> — ${d < 0 ? `venceu em ${fmtData(sacoAv.validade)}` : d === 0 ? 'vence hoje' : `vence em ${plural(d, 'dia', 'dias')} (${fmtData(sacoAv.validade)})`}` });
   }
   for (const c of consultasDoPet(petId).filter(retornoPendente)) {
@@ -5801,13 +6264,13 @@ function avisosDoPet(petId) {
       html: `<strong>Retorno${c.clinica ? ' — ' + esc(c.clinica) : ''}</strong> — ${d < 0 ? `atrasado (era ${fmtData(c.retorno)})` : d === 0 ? 'hoje' : `em ${plural(d, 'dia', 'dias')} (${fmtData(c.retorno)})`}` });
   }
   const cont = repeticoesSintomas(petId);
-  for (const [k, n] of Object.entries(cont)) {
-    if (n >= 3) lista.push({ nivel: 'perto', icone: SINTOMAS[k].ic, aba: 'diario', ordem: 2,
-      html: `<strong>${SINTOMAS[k].nome}</strong> — ${n} vezes em 7 dias: vale consultar o veterinário` });
+  for (const c of Object.values(cont)) {
+    if (c.n >= 3) lista.push({ nivel: 'perto', icone: c.ic, aba: 'diario', ordem: 2,
+      html: `<strong>${esc(c.nome)}</strong> — ${c.n} vezes em 7 dias: vale consultar o veterinário` });
   }
-  const urgente = estado.sintomas.find((s) => s.petId === petId && SINTOMAS[s.tipo]?.urgente && s.data >= somarDias(hoje, -1));
+  const urgente = estado.sintomas.find((s) => s.petId === petId && urgenteSintoma(s.tipo, p) && s.data >= somarDias(hoje, -1));
   if (urgente) lista.push({ nivel: 'atrasada', icone: 'urgente', aba: 'diario', ordem: -99,
-    html: `<strong>${SINTOMAS[urgente.tipo].nome}</strong> registrado: ${SINTOMAS[urgente.tipo].urgente}` });
+    html: `<strong>${esc(nomeSintoma(urgente))}</strong> registrado: ${esc(urgenteSintoma(urgente.tipo, p))}` });
   return lista.sort((a, b) => (a.nivel === b.nivel ? a.ordem - b.ordem : a.nivel === 'atrasada' ? -1 : 1));
 }
 
@@ -5816,7 +6279,7 @@ function renderResumo() {
   const p = petAtual();
   $('#resumo-emoji').innerHTML = avatarHTML(p, 52);
   $('#resumo-nome').textContent = p.nome;
-  $('#resumo-det').textContent = [ESPECIES[p.especie].nome, p.raca].filter(Boolean).join(' · ');
+  $('#resumo-det').innerHTML = [esc(ESPECIES[p.especie].nome), SEXOS[p.sexo] ? esc(sexoTexto(p)) : '<button type="button" class="link" data-informar-sexo>informar sexo</button>', esc(p.raca)].filter(Boolean).join(' · ');
 
   const pesos = pesosDoPet();
   const banho = banhosDoPet()[0];
@@ -5865,6 +6328,9 @@ $('#btn-resumo').addEventListener('click', () => {
   aplicarResumo();
 });
 aplicarResumo();
+$('#resumo-det').addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-informar-sexo]')) { abrirPainelPets(); editarPet(estado.petAtual); document.querySelector('input[name="pet-sexo"]').focus(); }
+});
 $('#resumo-fatos').addEventListener('click', (ev) => {
   if (ev.target.closest('[data-informar-idade]')) {
     abrirPainelPets();
@@ -5874,17 +6340,20 @@ $('#resumo-fatos').addEventListener('click', (ev) => {
 });
 
 
-/* ---------- Sub-abas de Peso: Peso | Corpo (ECC) ---------- */
+/* ---------- Sub-abas de Peso e ração: Peso | Corpo (ECC) | Ração | Alimentos ---------- */
+const SUBABAS_PESO = ['registro', 'corpo', 'racao', 'alimentos'];
 let subabaPeso = 'registro';
-try { if (localStorage.getItem('diario-pet-subaba-peso') === 'corpo') subabaPeso = 'corpo'; } catch (e) { /* ignora */ }
+try { const s = localStorage.getItem('diario-pet-subaba-peso'); if (SUBABAS_PESO.includes(s)) subabaPeso = s; } catch (e) { /* ignora */ }
 function mostrarSubabaPeso(nome) {
-  subabaPeso = nome === 'corpo' ? 'corpo' : 'registro';
+  subabaPeso = SUBABAS_PESO.includes(nome) ? nome : 'registro';
   try { localStorage.setItem('diario-pet-subaba-peso', subabaPeso); } catch (e) { /* ignora */ }
   document.querySelectorAll('[data-subaba-peso]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subabaPeso === subabaPeso)));
-  $('#peso-registro').hidden = subabaPeso !== 'registro';
-  $('#peso-corpo').hidden = subabaPeso !== 'corpo';
-  if (subabaPeso === 'corpo' && petAtual()) { preencherFormEcc(); renderListaEcc(); }
-  if (subabaPeso === 'registro' && petAtual()) desenharGrafico($('#grafico-peso'), pesosDoPet(), ultimaAvaliacao()?.pesoIdeal || null);
+  for (const s of SUBABAS_PESO) $('#peso-' + s).hidden = subabaPeso !== s;
+  if (!petAtual()) return;
+  if (subabaPeso === 'corpo') { preencherFormEcc(); renderListaEcc(); }
+  if (subabaPeso === 'registro') desenharGrafico($('#grafico-peso'), pesosDoPet(), ultimaAvaliacao()?.pesoIdeal || null);
+  if (subabaPeso === 'racao') { renderRacao(); renderSaco(); }
+  if (subabaPeso === 'alimentos') renderAlimentos();
 }
 $('#subabas-peso').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-subaba-peso]');
@@ -5892,6 +6361,7 @@ $('#subabas-peso').addEventListener('click', (ev) => {
 });
 // Navegação entre abas (e sub-abas) a partir de avisos, próximos e calendário
 function irPara(aba, sub) {
+  if (aba === 'racao' || aba === 'alimentos') { sub = aba; aba = 'peso'; } // Ração virou sub-aba de "Peso e ração"
   if (aba === 'peso' && sub) mostrarSubabaPeso(sub);
   if (aba === 'saude' && sub) mostrarSubaba(sub);
   if (aba === 'diario' && sub) mostrarSubabaDiario(sub);
@@ -5932,6 +6402,8 @@ function eventosDoPet(petId, ini, fim) {
       detalhe: r.proxima < hoje ? 'atrasada' : 'próxima dose', nivel: st.nivel === 'atrasada' ? 'alerta' : st.nivel === 'perto' ? 'perto' : '',
       aba: 'saude', sub: 'prevencao', google: eventoVacina(r) });
   }
+  // Plano de vacinação: datas sugeridas ainda sem registro
+  ev.push(...eventosPlano(p, dentro));
   // Retornos marcados nas consultas
   for (const c of consultasDoPet(petId).filter(retornoPendente)) {
     if (!dentro(c.retorno)) continue;
@@ -5942,12 +6414,12 @@ function eventosDoPet(petId, ini, fim) {
   const er = estoqueRacao(p);
   if (er && er.acaba && dentro(er.acaba)) {
     ev.push({ chave: 'rac-fim', data: er.acaba, ic: 'racao', titulo: 'Ração deve acabar', detalhe: `${racaoDoPet(petId)?.marca || 'saco atual'} · ${fmtG(er.consumo)}/dia`,
-      nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'racao' });
+      nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'peso', sub: 'racao' });
   }
   const sacoP = sacoDono(p).saco;
   if (sacoP?.validade && dentro(sacoP.validade)) {
     ev.push({ chave: 'rac-val', data: sacoP.validade, ic: 'saco', titulo: 'Validade da ração', detalhe: racaoDoPet(petId)?.marca || '',
-      nivel: sacoP.validade < hoje ? 'alerta' : diasEntre(hoje, sacoP.validade) <= 15 ? 'perto' : '', aba: 'racao' });
+      nivel: sacoP.validade < hoje ? 'alerta' : diasEntre(hoje, sacoP.validade) <= 15 ? 'perto' : '', aba: 'peso', sub: 'racao' });
   }
   // Remédios: último dia e fim do estoque
   for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x))) {
@@ -5964,6 +6436,19 @@ function eventosDoPet(petId, ini, fim) {
       if (!dentro(d) || a <= an) continue;
       ev.push({ chave: 'niver-' + a, data: d, ic: 'bolo', titulo: `Aniversário de ${p.nome}`, detalhe: `${p.nascAprox ? '≈ ' : ''}${plural(a - an, 'ano', 'anos')}`, nivel: 'ok', aba: 'inicio',
         google: { uid: `niver-${p.id}-${a}`, titulo: `Aniversário de ${p.nome}`, detalhes: `${p.nome} faz ${a - an} anos.\nRegistrado no Diário do Pet.`, data: d, alarmes: ['PT9H'] } });
+    }
+  }
+  // Cio previsto (cadelas não castradas): intervalo médio entre os cios registrados, ou ~6 meses
+  if (p.especie === 'cao' && femeaInteira(p)) {
+    const cios = [...new Set(estado.sintomas.filter((s) => s.petId === petId && s.tipo === 'cio').map((s) => s.data))].sort()
+      .filter((d, i, a) => i === 0 || diasEntre(a[i - 1], d) > 30); // dias seguidos do mesmo cio contam uma vez
+    if (cios.length) {
+      const gaps = cios.slice(1).map((d, i) => diasEntre(cios[i], d)).filter((g) => g >= 120 && g <= 365);
+      const intervalo = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 182;
+      let prev = somarDias(cios[cios.length - 1], intervalo);
+      while (prev < hoje) prev = somarDias(prev, intervalo);
+      if (dentro(prev)) ev.push({ chave: 'cio-' + prev, data: prev, ic: 'gota', titulo: 'Cio previsto', detalhe: `a cada ~${Math.round(intervalo / 30)} meses${gaps.length ? '' : ' (estimado)'}`,
+        nivel: '', aba: 'diario', sub: 'sintomas' });
     }
   }
   // Compromissos anotados
@@ -6151,17 +6636,20 @@ $('#form-compromisso').addEventListener('submit', (ev) => {
 limparFormCompromisso();
 
 /* ---------- Abas ---------- */
-const ABAS = ['inicio', 'agenda', 'peso', 'racao', 'saude', 'diario'];
+const ABAS = ['inicio', 'agenda', 'peso', 'saude', 'diario'];
 let abaAtual = 'inicio';
 try { abaAtual = localStorage.getItem('diario-pet-aba') || 'inicio'; } catch (e) { /* sem armazenamento */ }
-if (abaAtual === 'ecc') { abaAtual = 'peso'; try { localStorage.setItem('diario-pet-subaba-peso', 'corpo'); } catch (e) { /* ignora */ } }
+if (abaAtual === 'ecc' || abaAtual === 'racao') {
+  const sub = abaAtual === 'ecc' ? 'corpo' : 'racao';
+  abaAtual = 'peso'; subabaPeso = sub;
+  try { localStorage.setItem('diario-pet-subaba-peso', sub); } catch (e) { /* ignora */ }
+}
 if (!ABAS.includes(abaAtual)) abaAtual = 'inicio';
 function mostrarAba(nome) {
+  if (nome === 'racao' || nome === 'alimentos') { mostrarSubabaPeso(nome); nome = 'peso'; }
   if (!ABAS.includes(nome)) nome = 'inicio';
   abaAtual = nome;
-  if (nome === 'racao') preencherFormRacao();
-  if (nome === 'peso') preencherFormEcc();
-  if (nome === 'racao') preencherFormSaco();
+  if (nome === 'peso') { preencherFormEcc(); preencherFormRacao(); preencherFormSaco(); }
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
     if (b.dataset.aba === nome) b.setAttribute('aria-current', 'page');
@@ -6233,8 +6721,7 @@ function renderTudo() {
   renderResumo();
   if (abaAtual === 'inicio') renderProximos();
   else if (abaAtual === 'agenda') renderAgenda();
-  else if (abaAtual === 'peso') { renderPeso(); renderEcc(); renderListaEcc(); }
-  else if (abaAtual === 'racao') { renderRacao(); renderSaco(); renderAlimentos(); }
+  else if (abaAtual === 'peso') { renderPeso(); renderEcc(); renderListaEcc(); renderRacao(); renderSaco(); renderAlimentos(); }
   else if (abaAtual === 'diario') renderDiario();
   else { renderSaude(); renderClinico(); renderRaca(); }
 }
@@ -6409,6 +6896,97 @@ $('#btn-fechar-banner').addEventListener('click', () => {
   $('#banner-instalar').hidden = true;
   try { localStorage.setItem('diario-pet-banner', 'fechado'); } catch (e) { /* ignora */ }
 });
+
+
+/* ---------- Tutorial: aparece na primeira vez que o app é aberto ---------- */
+const PASSOS_TUTORIAL = [
+  { ic: 'pata', titulo: 'Bem-vindo ao Diário do Pet', texto: `<p>Aqui você acompanha a saúde do seu cão ou gato: peso, ração, vacinas, remédios, sintomas, consultas e gastos.</p>
+      <p>Tudo fica guardado só neste aparelho e funciona sem internet. Veja em 1 minuto como usar.</p>` },
+  { ic: 'mais', alvo: () => (petAtual() ? '#btn-pets' : '#btn-primeiro-pet'), titulo: 'Adicionar um pet', texto: `<p>Toque na <strong>patinha</strong> no alto da tela (ou em <strong>Cadastrar pet</strong>) para abrir <strong>Meus pets</strong>.</p>
+      <ul><li>Preencha o nome, cão ou gato, <strong>macho ou fêmea</strong>, se é castrado(a), a raça e a idade (data de nascimento ou idade aproximada).</li>
+      <li>Escolha uma foto ou um ícone e toque em <strong>Adicionar</strong>.</li>
+      <li>Na mesma tela você edita ou exclui um pet e cadastra quantos quiser.</li></ul>` },
+  { ic: 'pata', alvo: () => (estado.pets.length ? '#pet-atual' : null), titulo: 'Trocar de pet', texto: `<p>Com mais de um pet, escolha aqui qual você está vendo. Todas as abas mostram os dados do pet escolhido.</p>
+      <p>O número entre parênteses é a quantidade de avisos daquele pet.</p>` },
+  { ic: 'inicio', alvo: '[data-aba="inicio"]', titulo: 'Início', texto: `<p>O resumo do pet: idade, peso, ração por dia e último banho.</p>
+      <p>Logo abaixo ficam os <strong>avisos</strong> (vacina vencendo, ração acabando, remédio no fim) e os <strong>próximos compromissos</strong>. Toque em um item para ir até ele.</p>` },
+  { ic: 'agenda', alvo: '[data-aba="agenda"]', titulo: 'Agenda', texto: `<p>Um calendário que junta sozinho tudo o que está por vir: próximas vacinas (inclusive as sugeridas pelo plano de vacinação), vermífugo, retornos, fim da ração e dos remédios, cio previsto e aniversário.</p>
+      <p>Anote também banho e tosa, exames ou consultas marcadas, e mande para a agenda do celular ou o Google Agenda.</p>` },
+  { ic: 'peso', alvo: '[data-aba="peso"]', titulo: 'Peso e ração', texto: `<p>Quatro sub-abas no alto da tela:</p>
+      <ul><li><strong>Peso:</strong> registre as pesagens e veja o gráfico.</li>
+      <li><strong>Corpo (ECC):</strong> avalie o escore corporal e veja o peso ideal, as calorias e as gramas de ração por dia.</li>
+      <li><strong>Ração:</strong> leia a embalagem por foto, controle o saco (quando acaba e validade) e configure o alimentador.</li>
+      <li><strong>Alimentos:</strong> frutas, verduras e petiscos que ele pode comer, quanto, e o que nunca dar.</li></ul>` },
+  { ic: 'saude', alvo: '[data-aba="saude"]', titulo: 'Saúde', texto: `<ul><li><strong>Prevenção:</strong> banho, <strong>plano de vacinação</strong> (calcula as próximas doses pela idade, espécie, raça, sexo e doses anteriores), vacinas, vermífugo e antipulgas.</li>
+      <li><strong>Doenças e remédios:</strong> tratamentos, horários, estoque e lembretes.</li>
+      <li><strong>Raça:</strong> riscos de saúde mais prováveis para o seu pet e os primeiros sinais.</li></ul>` },
+  { ic: 'diario', alvo: '[data-aba="diario"]', titulo: 'Diário', texto: `<ul><li><strong>Sintomas:</strong> vômito, coceira, tosse… Se não estiver na lista, escolha <strong>Outro</strong> e escreva qual é. O app avisa quando algo se repete ou é urgente.</li>
+      <li><strong>Consultas:</strong> consultas, exames, diagnósticos e retornos, com foto da receita.</li>
+      <li><strong>Gastos:</strong> quanto você gasta por mês, com leitura da nota fiscal por foto.</li></ul>` },
+  { ic: 'config', alvo: '#btn-config', titulo: 'Configurações e backup', texto: `<p>Na engrenagem você muda a cor e o tema e faz o <strong>backup</strong>: exporte de vez em quando e antes de trocar de celular.</p>
+      <p>Este tutorial fica lá também, em <strong>Ver o tutorial de novo</strong>. Cada tela tem ainda um <strong>Como funciona</strong> que abre e fecha.</p>` },
+];
+let passoTutorial = 0;
+let alvoTutorial = null;
+function tutorialVisto() { try { return localStorage.getItem('diario-pet-tutorial') === 'visto'; } catch (e) { return true; } }
+function mostrarPassoTutorial() {
+  const passo = PASSOS_TUTORIAL[passoTutorial];
+  const tut = $('#tutorial');
+  if (alvoTutorial) alvoTutorial.classList.remove('tutorial-alvo');
+  alvoTutorial = null;
+  const sel = typeof passo.alvo === 'function' ? passo.alvo() : passo.alvo;
+  const el = sel ? $(sel) : null;
+  if (el && el.getClientRects().length) {
+    alvoTutorial = el;
+    el.classList.add('tutorial-alvo');
+    const r = el.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: 'center' });
+  }
+  const r = alvoTutorial?.getBoundingClientRect();
+  tut.classList.toggle('com-alvo', !!alvoTutorial);
+  tut.classList.toggle('cartao-baixo', !!r && r.top < innerHeight / 2);
+  tut.classList.toggle('cartao-cima', !!r && r.top >= innerHeight / 2);
+  $('#tutorial-ic').innerHTML = ic(passo.ic);
+  $('#tutorial-titulo').textContent = passo.titulo;
+  $('#tutorial-texto').innerHTML = passo.texto;
+  $('#tutorial-pontos').innerHTML = PASSOS_TUTORIAL.map((_, i) => `<span class="${i === passoTutorial ? 'atual' : ''}"></span>`).join('');
+  $('#tutorial-passo').textContent = `${passoTutorial + 1} de ${PASSOS_TUTORIAL.length}`;
+  $('#tutorial-voltar').hidden = passoTutorial === 0;
+  const ultimo = passoTutorial === PASSOS_TUTORIAL.length - 1;
+  $('#tutorial-proximo').textContent = ultimo ? (estado.pets.length ? 'Concluir' : 'Cadastrar meu pet') : 'Próximo';
+  $('#tutorial-pular').hidden = ultimo;
+  $('#tutorial-proximo').focus({ preventScroll: true });
+}
+function abrirTutorial() {
+  fecharConfig();
+  fecharPainelPets();
+  passoTutorial = 0;
+  $('#tutorial').hidden = false;
+  mostrarPassoTutorial();
+}
+function fecharTutorial(concluiu = false) {
+  if (alvoTutorial) alvoTutorial.classList.remove('tutorial-alvo');
+  alvoTutorial = null;
+  $('#tutorial').hidden = true;
+  try { localStorage.setItem('diario-pet-tutorial', 'visto'); } catch (e) { /* ignora */ }
+  if (concluiu && !estado.pets.length) abrirPainelPets();
+}
+$('#tutorial-proximo').addEventListener('click', () => {
+  if (passoTutorial === PASSOS_TUTORIAL.length - 1) { fecharTutorial(true); return; }
+  passoTutorial++;
+  mostrarPassoTutorial();
+});
+$('#tutorial-voltar').addEventListener('click', () => { if (passoTutorial > 0) { passoTutorial--; mostrarPassoTutorial(); } });
+$('#tutorial-pular').addEventListener('click', () => fecharTutorial());
+$('#btn-ver-tutorial').addEventListener('click', abrirTutorial);
+document.addEventListener('keydown', (ev) => {
+  if ($('#tutorial').hidden) return;
+  if (ev.key === 'Escape') fecharTutorial();
+  if (ev.key === 'ArrowRight') $('#tutorial-proximo').click();
+  if (ev.key === 'ArrowLeft') $('#tutorial-voltar').click();
+});
+window.addEventListener('resize', () => { if (!$('#tutorial').hidden) mostrarPassoTutorial(); });
+if (!tutorialVisto()) abrirTutorial();
 
 </script>
 

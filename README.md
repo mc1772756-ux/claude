@@ -1,8 +1,11 @@
 # Diário do Pet
 
-App para acompanhar a saúde do seu cão ou gato: peso, vacinas, vermífugo, antipulgas,
-remédios, ração e alimentador, escore corporal (ECC), riscos por raça, sintomas,
+App para acompanhar a saúde do seu cão ou gato: peso, vacinas (com plano de vacinação
+calculado pela idade, espécie, raça, sexo e doses anteriores), vermífugo, antipulgas,
+remédios, ração e alimentador, escore corporal (ECC), riscos por raça e sexo, sintomas,
 consultas e gastos. Funciona **offline** e pode ser **instalado no celular**.
+Na primeira vez que é aberto, um tutorial explica como cadastrar pets e cada aba
+(dá para rever em ⚙️ → Ver o tutorial de novo).
 
 O app fica na pasta [`docs/`](docs/) e é publicado pelo GitHub Pages.
 
