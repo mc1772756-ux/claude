@@ -626,6 +626,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 .tabela-rolagem th[scope="row"] { position: sticky; left: 0; background: var(--cartao); color: var(--texto-2); font-weight: 600; }
 .tabela-rolagem small { display: block; color: var(--texto-2); font-size: 0.72rem; }
 .txt-erro { color: var(--erro); font-weight: 600; }
+.lista li.mais-itens { justify-content: center; }
 .lote-tipos { flex-wrap: wrap; }
 .lote-tipos .seg { flex: 1 1 40%; }
 .lote-pets { display: flex; flex-direction: column; gap: 4px; }
@@ -1056,6 +1057,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
             </label>
             <label><span id="ecc-castrado-rot">Castrado(a)?</span>
               <select id="ecc-castrado">
+                <option value="">Não sei</option>
                 <option value="sim">Sim</option>
                 <option value="nao">Não</option>
               </select>
@@ -1835,6 +1837,26 @@ function estadoVazio() {
   for (const k of COLECOES) e[k] = [];
   return e;
 }
+// Dados vindos de fora (backup, outro aparelho) entram em HTML: ids e fotos precisam ser seguros
+const ID_SEGURO = /^[A-Za-z0-9_-]{1,80}$/;
+const FOTO_SEGURA = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+function sanearEstado(e) {
+  normalizarEstado(e);
+  e.pets = e.pets.filter((p) => p && typeof p === 'object' && ID_SEGURO.test(p.id) && typeof p.nome === 'string');
+  for (const p of e.pets) {
+    if (!ESPECIES[p.especie]) p.especie = 'cao';
+    if (p.foto && !(typeof p.foto === 'string' && FOTO_SEGURA.test(p.foto))) delete p.foto;
+    if (p.sacoDe && !ID_SEGURO.test(p.sacoDe)) delete p.sacoDe;
+  }
+  const petsOk = new Set(e.pets.map((p) => p.id));
+  for (const k of COLECOES) {
+    if (k === 'pets') continue;
+    e[k] = e[k].filter((r) => r && typeof r === 'object' && (r.id === undefined || ID_SEGURO.test(r.id)) && petsOk.has(r.petId));
+    for (const r of e[k]) if (r.fotoId && !ID_SEGURO.test(r.fotoId)) delete r.fotoId;
+  }
+  if (e.petAtual && !petsOk.has(e.petAtual)) e.petAtual = e.pets[0]?.id || null;
+  return e;
+}
 function normalizarEstado(e) {
   for (const k of COLECOES) if (!Array.isArray(e[k])) e[k] = [];
   if (!e.sync || typeof e.sync !== 'object') e.sync = {};
@@ -1908,7 +1930,31 @@ function fmtDataCurta(iso) {
   const [a, m, d] = iso.split('-');
   return `${d}/${m}/${a.slice(2)}`;
 }
-const fmtNum = (n, casas = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+// Formatadores reaproveitados: criar um Intl.NumberFormat a cada número (toLocaleString) é lento
+const FORMATOS = new Map();
+function formato(chave, opcoes) {
+  let f = FORMATOS.get(chave);
+  if (!f) { f = new Intl.NumberFormat('pt-BR', opcoes); FORMATOS.set(chave, f); }
+  return f;
+}
+const fmtNum = (n, casas = 2) => formato('n' + casas, { minimumFractionDigits: casas, maximumFractionDigits: casas }).format(n);
+// Listas longas: desenha 60 itens por vez ("Mostrar mais"), para não pesar no celular
+const PASSO_LISTA = 60;
+const limitesListas = {};
+function listaLimitada(chave, itens, render) {
+  const lim = limitesListas[chave] || PASSO_LISTA;
+  let html = itens.slice(0, lim).map(render).join('');
+  const resto = itens.length - lim;
+  if (resto > 0) html += `<li class="mais-itens"><button type="button" class="btn pequeno" data-mais-lista="${chave}">Mostrar mais ${Math.min(PASSO_LISTA, resto)} (faltam ${resto})</button></li>`;
+  return html;
+}
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-mais-lista]');
+  if (!b) return;
+  limitesListas[b.dataset.maisLista] = (limitesListas[b.dataset.maisLista] || PASSO_LISTA) + PASSO_LISTA;
+  renderTudo();
+});
+const fmtInt = (n) => formato('int', { maximumFractionDigits: 0 }).format(Math.round(n));
 const fmtKg = (n) => fmtNum(n) + ' kg';
 function lerNumero(txt) {
   const limpo = String(txt).trim().replace(/\s*(kg|g)\.?$/i, '').replace(/\s/g, '').replace(',', '.');
@@ -2200,13 +2246,12 @@ function renderPeso() {
   if (!regs.length) {
     ul.innerHTML = '<li class="vazio">Nenhum peso registrado ainda.</li>';
   } else {
-    ul.innerHTML = regs
-      .map((r, i) => {
-        const ant = regs[i - 1];
+    const recentes = regs.map((r, i) => [r, regs[i - 1]]).reverse();
+    ul.innerHTML = listaLimitada('peso', recentes, ([r, ant]) => {
         let delta = '';
         if (ant) {
           const d = Math.round((r.kg - ant.kg) * 100) / 100;
-          delta = d === 0 ? '= 0,00' : (d > 0 ? '▲ +' : '▼ ') + d.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+          delta = d === 0 ? '= 0,00' : (d > 0 ? '▲ +' : '▼ ') + formato('min2', { minimumFractionDigits: 2 }).format(d);
         }
         return `
         <li>
@@ -2216,9 +2261,7 @@ function renderPeso() {
           </div>
           <button type="button" class="btn pequeno perigo" data-remover-peso="${r.id}" aria-label="Excluir registro de ${fmtData(r.data)}">Excluir</button>
         </li>`;
-      })
-      .reverse()
-      .join('');
+      });
   }
 
   // Resumo
@@ -2646,7 +2689,7 @@ function planejarVacina(v, p, regs) {
     }
     // Adulto com uma dose só: na maioria das vezes é o último reforço anual registrado
     const talvezPrimeira = !deFilhote.length && n === 1 && diasEntre(ult, hoje) <= 60;
-    return { proxima: somarDias(ult, 365), rotulo: talvezPrimeira ? `reforço anual (se foi a 1ª vacina da vida, faça a 2ª dose ${v.intervalo / 7 + 1}–4 semanas depois)` : 'reforço anual', fonte: 'plano' };
+    return { proxima: somarDias(ult, 365), rotulo: talvezPrimeira ? `reforço anual (se foi a 1ª vacina da vida, faça a 2ª dose ${v.intervalo / 7}–4 semanas depois)` : 'reforço anual', fonte: 'plano' };
   }
   // Vacinas de N doses iniciais e reforço anual
   let serie = 1;
@@ -2831,7 +2874,7 @@ function renderBanho() {
 function racaoDoPet(petId = estado.petAtual) {
   return estado.racoes.find((r) => r.petId === petId) || null;
 }
-const fmtG = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' g';
+const fmtG = (n) => formato('max1', { maximumFractionDigits: 1 }).format(n) + ' g';
 function totalDia(refeicoes) {
   return Math.round(refeicoes.reduce((s, x) => s + x.g, 0) * 10) / 10;
 }
@@ -2925,7 +2968,8 @@ $('#form-racao').addEventListener('submit', (ev) => {
   if (msg) { erroEl.textContent = msg; erroEl.hidden = false; return; }
   erroEl.hidden = true;
   const atual = racaoDoPet();
-  const nova = { petId: estado.petAtual, marca, refeicoes, atualizado: hojeISO(), caracteristicas: caracteristicasForm || atual?.caracteristicas || [] };
+  const mesmaRacao = atual && (!atual.marca || normalizar(atual.marca) === normalizar(marca));
+  const nova = { petId: estado.petAtual, marca, refeicoes, atualizado: hojeISO(), caracteristicas: caracteristicasForm || (mesmaRacao ? atual.caracteristicas : null) || [] };
   if (atual) Object.assign(atual, nova);
   else estado.racoes.push(nova);
   salvar();
@@ -2961,7 +3005,7 @@ function renderRacao() {
           ${prox && x.hora === prox.hora ? `<span class="selo ok">Próxima${prox.amanha ? ' (amanhã)' : ''}</span>` : ''}
         </li>`).join('')}
     </ul>
-    <p class="nota">${petAtual().nutri?.kcalKg ? `≈ ${Math.round((total * petAtual().nutri.kcalKg) / 1000).toLocaleString('pt-BR')} kcal/dia · ` : ''}${porKg ? `≈ ${porKg.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} g por kg de peso · ` : ''}Atualizado em ${fmtData(r.atualizado)}</p>`;
+    <p class="nota">${petAtual().nutri?.kcalKg ? `≈ ${fmtInt((total * petAtual().nutri.kcalKg) / 1000)} kcal/dia · ` : ''}${porKg ? `≈ ${formato('max1', { maximumFractionDigits: 1 }).format(porKg)} g por kg de peso · ` : ''}Atualizado em ${fmtData(r.atualizado)}</p>`;
 }
 
 /* ---------- Saúde: sub-abas ---------- */
@@ -3157,7 +3201,7 @@ function encerrarRemedio(id) {
   if (!r) return;
   const hoje = hojeISO();
   r.encerrado = hoje;
-  if ((!r.fim || r.fim > hoje) && r.inicio <= hoje) r.fim = hoje;
+  if ((!r.fim || r.fim > hoje) && r.inicio <= hoje) { r.fimAntes = r.fim || ''; r.fim = hoje; }
   salvar();
   renderTudo();
 }
@@ -3165,7 +3209,8 @@ function reativarRemedio(id) {
   const r = estado.remedios.find((x) => x.id === id);
   if (!r) return;
   r.encerrado = '';
-  if (r.fim && r.fim < hojeISO()) r.fim = '';
+  if (r.fimAntes !== undefined) { r.fim = r.fimAntes && r.fimAntes >= hojeISO() ? r.fimAntes : ''; delete r.fimAntes; }
+  else if (r.fim && r.fim <= hojeISO()) r.fim = '';
   salvar();
   renderTudo();
 }
@@ -4233,7 +4278,8 @@ function preencherFormEcc() {
   const fases = [...FASES[p.especie], ...(femeaInteira(p) && (meses === null || meses >= 6) ? [['gestante', 'Gestante (último terço)'], ['lactante', 'Amamentando filhotes']] : [])];
   $('#ecc-fase').innerHTML = fases.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
   $('#ecc-fase').value = faseSugerida(p);
-  $('#ecc-castrado').value = (p.castrado ?? nutri.castrado) === false ? 'nao' : 'sim';
+  const cast = p.castrado ?? nutri.castrado;
+  $('#ecc-castrado').value = cast === false ? 'nao' : cast === true ? 'sim' : '';
   $('#ecc-castrado-rot').textContent = p.sexo === 'femea' ? 'Castrada?' : p.sexo === 'macho' ? 'Castrado?' : 'Castrado(a)?';
   $('#ecc-atividade').value = nutri.atividade || 'normal';
   $('#ecc-kcal').value = nutri.kcalKg ? String(nutri.kcalKg) : '';
@@ -4255,7 +4301,7 @@ function lerFormEcc() {
   }
   return { entrada: {
     especie: p.especie, peso, ecc: eccEscolhido, fase: $('#ecc-fase').value,
-    castrado: $('#ecc-castrado').value === 'sim', atividade: $('#ecc-atividade').value, kcalKg,
+    castrado: $('#ecc-castrado').value !== 'nao', atividade: $('#ecc-atividade').value, kcalKg,
   } };
 }
 
@@ -4265,9 +4311,11 @@ function salvarPreferenciasNutri() {
   if (!p) return;
   const kcalTxt = $('#ecc-kcal').value.trim();
   const kcal = kcalTxt ? lerKcal(kcalTxt) : null;
-  p.castrado = $('#ecc-castrado').value === 'sim';
+  // "Não sei" não vira "castrado": isso mudaria riscos, sintomas e vacinas de fêmeas inteiras
+  const v = $('#ecc-castrado').value;
+  if (v) p.castrado = v === 'sim'; else delete p.castrado;
   p.nutri = {
-    castrado: p.castrado,
+    castrado: v ? p.castrado : undefined,
     atividade: $('#ecc-atividade').value,
     kcalKg: kcal >= 500 && kcal <= 6000 ? Math.round(kcal) : (p.nutri?.kcalKg || null),
   };
@@ -4289,8 +4337,8 @@ $('#ecc-escala').addEventListener('click', (ev) => {
   renderEcc();
 });
 
-const fmtKcal = (n) => Math.round(n).toLocaleString('pt-BR') + ' kcal';
-const fmtGInt = (n) => Math.round(n).toLocaleString('pt-BR') + ' g';
+const fmtKcal = (n) => fmtInt(n) + ' kcal';
+const fmtGInt = (n) => fmtInt(n) + ' g';
 
 function renderEcc() {
   const out = $('#ecc-resultado');
@@ -4405,7 +4453,7 @@ function renderListaEcc() {
     <li>
       <div class="info">
         <div class="principal">ECC ${r.escore} — ${ECC_DESC[r.escore][0]}</div>
-        <div class="secundario">${fmtData(r.data)} · ${fmtKg(r.peso)}${r.pesoIdeal ? ' · ideal ' + fmtKg(r.pesoIdeal) : ''} · ${r.kcalMeta.toLocaleString('pt-BR')} kcal/dia${r.gMeta ? ' · ' + r.gMeta + ' g/dia' : ''}</div>
+        <div class="secundario">${fmtData(r.data)} · ${fmtKg(r.peso)}${r.pesoIdeal ? ' · ideal ' + fmtKg(r.pesoIdeal) : ''} · ${fmtInt(r.kcalMeta)} kcal/dia${r.gMeta ? ' · ' + r.gMeta + ' g/dia' : ''}</div>
       </div>
       <button type="button" class="btn pequeno perigo" data-remover-ecc="${r.id}">Excluir</button>
     </li>`).join('') : '<li class="vazio">Nenhuma avaliação salva. Escolha o escore e toque em "Salvar avaliação".</li>';
@@ -4417,10 +4465,11 @@ function lerValor(txt) {
   let t = String(txt || '').replace(/r\$/i, '').replace(/\s/g, '');
   if (!t) return NaN;
   if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, ''); // "1.500" = mil e quinhentos
   const n = Number(t);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
 }
-const fmtReais = (n) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtReais = (n) => formato('brl', { style: 'currency', currency: 'BRL' }).format(n);
 const mesDe = (iso) => iso.slice(0, 7);
 function somarDias(iso, n) { const d = dataLocal(iso); d.setDate(d.getDate() + n); return paraISO(d); }
 const NOMES_MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -4525,7 +4574,8 @@ function iconePadrao(p) {
   return p.especie === 'gato' ? 'gato-laranja' : 'cao-caramelo';
 }
 function avatarHTML(p, tam = 48) {
-  if (p.foto) return `<img class="foto-pet" src="${p.foto}" alt="" width="${tam}" height="${tam}">`;
+  // só aceita foto em data:image (a foto pode ter vindo de outro aparelho pela sincronização)
+  if (typeof p.foto === 'string' && FOTO_SEGURA.test(p.foto)) return `<img class="foto-pet" src="${p.foto}" alt="" width="${tam}" height="${tam}">`;
   const id = p.icone && ICONES[p.icone]?.especie === p.especie ? p.icone : iconePadrao(p);
   return svgIcone(id, tam);
 }
@@ -4837,7 +4887,7 @@ function perfilAlimentar(p) {
   const veterinaria = carac.includes('veterinaria');
   const poucaGordura = carac.includes('lowfat') || /pancreat|hiperlip|gastro|colite|enterit/.test(doencas);
   const diabetes = /diabet/.test(doencas);
-  const renal = carac.includes('renal') || /renal|rim/.test(doencas);
+  const renal = carac.includes('renal') || /\b(renal|rins?)\b/.test(doencas);
   const engorda = RACAS_ENGORDAM.includes(raca) || (ecc !== null && ecc >= 6);
   const braqui = RACAS_BRAQUI.includes(raca);
   // calorias do dia: meta da avaliação ECC ou estimativa pela fórmula de energia
@@ -5785,8 +5835,11 @@ async function lerNota(arquivo) {
       await leitor.setParameters({ tessedit_pageseg_mode: '6' });
       const r2 = extrairNota(data.text);
       texto += '\n' + data.text;
-      r = { ...r2, ...Object.fromEntries(Object.entries(r).filter(([, v]) => v && (!Array.isArray(v) || v.length))) };
-      if (!r.itens.length && r2.itens.length) Object.assign(r, { itens: r2.itens, porCat: r2.porCat, separavel: r2.separavel });
+      const r1 = r;
+      r = { ...r2, ...Object.fromEntries(Object.entries(r1).filter(([, v]) => v && (!Array.isArray(v) || v.length))) };
+      // itens, categorias e "dá para separar" vêm sempre juntos da mesma leitura
+      const fonte = r1.itens.length || !r2.itens.length ? r1 : r2;
+      Object.assign(r, { itens: fonte.itens, porCat: fonte.porCat, separavel: fonte.separavel });
       r.texto = limparTextoNota(texto).trim();
     }
     mostrarNota(r);
@@ -6048,9 +6101,11 @@ function renderGastos() {
   const antigos = regs.filter((g) => mesDe(g.data) !== mesAtual);
   $('#lista-gastos').innerHTML = doMes.length ? doMes.map(item).join('') : '<li class="vazio">Nenhum gasto neste mês.</li>';
   $('#det-gastos-antigos').hidden = !antigos.length;
-  $('#lista-gastos-antigos').innerHTML = antigos.map(item).join('');
+  $('#lista-gastos-antigos').innerHTML = $('#det-gastos-antigos').open ? listaLimitada('gastos-antigos', antigos, item) : '';
   carregarFotos($('#diario-gastos'));
 }
+
+$('#det-gastos-antigos').addEventListener('toggle', () => { if ($('#det-gastos-antigos').open) renderGastos(); });
 
 /* ---------- Sintomas ---------- */
 const SINTOMAS = {
@@ -6254,9 +6309,11 @@ function renderSintomas() {
   };
   $('#lista-sintomas').innerHTML = recentes.length ? recentes.map(item).join('') : '<li class="vazio">Nenhum sintoma nos últimos 30 dias.</li>';
   $('#det-sintomas-antigos').hidden = !antigos.length;
-  $('#lista-sintomas-antigos').innerHTML = antigos.map(item).join('');
+  $('#lista-sintomas-antigos').innerHTML = $('#det-sintomas-antigos').open ? listaLimitada('sintomas-antigos', antigos, item) : '';
   carregarFotos($('#diario-sintomas'));
 }
+
+$('#det-sintomas-antigos').addEventListener('toggle', () => { if ($('#det-sintomas-antigos').open) renderSintomas(); });
 
 /* ---------- Consultas e exames ---------- */
 const TIPOS_CONSULTA = {
@@ -6635,7 +6692,8 @@ function ocorrencias(c, ini, fim) {
 const compromissoFeito = (c, d) => (REPETIR[c.repetir] ? (c.feitos || []).includes(d) : !!c.feito);
 function rrulePara(c) {
   const r = REPETIR[c.repetir];
-  return r ? r.rrule + (c.ate ? ';UNTIL=' + compacto(c.ate) : '') : undefined;
+  // RFC 5545: UNTIL tem o mesmo tipo do DTSTART (data, ou data e hora local)
+  return r ? r.rrule + (c.ate ? ';UNTIL=' + compacto(c.ate) + (c.hora ? 'T235959' : '') : '') : undefined;
 }
 
 // Eventos entre ini e fim (ISO). Cada um: { chave, data, hora?, ic, titulo, detalhe, nivel, aba, sub, compromisso? }
@@ -7046,7 +7104,7 @@ async function fotosDoEstado(e = estado) {
 async function guardarFotosRecebidas(fotos) {
   let n = 0;
   for (const [id, url] of Object.entries(fotos || {})) {
-    if (typeof url !== 'string' || !url.startsWith('data:image/')) continue;
+    if (typeof url !== 'string' || !FOTO_SEGURA.test(url) || !ID_SEGURO.test(id)) continue;
     try { await FotosDB.salvar(id, url); cacheFotos.set(id, url); n++; } catch (e) { /* segue */ }
   }
   return n;
@@ -7081,7 +7139,9 @@ $('#btn-exportar').addEventListener('click', async () => {
 });
 
 function validarBackup(b) {
-  if (!b || b.app !== 'diario-do-pet' || !b.estado || !Array.isArray(b.estado.pets)) throw new Error('formato');
+  if (!b || b.app !== 'diario-do-pet' || !b.estado || typeof b.estado !== 'object' || !Array.isArray(b.estado.pets)) throw new Error('formato');
+  sanearEstado(b.estado);
+  for (const id of Object.keys(b.fotos || {})) if (!ID_SEGURO.test(id)) delete b.fotos[id];
   return b;
 }
 function oferecerImportacao(b) {
@@ -7151,6 +7211,9 @@ $('#backup-status').addEventListener('click', async (ev) => {
   await guardarFotosRecebidas(backupPendente.fotos);
   estado = novo;
   backupPendente = null;
+  // O backup entra como está: sem marcar os registros como editados agora
+  // (senão ele "venceria" edições mais novas do outro aparelho na próxima sincronização)
+  if (typeof tirarFotografia === 'function') tirarFotografia();
   salvar();
   aoTrocarPet();
   renderListaPets();
@@ -7401,7 +7464,7 @@ function anotarTrocaDeRacao(antes, depois) {
   estado.mudancasRacao.push({ id: novoId(), petId: depois.petId, data: hojeISO(), de, para, criado: Date.now() });
 }
 tirarFotografia();
-window.addEventListener('storage', (ev) => { if (ev.key === CHAVE) tirarFotografia(); });
+window.addEventListener('storage', (ev) => { if (ev.key === CHAVE) { tirarFotografia(); if (typeof versaoDados === 'number') versaoDados++; } });
 
 /* ---------- Juntar dois estados ---------- */
 function venceRemoto(r, l) {
@@ -7409,8 +7472,9 @@ function venceRemoto(r, l) {
   if (mr !== ml) return mr > ml;
   return jsonSemCarimbo(r) > jsonSemCarimbo(l); // empate: escolha igual nos dois aparelhos
 }
+const origem_local_tem = (local, k, id) => local[k].some((r) => r && r.id === id);
 function juntarEstados(local, remotoBruto) {
-  const remoto = normalizarEstado(Object.assign(estadoVazio(), remotoBruto));
+  const remoto = sanearEstado(Object.assign(estadoVazio(), remotoBruto));
   const lapides = { ...local.sync.apagados };
   for (const [c, t] of Object.entries(remoto.sync.apagados)) if (typeof t === 'number' && !(lapides[c] >= t)) lapides[c] = t;
   const stats = { novos: 0, atualizados: 0, apagados: 0 };
@@ -7421,7 +7485,8 @@ function juntarEstados(local, remotoBruto) {
     const origem = new Map(); // id → 'l' | 'r' | 'lr'
     for (const r of local[k]) { if (r && r.id && !porId.has(r.id)) { porId.set(r.id, r); ordem.push(r.id); origem.set(r.id, 'l'); } }
     for (const r of remoto[k]) {
-      if (!r || typeof r !== 'object' || !r.id) continue;
+      if (!r || typeof r !== 'object') continue;
+      if (!r.id) r.id = idDeterministico(k, r); // backup antigo (ex.: ração sem id)
       const l = porId.get(r.id);
       if (!l) { porId.set(r.id, r); ordem.push(r.id); origem.set(r.id, 'r'); }
       else if (origem.get(r.id) === 'l' && venceRemoto(r, l)) {
@@ -7435,6 +7500,18 @@ function juntarEstados(local, remotoBruto) {
       if (!vivo && origem.get(r.id) === 'l') stats.apagados++;
       if (vivo && origem.get(r.id) === 'r') stats.novos++;
       return vivo;
+    });
+  }
+  // Pet apagado em um aparelho: some também com o que o outro registrou para ele
+  const vivos = new Set(res.pets.map((p) => p.id));
+  const agora = Date.now();
+  for (const k of COLECOES) {
+    if (k === 'pets') continue;
+    res[k] = res[k].filter((r) => {
+      if (!r.petId || vivos.has(r.petId)) return true;
+      lapides[k + ':' + r.id] = Math.max(lapides[k + ':' + r.id] || 0, r._m || 0, agora);
+      if (origem_local_tem(local, k, r.id)) stats.apagados++;
+      return false;
     });
   }
   return { estado: res, stats };
@@ -7629,17 +7706,23 @@ async function obterDetectorQR() {
   };
   return detectorQR;
 }
+let sessaoCamera = 0;
 async function abrirCamera() {
   pararCamera();
+  const minha = ++sessaoCamera;
   const caixa = $('#sync-camera');
   const video = $('#sync-video');
   caixa.hidden = false;
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('sem camera');
-    Sync.fluxo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
-    video.srcObject = Sync.fluxo;
+    const fluxo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+    // fechou a tela (ou pediu outra leitura) enquanto a câmera abria: desliga
+    if (minha !== sessaoCamera || $('#painel-sync').hidden) { for (const t of fluxo.getTracks()) t.stop(); return; }
+    Sync.fluxo = fluxo;
+    video.srcObject = fluxo;
     await video.play();
   } catch (e) {
+    if (minha !== sessaoCamera) return;
     caixa.hidden = true;
     syncProgresso('Não deu para usar a câmera aqui. Use <strong>“Colar o código recebido”</strong> ou <strong>“Ler QR de uma foto”</strong> abaixo.', 'erro-leitura');
     $('#sync-colar').open = true;
@@ -7647,9 +7730,10 @@ async function abrirCamera() {
   }
   let detectar;
   try { detectar = await obterDetectorQR(); } catch (e) { syncProgresso('Não deu para carregar o leitor de QR. Use “Colar o código recebido”.', 'erro-leitura'); return; }
+  if (minha !== sessaoCamera || !Sync.fluxo) return;
   Sync.lendo = true;
   const passo = async () => {
-    if (!Sync.lendo) return;
+    if (!Sync.lendo || minha !== sessaoCamera) return;
     try {
       const txt = video.readyState >= 2 ? await detectar(video) : '';
       if (txt && txt.startsWith('DP1')) { pararCamera(); receberCodigo(txt); return; }
@@ -7659,6 +7743,7 @@ async function abrirCamera() {
   passo();
 }
 function pararCamera() {
+  sessaoCamera++;
   Sync.lendo = false;
   if (Sync.fluxo) { for (const t of Sync.fluxo.getTracks()) t.stop(); Sync.fluxo = null; }
   const v = $('#sync-video');
@@ -7691,7 +7776,7 @@ function novaConexao() {
   if (typeof RTCPeerConnection !== 'function') throw new Error('webrtc');
   const pc = new RTCPeerConnection({ iceServers: ICE });
   pc.addEventListener('connectionstatechange', () => {
-    if (pc.connectionState === 'failed' && !Sync.terminou) falhaConexao();
+    if (pc === Sync.pc && pc.connectionState === 'failed' && !Sync.terminou) falhaConexao();
   });
   return pc;
 }
@@ -7795,6 +7880,7 @@ function configurarCanal(dc) {
   Sync.dc = dc;
   dc.addEventListener('open', aoAbrirCanal);
   dc.addEventListener('message', (ev) => {
+    if (dc !== Sync.dc) return;
     let m;
     try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.t !== 'p') return;
@@ -7810,7 +7896,7 @@ function configurarCanal(dc) {
     }
   });
   dc.addEventListener('close', () => {
-    if (!Sync.terminou && Sync.papel) syncProgresso('A conexão caiu antes de terminar. Comece de novo nos dois celulares.', 'erro-leitura');
+    if (dc === Sync.dc && !Sync.terminou && Sync.papel) syncProgresso('A conexão caiu antes de terminar. Comece de novo nos dois celulares.', 'erro-leitura');
   });
 }
 function estadoParaEnviar() {
@@ -7851,7 +7937,7 @@ async function tratarMsg(m) {
     await enviarMsg({ t: 'fotos-fim' });
     verSeTerminou();
   } else if (m.t === 'foto') {
-    if (typeof m.url === 'string' && m.url.startsWith('data:image/') && typeof m.id === 'string') {
+    if (typeof m.url === 'string' && FOTO_SEGURA.test(m.url) && ID_SEGURO.test(m.id)) {
       Sync.fotosRecebidas += await guardarFotosRecebidas({ [m.id]: m.url });
     }
   } else if (m.t === 'fotos-fim') {
@@ -8011,7 +8097,7 @@ async function mostrarNotificacao(titulo, corpo) {
 // Mesmo texto que o service worker monta (ver sw.js)
 function textoAviso(eventos, hoje) {
   const amanha = somarDias(hoje, 1);
-  const atras = eventos.filter((e) => e.data < hoje), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
+  const atras = eventos.filter((e) => e.data < hoje && e.atrasavel !== false), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
   const partes = [];
   if (atras.length) partes.push(plural(atras.length, 'atrasado', 'atrasados'));
   if (deHoje.length) partes.push(`${deHoje.length} para hoje`);
@@ -8034,7 +8120,7 @@ $('#btn-notif-teste').addEventListener('click', () => {
 // O service worker não lê o localStorage: deixamos um resumo dos lembretes no Cache Storage
 function dadosParaAvisos() {
   return pendencias(estado.pets.map((p) => p.id), 45)
-    .map((e) => ({ data: e.data, hora: e.hora || '', titulo: e.titulo, pet: nomePet(e.petId) }));
+    .map((e) => ({ data: e.data, hora: e.hora || '', titulo: e.titulo, pet: nomePet(e.petId), atrasavel: e.nivel === 'alerta' && !e.compromisso }));
 }
 let timerAvisos = 0;
 function gravarLembretesParaAvisos() {
@@ -8047,7 +8133,9 @@ function gravarLembretesParaAvisos() {
       new Response(JSON.stringify({ gerado: Date.now(), eventos }), { headers: { 'Content-Type': 'application/json' } }))).catch(() => {});
   }, 1500);
 }
-function aposSalvar() { gravarLembretesParaAvisos(); }
+// Muda a cada gravação: os cálculos pesados (padrões) só refazem quando os dados mudam
+let versaoDados = 0;
+function aposSalvar() { versaoDados++; gravarLembretesParaAvisos(); }
 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
   registrarAvisosEmSegundoPlano().then((ok) => { syncPeriodicoAtivo = ok; if (abaAtual === 'agenda') renderNotif(); });
 }
@@ -8238,12 +8326,14 @@ function padroesCausas(p) {
   const banhos = estado.banhos.filter((b) => b.petId === p.id && b.data >= somarDias(hoje, -365)).map((b) => b.data).sort();
   const coceira = episodios(p.id, (s) => s.tipo === 'coceira').filter((e) => e.ini >= somarDias(hoje, -365));
   if (banhos.length >= 2 && coceira.length >= 3) {
-    const posBanho = (d) => banhos.some((b) => { const x = diasEntre(b, d); return x >= 0 && x <= 3; });
+    const cobertosSet = new Set();
+    for (const b of banhos) for (let i = 0; i <= 3; i++) cobertosSet.add(somarDias(b, i));
+    const posBanho = (d) => cobertosSet.has(d);
     const n = coceira.filter((e) => posBanho(e.ini)).length;
     const ini = [banhos[0], coceira[0].ini].sort()[0];
     const total = Math.max(1, diasEntre(ini, hoje) + 1);
     let cobertos = 0;
-    for (let d = ini; d <= hoje; d = somarDias(d, 1)) if (posBanho(d)) cobertos++;
+    for (const d of cobertosSet) if (d >= ini && d <= hoje) cobertos++;
     const esperado = cobertos / total;
     const frac = n / coceira.length;
     if (n >= 3 && frac >= 0.6 && frac >= 2 * esperado) {
@@ -8296,13 +8386,22 @@ function padroesGastos(p) {
     const [top, v] = Object.entries(cats).sort((x, y) => y[1] - x[1])[0] || [];
     out.push({ chave: `gasto-ano-${p.id}-${hoje.slice(0, 7)}`, nivel: 'info', ic: 'moedas', aba: 'diario', sub: 'gastos',
       titulo: `≈ ${fmtReais(ano)} por ano`,
-      texto: `No ritmo dos últimos ${dias >= 360 ? '12 meses' : tempoTexto(dias)}, ${p.nome} custa cerca de ${fmtReais(ano / 12)} por mês.${top ? ` A maior parte vai para ${(CATEGORIAS[top] || top).toLowerCase()} (${fmtNum((v / total) * 100, 0)}%).` : ''}`,
+      texto: `No ritmo dos últimos ${dias >= 360 ? '12 meses' : tempoTexto(dias)}, ${esc(p.nome)} custa cerca de ${fmtReais(ano / 12)} por mês.${top ? ` A maior parte vai para ${(CATEGORIAS[top] || top).toLowerCase()} (${fmtNum((v / total) * 100, 0)}%).` : ''}`,
       como: `${fmtReais(total)} registrados desde ${fmtData(desde)}, projetados para 365 dias.` });
   }
   return out;
 }
 
+const cachePadroes = new Map();
 function padroesDoPet(p) {
+  const chave = `${p.id}|${versaoDados}|${hojeISO()}`;
+  if (cachePadroes.has(chave)) return cachePadroes.get(chave);
+  cachePadroes.clear();
+  const r = calcularPadroes(p);
+  cachePadroes.set(chave, r);
+  return r;
+}
+function calcularPadroes(p) {
   const todos = [];
   for (const f of [padroesPeso, padroesSintomas, padroesCausas, padroesGastos]) {
     try { todos.push(...f(p)); } catch (e) { console.warn('padrão', f.name, e); }
@@ -8391,7 +8490,7 @@ function renderTodosPets() {
 function renderComparacao() {
   const hoje = hojeISO();
   const linhas = [
-    ['Espécie / raça', (p) => [ESPECIES[p.especie].nome, p.raca].filter(Boolean).join(' · ')],
+    ['Espécie / raça', (p) => esc([ESPECIES[p.especie]?.nome, p.raca].filter(Boolean).join(' · '))],
     ['Idade', (p) => idadeDoPet(p) || '—'],
     ['Peso', (p) => { const ps = estado.pesos.filter((x) => x.petId === p.id).sort((a, b) => a.data.localeCompare(b.data)); return ps.length ? `${fmtKg(ps[ps.length - 1].kg)}<small>${fmtDataCurta(ps[ps.length - 1].data)}</small>` : '—'; }],
     ['Corpo (ECC)', (p) => { const e = ultimaAvaliacao(p.id); return e ? `${e.escore}/9${e.pesoIdeal ? `<small>ideal ${fmtKg(e.pesoIdeal)}</small>` : ''}` : '—'; }],
@@ -8490,12 +8589,14 @@ $('#form-lote').addEventListener('submit', (ev) => {
     feitos.push(p);
   }
   if (valor > 0 && feitos.length) {
+    // divide entre todos os pets marcados; quem já tinha o registro não ganha gasto de novo
     const centavos = Math.round(valor * 100);
-    const parte = Math.floor(centavos / feitos.length);
+    const parte = Math.floor(centavos / pets.length);
     const categoria = tipo === 'vacina' ? 'vacinas' : tipo === 'banho' ? 'higiene' : 'remedios';
     feitos.forEach((p, i) => {
-      const v = (i === feitos.length - 1 ? centavos - parte * (feitos.length - 1) : parte) / 100;
-      estado.gastos.push({ id: novoId(), petId: p.id, data, valor: v, categoria, descricao: `${tipo === 'banho' ? 'Banho' : nome}${feitos.length > 1 ? ` (dividido entre ${feitos.length})` : ''}`, criado: agora });
+      const ultimo = feitos.length === pets.length && i === feitos.length - 1;
+      const v = (ultimo ? centavos - parte * (pets.length - 1) : parte) / 100;
+      estado.gastos.push({ id: novoId(), petId: p.id, data, valor: v, categoria, descricao: `${tipo === 'banho' ? 'Banho' : nome}${pets.length > 1 ? ` (dividido entre ${pets.length})` : ''}`, criado: agora });
     });
   }
   salvar();

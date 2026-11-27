@@ -38,7 +38,10 @@ self.addEventListener('fetch', (ev) => {
     ev.respondWith(
       fetch(req)
         .then((resp) => {
-          if (resp.ok) { const copia = resp.clone(); caches.open(VERSAO).then((c) => c.put('./index.html', copia)); }
+          // só a própria página do app substitui a cópia guardada (não um ícone ou licença aberto numa aba)
+          const caminho = new URL(req.url).pathname;
+          const ehApp = caminho === new URL('./', self.registration.scope).pathname || caminho.endsWith('/index.html');
+          if (resp.ok && ehApp) { const copia = resp.clone(); ev.waitUntil(caches.open(VERSAO).then((c) => c.put('./index.html', copia))); }
           return resp;
         })
         .catch(() => caches.match('./index.html', { ignoreSearch: true })),
@@ -52,7 +55,7 @@ self.addEventListener('fetch', (ev) => {
       if (guardado && doLeitor) return guardado;
       const rede = fetch(req)
         .then((resp) => {
-          if (resp.ok) { const copia = resp.clone(); caches.open(VERSAO).then((c) => c.put(req, copia)); }
+          if (resp.ok) { const copia = resp.clone(); ev.waitUntil(caches.open(VERSAO).then((c) => c.put(req, copia))); }
           return resp;
         })
         .catch(() => guardado);
@@ -80,7 +83,7 @@ async function avisarLembretes() {
   const controle = await c.match(urlDe('lembretes-ultimo-aviso.txt'));
   if (controle && (await controle.text()) === hoje) return;
   const amanha = somarDiasISO(hoje, 1);
-  const atras = eventos.filter((e) => e.data < hoje), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
+  const atras = eventos.filter((e) => e.data < hoje && e.atrasavel !== false), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
   if (!atras.length && !deHoje.length && !deAmanha.length) return;
   const partes = [];
   if (atras.length) partes.push(`${atras.length} ${atras.length === 1 ? 'atrasado' : 'atrasados'}`);
