@@ -2635,7 +2635,7 @@ $('#plano-vacinas').addEventListener('click', (ev) => {
 const CARTEIRA_TERMOS = {
   cao: [
     { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|rabguard|imrab|rabvac|rai[\s-]?vac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
-    { cat: 'gripe', re: /gripe|tosse|bordetel|bronchi|pneumodog|nobivac\s*kc|\bkc\b|intrac/i },
+    { cat: 'gripe', re: /gripe|tosse|bordetel|vanguard\W{0,3}b\b|bronchi|pneumodog|nobivac\s*kc|\bkc\b|intrac/i },
     { cat: 'giardia', re: /gi[aá]rdia/i },
     { cat: 'leish', re: /leish/i },
     { cat: 'multipla', re: /\bv\s?(?:6|7|8|10|11|12)\b|polivalente|m[uú]ltipla|[oó]ctupla|d[eé]ctupla|vanguard|duramune|recombitek|canigen|eurican|biocan|nobivac\s*(?:dhp|puppy|lepto)|vencomax|cinomose|parvo|leptospir/i },
@@ -2677,40 +2677,74 @@ function datasDaLinha(l) {
   return out;
 }
 
-function extrairCarteira(texto, p) {
+// Cada trecho lido tem posição (x, y de 0 a 1 na foto). Etiquetas próximas viram uma vacina;
+// cada data vai para a etiqueta mais próxima que esteja acima dela ou na mesma altura.
+const PRIORIDADE_CAT = { '': 0, multipla: 1 };
+function extrairCarteira(trechos, p) {
   const termos = CARTEIRA_TERMOS[p.especie] || CARTEIRA_TERMOS.cao;
-  const linhas = limparTextoOcr(texto).split('\n').map((l) => l.trim()).filter(Boolean);
-  const itens = [];
-  let atual = null;
-  let soltas = []; // datas lidas antes de achar a etiqueta
-  for (const l of linhas) {
-    const achou = termos.find((t) => t.re.test(l));
-    const datas = datasDaLinha(l);
-    if (achou) {
-      // a etiqueta da múltipla lista várias doenças: continua o mesmo item enquanto não aparece data
-      const mesmo = atual && !atual.datas.length && (atual.cat === achou.cat || (atual.cat === 'multipla' && achou.cat !== 'raiva'));
-      if (mesmo) {
-        if (p.especie === 'gato' && achou.cat === 'felv' && atual.cat === 'multipla') atual.nome = 'V5';
-        atual.texto += ' ' + l;
-        if (atual.cat === 'multipla' && /\bv\s?\d{1,2}\b/i.test(l)) atual.nome = nomeVacinaCarteira('multipla', l, p.especie);
-      } else {
-        atual = { cat: achou.cat, nome: nomeVacinaCarteira(achou.cat, l, p.especie), texto: l, datas: [...soltas] };
-        soltas = [];
-        itens.push(atual);
-      }
-      atual.datas.push(...datas);
-    } else if (datas.length) {
-      if (atual && atual.datas.length < 2) atual.datas.push(...datas);
-      else soltas.push(...datas);
+  const hits = [];
+  const datas = [];
+  for (const t of trechos) {
+    const l = limparTextoOcr(t.texto);
+    const achou = termos.find((x) => x.re.test(l));
+    if (achou) hits.push({ cat: achou.cat, texto: l, x: t.x, y: t.y });
+    else if (/vacina\s+(viva|inativada|atenuada|recombinante)/i.test(l)) hits.push({ cat: '', texto: l, x: t.x, y: t.y });
+    if (t.girado) continue;
+    for (const d of datasDaLinha(l)) datas.push({ ...d, x: t.x, y: t.y });
+  }
+  // junta etiquetas da mesma caixa (selos lado a lado, linhas da mesma etiqueta)
+  const grupos = [];
+  for (const h of hits.sort((a, b) => a.y - b.y)) {
+    const g = grupos.find((x) => Math.abs(x.y - h.y) < 0.06 && Math.abs(x.x - h.x) < 0.25
+      && (x.cat === h.cat || x.cat === '' || h.cat === '' || x.cat === 'multipla' || h.cat === 'multipla'));
+    if (!g) { grupos.push({ ...h, textos: [h.texto] }); continue; }
+    g.textos.push(h.texto);
+    if ((PRIORIDADE_CAT[h.cat] ?? 2) > (PRIORIDADE_CAT[g.cat] ?? 2)) g.cat = h.cat;
+  }
+  for (const d of datas) {
+    let melhor = null, nota = Infinity;
+    for (const g of grupos) {
+      const dy = d.y - g.y, dx = Math.abs(d.x - g.x);
+      if (dy < -0.02 || dy > 0.3 || dx > 0.6) continue;
+      const n = Math.max(dy, 0) * 2 + dx;
+      if (n < nota) { nota = n; melhor = g; }
     }
+    if (melhor) (melhor.datas = melhor.datas || []).push(d);
   }
   const hoje = hojeISO();
-  return itens.map((it) => {
-    const aplic = it.datas.filter((d) => !d.prox && d.iso <= hoje).map((d) => d.iso);
-    const data = aplic[0] || '';
-    const prox = it.datas.find((d) => d.prox && (!data || d.iso > data)) || it.datas.find((d) => data && d.iso > data);
-    return { cat: it.cat, nome: it.nome, data, proxima: prox ? prox.iso : '' };
-  });
+  return grupos.map((g) => {
+    const txt = g.textos.join(' ');
+    let nome = g.cat ? nomeVacinaCarteira(g.cat, txt, p.especie) : '';
+    if (p.especie === 'gato' && g.cat === 'felv' && termos.find((x) => x.cat === 'multipla').re.test(txt) && /\bv\s?5\b|qu[ií]ntupla/i.test(txt)) nome = 'V5';
+    const ds = (g.datas || []).sort((a, b) => a.y - b.y || a.iso.localeCompare(b.iso));
+    const aplic = ds.find((d) => !d.prox && d.iso <= hoje);
+    const data = aplic ? aplic.iso : '';
+    const prox = ds.find((d) => d !== aplic && d.prox && (!data || d.iso > data)) || ds.find((d) => d !== aplic && data && d.iso > data);
+    return { cat: g.cat, nome, data, proxima: prox ? prox.iso : '', x: g.x, y: g.y };
+  }).sort((a, b) => (Math.abs(a.x - b.x) > 0.3 ? a.x - b.x : a.y - b.y));
+}
+
+// Trechos lidos com a posição do centro (0 a 1) na foto original
+function trechosDoResultado(data, w, h, giro = 0) {
+  const out = [];
+  for (const b of data.blocks || []) for (const pa of b.paragraphs || []) for (const l of pa.lines || []) {
+    if (!l.text || !l.bbox) continue;
+    const cx = (l.bbox.x0 + l.bbox.x1) / 2, cy = (l.bbox.y0 + l.bbox.y1) / 2;
+    // giro 1: foto girada 90° no sentido horário; -1: anti-horário (w, h = tamanho da original)
+    const x = giro === 1 ? cy : giro === -1 ? w - cy : cx;
+    const y = giro === 1 ? h - cx : giro === -1 ? cx : cy;
+    out.push({ texto: l.text.trim(), x: x / w, y: y / h, girado: !!giro });
+  }
+  return out;
+}
+function girarCanvas(c, dir) {
+  const o = document.createElement('canvas');
+  o.width = c.height; o.height = c.width;
+  const ctx = o.getContext('2d');
+  ctx.translate(o.width / 2, o.height / 2);
+  ctx.rotate(dir * Math.PI / 2);
+  ctx.drawImage(c, -c.width / 2, -c.height / 2);
+  return o;
 }
 
 let lendoCarteira = false;
@@ -2748,17 +2782,20 @@ async function lerCarteira(arquivo) {
   try {
     const leitor = await obterLeitor();
     const canvas = await prepararFoto(arquivo, 3000, 1500);
-    await leitor.setParameters({ tessedit_pageseg_mode: '4' });
-    let texto = (await leitor.recognize(canvas)).data.text;
-    let itens = extrairCarteira(texto, p);
-    if (!itens.length || itens.some((x) => !x.data)) {
-      etapa = 'Procurando mais detalhes…';
-      await leitor.setParameters({ tessedit_pageseg_mode: '11' });
-      const t2 = (await leitor.recognize(canvas)).data.text;
-      const i2 = extrairCarteira(t2, p);
-      if (i2.filter((x) => x.data).length > itens.filter((x) => x.data).length) itens = i2;
-      texto += '\n----\n' + t2;
+    const W = canvas.width, H = canvas.height;
+    // modo "texto esparso": a carteira é uma grade de caixas, com selos e datas soltos
+    await leitor.setParameters({ tessedit_pageseg_mode: '11' });
+    let { data } = await leitor.recognize(canvas, {}, { text: true, blocks: true });
+    let texto = data.text;
+    const trechos = trechosDoResultado(data, W, H);
+    // selos colados de lado: lê também com a foto girada (só os nomes das vacinas)
+    for (const [giro, rot] of [[1, 'Procurando selos de lado…'], [-1, 'Procurando selos de lado…']]) {
+      etapa = rot;
+      ({ data } = await leitor.recognize(girarCanvas(canvas, giro), {}, { text: true, blocks: true }));
+      trechos.push(...trechosDoResultado(data, W, H, giro));
+      texto += '\n----\n' + data.text;
     }
+    const itens = extrairCarteira(trechos, p);
     await leitor.setParameters({ tessedit_pageseg_mode: '6' });
     mostrarCarteira(itens, texto.trim(), p);
     marcarAjuda('carteira');
@@ -2796,7 +2833,7 @@ function linhaCarteira(it, i, p) {
       <label>Data aplicada<input type="date" data-c="data" max="${hoje}" value="${it.data || ''}"></label>
       <label>Próxima dose<input type="date" data-c="proxima" value="${it.proxima || ''}"></label>
     </div>
-    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida: preencha olhando a carteira.</p>' : ''}
+    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : ''}
   </div>`;
 }
 
@@ -2809,7 +2846,7 @@ function mostrarCarteira(itens, texto, p) {
     itens = [{ cat: '', nome: '', data: '', proxima: '' }];
   } else {
     const comData = itens.filter((x) => x.data).length;
-    statusCarteira(`Encontrei <strong>${plural(itens.length, 'vacina', 'vacinas')}</strong>${comData < itens.length ? ` (${comData} com data)` : ''}. Confira antes de salvar.`, 'ok-leitura');
+    statusCarteira(`Encontrei <strong>${plural(itens.length, 'vacina', 'vacinas')}</strong>${comData < itens.length ? ` (${comData} com data lida)` : ''}. Confira e complete antes de salvar.`, 'ok-leitura');
   }
   box.innerHTML = `<div id="carteira-itens">${itens.map((it, i) => linhaCarteira(it, i, p)).join('')}</div>
     <p class="nota">A próxima dose vazia é preenchida pelo plano de vacinação ao salvar.</p>
