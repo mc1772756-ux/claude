@@ -1,10 +1,10 @@
 /* Diário do Pet — service worker: deixa o app funcionando sem internet.
    Página: busca a versão nova quando há internet (e guarda), senão usa a guardada.
    Ícones e manifesto: usa o guardado e atualiza em segundo plano.
-   Leitor de fotos (ocr/, ~10 MB): só é baixado na primeira vez que alguém usa o leitor
+   Leitor de fotos (ocr/, ~10 MB, inclui digitos.json: rede de dígitos à mão): só é baixado na primeira vez que alguém usa o leitor
    e depois sai sempre do guardado (sem baixar de novo a cada uso).
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v10';
+const VERSAO = 'diario-pet-v11';
 const ARQUIVOS = [
   './',
   './index.html',

@@ -2687,14 +2687,16 @@ function extrairCarteira(trechos, p) {
   const datas = [];
   const rotulos = [];
   for (const t of trechos) {
+    if (t.mao) { datas.push({ iso: t.mao[0].iso, cands: t.mao, x: t.x, y: t.y, mao: true }); continue; }
     const l = limparTextoOcr(t.texto);
     const achou = termos.find((x) => x.re.test(l));
     if (achou) hits.push({ cat: achou.cat, texto: l, x: t.x, y: t.y });
     else if (/vacina\s+(viva|inativada|atenuada|recombinante)|nobiva|zoetis|boehringer|\bmsd\b/i.test(l)) hits.push({ cat: '', texto: l, x: t.x, y: t.y });
     if (t.girado) continue;
-    if (/revac|refor[cç]o|pr[oó]xima/i.test(l)) rotulos.push({ prox: true, x: t.x, y: t.y });
-    else if (/vacinad|aplicad|^data\b/i.test(l)) rotulos.push({ prox: false, x: t.x, y: t.y });
-    for (const d of datasDaLinha(l)) if (!datas.some((o) => o.iso === d.iso && Math.abs(o.x - t.x) < 0.05 && Math.abs(o.y - t.y) < 0.03)) datas.push({ ...d, x: t.x, y: t.y });
+    const dl = datasDaLinha(l);
+    if (!dl.length && /revac|refor[cç]o|pr[oó]xima/i.test(l)) rotulos.push({ prox: true, x: t.x, y: t.y });
+    else if (!dl.length && /vacinad|aplicad|^data\b/i.test(l)) rotulos.push({ prox: false, x: t.x, y: t.y });
+    for (const d of dl) if (!datas.some((o) => o.iso === d.iso && Math.abs(o.x - t.x) < 0.05 && Math.abs(o.y - t.y) < 0.03)) datas.push({ ...d, cands: [{ iso: d.iso, p: 1 }], x: t.x, y: t.y });
   }
   // data logo abaixo de "Revacinar em" é a próxima dose; abaixo de "Vacinado em", a aplicada
   for (const d of datas) {
@@ -2704,7 +2706,7 @@ function extrairCarteira(trechos, p) {
       if (dy < -0.01 || dy > 0.07 || dx > 0.1) continue;
       if (dy + dx < dist) { dist = dy + dx; r = o; }
     }
-    if (r && !d.prox) d.prox = r.prox;
+    if (r && !d.prox) { d.prox = r.prox; d.aplic = !r.prox; }
   }
   // junta etiquetas da mesma caixa (selos lado a lado, linhas da mesma etiqueta)
   const grupos = [];
@@ -2719,24 +2721,64 @@ function extrairCarteira(trechos, p) {
     let melhor = null, nota = Infinity;
     for (const g of grupos) {
       const dy = d.y - g.y, dx = Math.abs(d.x - g.x);
-      const mesmaLinha = Math.abs(dy) <= 0.04 && dx <= 0.35, abaixo = dy > 0 && dy <= 0.16 && dx <= 0.15;
+      const mesmaLinha = Math.abs(dy) <= 0.04 && dx <= 0.35, abaixo = dy > 0 && dy <= 0.16 && dx <= 0.12;
       if (!mesmaLinha && !abaixo) continue;
       const n = Math.abs(dy) * 2 + dx;
       if (n < nota) { nota = n; melhor = g; }
     }
-    if (melhor) (melhor.datas = melhor.datas || []).push(d);
+    if (melhor) { (melhor.datas = melhor.datas || []).push(d); d.g = melhor; }
+  }
+  // data sem selo por perto: vai junto da data logo acima (mesma coluna) ou à esquerda (mesma linha)
+  for (const d of datas) {
+    if (d.g) continue;
+    const viz = datas.find((e) => e.g && e !== d && e.g.datas.length < 2
+      && ((Math.abs(e.x - d.x) < 0.06 && d.y - e.y > 0 && d.y - e.y < 0.12) || (Math.abs(e.y - d.y) < 0.03 && d.x - e.x > 0 && d.x - e.x < 0.3)));
+    if (viz) { viz.g.datas.push(d); d.g = viz.g; }
+  }
+  // data bem lida numa caixa "Vacinado/Revacinar em" sem selo reconhecido: vira uma vacina sem nome
+  for (const d of datas) {
+    if (d.g || (d.prox === undefined && d.aplic === undefined) || (d.cands[0].conf ?? 1) < 0.8) continue;
+    const viz = grupos.find((g) => g.orfao && Math.abs(g.y - d.y) < 0.04 && Math.abs(g.x - d.x) < 0.3 && g.datas.length < 2);
+    if (viz) { viz.datas.push(d); d.g = viz; continue; }
+    const g = { cat: '', textos: [], x: d.x, y: d.y, orfao: true, datas: [d] };
+    grupos.push(g); d.g = g;
   }
   const hoje = hojeISO();
   return grupos.map((g) => {
     const txt = g.textos.join(' ');
     let nome = g.cat ? nomeVacinaCarteira(g.cat, txt, p.especie) : '';
     if (p.especie === 'gato' && g.cat === 'felv' && termos.find((x) => x.cat === 'multipla').re.test(txt) && /\bv\s?5\b|qu[ií]ntupla/i.test(txt)) nome = 'V5';
-    const ds = (g.datas || []).sort((a, b) => a.y - b.y || a.iso.localeCompare(b.iso));
-    const aplic = ds.find((d) => !d.prox && d.iso <= hoje);
-    const data = aplic ? aplic.iso : '';
-    const prox = ds.find((d) => d !== aplic && d.prox && (!data || d.iso > data)) || ds.find((d) => d !== aplic && data && d.iso > data);
-    return { cat: g.cat, nome, data, proxima: prox ? prox.iso : '', x: g.x, y: g.y };
+    const { data, proxima } = escolherDatas(g.datas || [], hoje, p.nascimento || '');
+    return { cat: g.cat, nome, data, proxima, x: g.x, y: g.y, orfao: !!g.orfao };
   }).sort((a, b) => (Math.abs(a.x - b.x) > 0.3 ? a.x - b.x : a.y - b.y));
+}
+
+// Escolhe a data aplicada e a próxima entre as leituras da caixa. A revacinação costuma ser
+// no mesmo dia e mês do ano seguinte: um par assim vale muito mais (corrige dígitos mal lidos).
+function escolherDatas(ds, hoje, nasc = '') {
+  let melhor = { data: '', proxima: '', s: 0 };
+  const vazio = { cands: [{ iso: '', p: 1 }] };
+  const tenta = (A, B) => {
+    for (const a of A.cands) for (const b of B.cands) {
+      if (a.iso && a.iso > hoje) continue;
+      if (a.iso && b.iso && b.iso <= a.iso) continue;
+      if (!a.iso && !b.iso) continue;
+      if (nasc && ((a.iso && a.iso < nasc) || (b.iso && b.iso <= nasc))) continue; // antes de o pet nascer
+      const umAno = a.iso && b.iso && a.iso.slice(4) === b.iso.slice(4) && Number(b.iso.slice(0, 4)) - Number(a.iso.slice(0, 4)) === 1;
+      // letra de mão: sozinha só vale com leitura bem segura; em par que bate, basta média
+      const minimo = umAno ? 0.45 : 0.8;
+      if ((a.iso && (a.conf ?? 1) < minimo) || (b.iso && (b.conf ?? 1) < minimo)) continue;
+      let s = a.p * b.p;
+      if (a.iso && b.iso) {
+        s *= umAno ? 20 : diasEntre(a.iso, b.iso) <= 400 ? 1.5 : 0.3;
+      } else s *= 0.6;
+      if (A.prox) s *= 0.2;
+      if (B.aplic) s *= 0.2;
+      if (s > melhor.s) melhor = { data: a.iso, proxima: b.iso, s };
+    }
+  };
+  for (const A of ds) { tenta(A, vazio); tenta(vazio, A); for (const B of ds) if (A !== B) tenta(A, B); }
+  return melhor;
 }
 
 // Trechos lidos com a posição do centro (0 a 1) na foto original
@@ -2760,6 +2802,267 @@ function girarCanvas(c, dir) {
   ctx.rotate(dir * Math.PI / 2);
   ctx.drawImage(c, -c.width / 2, -c.height / 2);
   return o;
+}
+
+/* ---------- Datas escritas à mão ----------
+   Rede pequena treinada com dígitos manuscritos (MNIST) + a barra "/", roda no aparelho.
+   Isola a tinta de caneta (azul/roxa), separa os caracteres, lê cada um e monta a data. */
+let redeDigitos = null;
+function obterRedeDigitos() {
+  if (!redeDigitos) {
+    redeDigitos = fetch(urlOcr('digitos.json')).then((r) => r.json()).then((j) => {
+      const P = {};
+      for (const [k, v] of Object.entries(j)) {
+        const bin = atob(v.dados);
+        const a = new Float32Array(bin.length);
+        for (let i = 0; i < bin.length; i++) { const b = bin.charCodeAt(i); a[i] = (b > 127 ? b - 256 : b) * v.escala; }
+        P[k] = a;
+      }
+      return P;
+    });
+    redeDigitos.catch(() => { redeDigitos = null; });
+  }
+  return redeDigitos;
+}
+
+function convRelu(x, H, W, C, w, b, k, pad, O) {
+  const out = new Float32Array(H * W * O);
+  for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+    const o0 = (y * W + xx) * O;
+    for (let o = 0; o < O; o++) out[o0 + o] = b[o];
+    for (let i = 0; i < k; i++) {
+      const yy = y + i - pad;
+      if (yy < 0 || yy >= H) continue;
+      for (let j = 0; j < k; j++) {
+        const xj = xx + j - pad;
+        if (xj < 0 || xj >= W) continue;
+        const xi = (yy * W + xj) * C, wi = (i * k + j) * C;
+        for (let c = 0; c < C; c++) {
+          const v = x[xi + c];
+          if (!v) continue;
+          const wr = (wi + c) * O;
+          for (let o = 0; o < O; o++) out[o0 + o] += v * w[wr + o];
+        }
+      }
+    }
+    for (let o = 0; o < O; o++) if (out[o0 + o] < 0) out[o0 + o] = 0;
+  }
+  return out;
+}
+function pool2(x, H, W, C) {
+  const h = H / 2, w = W / 2, out = new Float32Array(h * w * C);
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) for (let c = 0; c < C; c++) {
+    const a = (i, j) => x[((2 * y + i) * W + 2 * xx + j) * C + c];
+    out[(y * w + xx) * C + c] = Math.max(a(0, 0), a(0, 1), a(1, 0), a(1, 1));
+  }
+  return out;
+}
+function densa(x, w, b, O, relu) {
+  const out = Float32Array.from(b);
+  for (let i = 0; i < x.length; i++) { const v = x[i]; if (!v) continue; const r = i * O; for (let o = 0; o < O; o++) out[o] += v * w[r + o]; }
+  if (relu) for (let o = 0; o < O; o++) if (out[o] < 0) out[o] = 0;
+  return out;
+}
+// Devolve a probabilidade de cada classe (0–9 e 10 = "/")
+function classificarCaractere(P, img28) {
+  let a = convRelu(img28, 28, 28, 1, P.c1w, P.c1b, 5, 2, 16);
+  a = pool2(a, 28, 28, 16);
+  a = convRelu(a, 14, 14, 16, P.c2w, P.c2b, 3, 1, 32);
+  a = pool2(a, 14, 14, 32);
+  a = densa(a, P.f1w, P.f1b, 64, true);
+  const z = densa(a, P.f2w, P.f2b, 11, false);
+  const m = Math.max(...z);
+  let s = 0;
+  const p = Array.from(z, (v) => { const e = Math.exp(v - m); s += e; return e; });
+  return p.map((v) => v / s);
+}
+
+// Igual ao treino: lado maior = 20 px e centro de massa no meio de 28×28
+function normalizar28(bin, w, h) {
+  const k = 20 / Math.max(w, h);
+  const nw = Math.max(1, Math.round(w * k)), nh = Math.max(1, Math.round(h * k));
+  const src = document.createElement('canvas');
+  src.width = w; src.height = h;
+  const sc = src.getContext('2d');
+  const id = sc.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { const v = bin[i] ? 255 : 0; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+  sc.putImageData(id, 0, 0);
+  const dst = document.createElement('canvas');
+  dst.width = nw; dst.height = nh;
+  const dc = dst.getContext('2d', { willReadFrequently: true });
+  dc.imageSmoothingQuality = 'high';
+  dc.drawImage(src, 0, 0, nw, nh);
+  const px = dc.getImageData(0, 0, nw, nh).data;
+  let tot = 0, sx = 0, sy = 0;
+  const b = new Float32Array(nw * nh);
+  for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) { const v = px[(y * nw + x) * 4]; b[y * nw + x] = v; tot += v; sx += v * x; sy += v * y; }
+  const ox = Math.round(14 - (tot ? sx / tot : nw / 2)), oy = Math.round(14 - (tot ? sy / tot : nh / 2));
+  const out = new Float32Array(784);
+  for (let y = 0; y < nh; y++) {
+    const yy = y + oy;
+    if (yy < 0 || yy >= 28) continue;
+    for (let x = 0; x < nw; x++) { const xx = x + ox; if (xx >= 0 && xx < 28) out[yy * 28 + xx] = b[y * nw + x] / 255; }
+  }
+  return out;
+}
+
+async function fotoColorida(arquivo, W, H) {
+  const img = await createImageBitmap(arquivo, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(arquivo));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, W, H);
+  return c;
+}
+
+// Interpreta uma sequência de caracteres (cada um com as probabilidades) como datas possíveis
+function datasPossiveis(chars) {
+  let feixe = [{ s: '', p: 1 }];
+  for (const c of chars) {
+    let op = [{ s: '/', p: 1 }];
+    if (!c.sep) {
+      // "/" e "1" se confundem na letra de mão: cada um vale um pouco como o outro
+      const q = c.p.slice();
+      q[10] = Math.max(c.p[10], 0.35 * c.p[1]);
+      q[1] = Math.max(c.p[1], 0.35 * c.p[10]);
+      op = q.map((p, i) => ({ s: i === 10 ? '/' : String(i), p })).sort((a, b) => b.p - a.p).slice(0, 4);
+    }
+    const novo = [];
+    for (const f of feixe) for (const o of op) if (o.p > 0.02) novo.push({ s: f.s + o.s, p: f.p * o.p });
+    feixe = novo.sort((a, b) => b.p - a.p).slice(0, 150);
+  }
+  const hoje = hojeISO(), min = somarDias(hoje, -18 * 365), max = somarDias(hoje, 3 * 365);
+  const res = new Map();
+  const valida = (d, m, a) => {
+    if (a < 100) a += 2000;
+    const dt = new Date(a, m - 1, d);
+    if (dt.getFullYear() !== a || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    const iso = `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return iso >= min && iso <= max ? iso : null;
+  };
+  for (const f of feixe) {
+    const g = f.s.split('/').filter(Boolean);
+    const digs = g.join('');
+    const tent = [];
+    if (g.length === 3 && g[0].length <= 2 && g[1].length <= 2 && (g[2].length === 2 || g[2].length === 4)) tent.push([g[0], g[1], g[2]]);
+    if (digs.length === 6) tent.push([digs.slice(0, 2), digs.slice(2, 4), digs.slice(4)]);
+    if (digs.length === 8) tent.push([digs.slice(0, 2), digs.slice(2, 4), digs.slice(4)]);
+    if (digs.length === 5) { tent.push([digs.slice(0, 1), digs.slice(1, 3), digs.slice(3)]); tent.push([digs.slice(0, 2), digs.slice(2, 3), digs.slice(3)]); }
+    for (const [d, m, a] of tent) {
+      const iso = valida(Number(d), Number(m), Number(a));
+      if (iso) { res.set(iso, (res.get(iso) || 0) + f.p); break; }
+    }
+  }
+  return [...res].map(([iso, p]) => ({ iso, p })).sort((a, b) => b.p - a.p).slice(0, 12);
+}
+
+// Acha as linhas escritas com caneta colorida e devolve trechos com datas possíveis
+function datasManuscritas(cor, P, dbg = null) {
+  const W = cor.width, H = cor.height;
+  const px = cor.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data;
+  const tinta = new Uint8Array(W * H);
+  for (let i = 0, j = 0; j < tinta.length; i += 4, j++) if (px[i + 2] - Math.max(px[i], px[i + 1] * 0.9) > 20) tinta[j] = 1;
+  // fecha falhas de 1–2 px no traço (caneta falhando)
+  const maxMin = (src, max) => {
+    const t = new Uint8Array(W * H), o = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; const a = x > 0 ? src[i - 1] : src[i], b = x < W - 1 ? src[i + 1] : src[i]; t[i] = max ? (src[i] | a | b) : (src[i] & a & b); }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; const a = y > 0 ? t[i - W] : t[i], b = y < H - 1 ? t[i + W] : t[i]; o[i] = max ? (t[i] | a | b) : (t[i] & a & b); }
+    return o;
+  };
+  tinta.set(maxMin(maxMin(tinta, true), false));
+  // componentes conectados
+  const rot = new Int32Array(W * H);
+  const comps = [];
+  const pilha = new Int32Array(W * H);
+  for (let i0 = 0; i0 < tinta.length; i0++) {
+    if (!tinta[i0] || rot[i0]) continue;
+    const id = comps.length + 1;
+    let topo = 0, x0 = W, y0 = H, x1 = 0, y1 = 0, area = 0;
+    pilha[topo++] = i0; rot[i0] = id;
+    while (topo) {
+      const i = pilha[--topo], x = i % W, y = (i - x) / W;
+      area++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const k = yy * W + xx;
+        if (tinta[k] && !rot[k]) { rot[k] = id; pilha[topo++] = k; }
+      }
+    }
+    comps.push({ ids: [id], x0, y0, x1, y1, area });
+  }
+  const cs = comps.filter((c) => {
+    const h = c.y1 - c.y0 + 1, w = c.x1 - c.x0 + 1;
+    return c.area >= 6 && h <= 0.07 * H && w <= 0.08 * W  && !(c.area > 0.55 * w * h && w > 0.6 * h && h > 0.012 * H); // mancha cheia e larga = faixa do selo
+  });
+  // agrupa em linhas (da esquerda para a direita)
+  cs.sort((a, b) => a.x0 - b.x0);
+  const linhas = [];
+  for (const c of cs) {
+    const cy = (c.y0 + c.y1) / 2, h = c.y1 - c.y0 + 1;
+    let melhor = null, dist = Infinity;
+    for (const l of linhas) {
+      const lh = l.h, gap = c.x0 - l.x1;
+      if (Math.abs(cy - l.cy) > 0.6 * Math.max(lh, h) || gap > 1.3 * lh || gap < -0.6 * lh) continue;
+      if (gap < dist) { dist = gap; melhor = l; }
+    }
+    if (melhor) {
+      melhor.cs.push(c); melhor.x1 = Math.max(melhor.x1, c.x1);
+      if (h > 0.4 * melhor.h) { melhor.cy = (melhor.cy * 3 + cy) / 4; melhor.h = Math.max(melhor.h * 0.8, Math.min(h, melhor.h * 1.5)); }
+    } else linhas.push({ cs: [c], x1: c.x1, cy, h: Math.max(h, 0.012 * H) });
+  }
+  const out = [];
+  for (const l of linhas) {
+    if (l.cs.length < 4 || l.cs.length > 16) continue;
+    const alts = l.cs.map((c) => c.y1 - c.y0 + 1).sort((a, b) => a - b);
+    const lh = alts[Math.floor(alts.length * 0.7)];
+    if (lh < 0.008 * H) continue;
+    // junta pedaços do mesmo caractere (sobrepostos na horizontal)
+    const chars = [];
+    for (const c of l.cs) {
+      const ult = chars[chars.length - 1];
+      const ov = ult ? Math.min(ult.x1, c.x1) - Math.max(ult.x0, c.x0) : -1;
+      const pequeno = (k) => k.y1 - k.y0 + 1 < 0.35 * lh && k.x1 - k.x0 + 1 < 0.5 * lh;
+      if (ult && ov > 0.5 * Math.min(ult.x1 - ult.x0 + 1, c.x1 - c.x0 + 1) && !pequeno(c) && !pequeno(ult)) {
+        ult.ids.push(...c.ids); ult.x0 = Math.min(ult.x0, c.x0); ult.x1 = Math.max(ult.x1, c.x1); ult.y0 = Math.min(ult.y0, c.y0); ult.y1 = Math.max(ult.y1, c.y1);
+      } else chars.push({ ...c, ids: [...c.ids] });
+    }
+    const lidos = [];
+    for (const c of chars) {
+      const w = c.x1 - c.x0 + 1, h = c.y1 - c.y0 + 1;
+      if (h < 0.35 * lh && w < 0.5 * lh) { lidos.push({ sep: true }); continue; } // ponto ou vírgula
+      if (h < 0.25 * lh) { lidos.push({ sep: true }); continue; }                     // traço
+      const bin = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const r = rot[(c.y0 + y) * W + c.x0 + x]; if (r && c.ids.includes(r)) bin[y * w + x] = 1; }
+      // dígitos encostados: testa inteiro, cortado em 2 e em 3 (no ponto com menos tinta) e fica com a leitura mais segura
+      const recorta = (a0, a1) => { const ww = a1 - a0, pb = new Uint8Array(ww * h); for (let y = 0; y < h; y++) for (let x = 0; x < ww; x++) pb[y * ww + x] = bin[y * w + a0 + x]; return [pb, ww, h]; };
+      const vale = (a0, a1) => { let corte = a0 + 1, menor = Infinity; for (let x = Math.round(a0 + (a1 - a0) * 0.3); x < a0 + (a1 - a0) * 0.7; x++) { let s2 = 0; for (let y = 0; y < h; y++) s2 += bin[y * w + x]; if (s2 < menor) { menor = s2; corte = x; } } return corte; };
+      const opcoes = [];
+      const ref = Math.max(h, 0.7 * lh);
+      if (w <= 1.25 * ref) opcoes.push([[bin, w, h]]);                       // largo demais para 1 dígito
+      if (w > 0.75 * lh && w <= 2.3 * ref) { const c1 = vale(0, w); opcoes.push([recorta(0, c1), recorta(c1, w)]); }
+      if (w > 1.6 * ref) { const c1 = vale(0, Math.round(w * 0.6)), c2 = vale(Math.round(w * 0.4), w); if (c2 > c1 + 2) opcoes.push([recorta(0, c1), recorta(c1, c2), recorta(c2, w)]); }
+      if (!opcoes.length) opcoes.push([[bin, w, h]]);
+      let partes = opcoes[0], melhorConf = -1, melhorP = null;
+      for (const op of opcoes) {
+        const ps = op.map(([bb, ww, hh]) => classificarCaractere(P, normalizar28(bb, ww, hh)));
+        const conf = Math.pow(ps.reduce((m, q) => m * Math.max(...q), 1), 1 / ps.length) * (op.length > 1 ? 0.97 : 1);
+        if (conf > melhorConf) { melhorConf = conf; partes = op; melhorP = ps; }
+      }
+      partes.forEach(([b, ww, hh], k) => { if (dbg && dbg.imgs) dbg.imgs.push([l.cy / H, normalizar28(b, ww, hh)]); lidos.push({ p: melhorP[k] }); });
+    }
+    const n = lidos.filter((c) => !c.sep).length;
+    if (dbg) dbg.push(`${((l.cs[0].x0 + l.x1) / 2 / W).toFixed(2)},${(l.cy / H).toFixed(2)} ${lidos.map((c) => (c.sep ? '.' : (() => { const i = c.p.indexOf(Math.max(...c.p)); return (i === 10 ? '/' : i) + (c.p[i] < 0.6 ? '?' : ''); })())).join('')} -> ${datasPossiveis(lidos).slice(0, 2).map((d) => d.iso + ':' + d.p.toExponential(1)).join(' ')}`);
+    if (n < 5 || n > 10) continue;
+    const cands = datasPossiveis(lidos);
+    if (!cands.length || Math.pow(cands[0].p, 1 / n) < 0.35) continue;
+    const x0 = l.cs[0].x0;
+    for (const c of cands) c.conf = Math.pow(c.p, 1 / n); // certeza média por caractere
+    out.push({ texto: '', x: (x0 + l.x1) / 2 / W, y: l.cy / H, mao: cands });
+  }
+  return out;
 }
 
 let lendoCarteira = false;
@@ -2800,22 +3103,20 @@ async function lerCarteira(arquivo) {
     const W = canvas.width, H = canvas.height;
     // modo "texto esparso": a carteira é uma grade de caixas, com selos e datas soltos
     await leitor.setParameters({ tessedit_pageseg_mode: '11' });
-    let { data } = await leitor.recognize(canvas, {}, { text: true, blocks: true });
-    let texto = data.text;
-    const trechos = trechosDoResultado(data, W, H);
-    // selos colados de lado: lê também com a foto girada (só os nomes das vacinas)
+    // selos colados de lado: lê a foto girada (só os nomes das vacinas)
     etapa = 'Procurando selos de lado…';
-    ({ data } = await leitor.recognize(girarCanvas(canvas, 1), {}, { text: true, blocks: true }));
-    trechos.push(...trechosDoResultado(data, W, H, 1));
-    texto += '\n----\n' + data.text;
-    // selos com letra miúda: lê a foto em 4 pedaços ampliados
+    let { data } = await leitor.recognize(girarCanvas(canvas, 1), {}, { text: true, blocks: true });
+    let texto = data.text;
+    const trechos = trechosDoResultado(data, W, H, 1);
+    // a foto inteira é lida em 4 pedaços ampliados (letra miúda dos selos)
     for (let i = 0; i < 4; i++) {
       etapa = `Lendo em detalhes (parte ${i + 1} de 4)…`;
       const fx0 = Math.max(0, (i % 2) / 2 - 0.06), fy0 = Math.max(0, Math.floor(i / 2) / 2 - 0.06);
       const fx1 = Math.min(1, (i % 2 + 1) / 2 + 0.06), fy1 = Math.min(1, (Math.floor(i / 2) + 1) / 2 + 0.06);
       const pw = (fx1 - fx0) * W, ph = (fy1 - fy0) * H;
       const cv = document.createElement('canvas');
-      cv.width = Math.round(pw * 2); cv.height = Math.round(ph * 2);
+      const esc = Math.min(2, 2600 / Math.max(pw, ph));
+      cv.width = Math.round(pw * esc); cv.height = Math.round(ph * esc);
       const ctx = cv.getContext('2d');
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(canvas, fx0 * W, fy0 * H, pw, ph, 0, 0, cv.width, cv.height);
@@ -2823,9 +3124,14 @@ async function lerCarteira(arquivo) {
       for (const t of trechosDoResultado(data, cv.width, cv.height)) trechos.push({ ...t, x: fx0 + t.x * (fx1 - fx0), y: fy0 + t.y * (fy1 - fy0) });
       texto += '\n----\n' + data.text;
     }
+    try {
+      progresso(0.97, 'Lendo as datas escritas à mão…');
+      const rede = await obterRedeDigitos();
+      trechos.push(...datasManuscritas(await fotoColorida(arquivo, W, H), rede));
+    } catch (e) { console.warn('datas à mão', e); }
     let itens = extrairCarteira(trechos, p);
     // selo achado sem nome (letras pequenas): amplia esse pedaço da foto e lê de novo
-    const semNome = itens.filter((it) => !it.cat).slice(0, 4);
+    const semNome = itens.filter((it) => !it.cat && !it.orfao).slice(0, 4);
     for (const [n, it] of semNome.entries()) {
       etapa = `Ampliando selo ${n + 1} de ${semNome.length}…`;
       const x0 = Math.max(0, it.x - 0.13) * W, y0 = Math.max(0, it.y - 0.06) * H;
