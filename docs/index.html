@@ -454,6 +454,11 @@ fieldset { min-width: 0; }
 #embalagem-resultado { margin-top: 12px; }
 #embalagem-resultado .linha-botoes { margin-top: 10px; }
 #embalagem-resultado pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.78rem; background: var(--fundo); border-radius: 8px; padding: 8px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; }
+.tabela-emb { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.tabela-emb th, .tabela-emb td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--borda); }
+.tabela-emb th:first-child, .tabela-emb td:first-child { text-align: left; }
+.tabela-emb th { color: var(--texto-2); font-weight: 600; }
+.tabela-emb td.col-pet { font-weight: 700; color: var(--primaria); }
 .progresso-ocr { height: 8px; border-radius: 999px; background: var(--cartao); overflow: hidden; margin-top: 6px; }
 .progresso-ocr span { display: block; height: 100%; width: 0; background: var(--primaria); transition: width .2s; }
 
@@ -876,7 +881,7 @@ fieldset { min-width: 0; }
           <label class="btn pequeno botao-arquivo">📷 Tirar foto<input type="file" id="embalagem-camera" accept="image/*" capture="environment"></label>
           <label class="btn pequeno botao-arquivo">🖼️ Escolher da galeria<input type="file" id="embalagem-galeria" accept="image/*" multiple></label>
         </div>
-        <p class="dica-campo" style="margin-top:8px">Dica: foto de perto, reta e com boa luz. Até 3 fotos por leitura.</p>
+        <p class="dica-campo" style="margin-top:8px">Dica: fotografe a frente, o verso (tabela) e a lateral (energia), de perto e com o pacote inclinado para não refletir a luz. Até 3 fotos por leitura.</p>
         <div class="fotos-emb" id="embalagem-fotos"></div>
         <div class="linha-botoes" id="embalagem-acoes" hidden>
           <button type="button" class="btn primario" id="btn-ler-embalagem">Ler embalagem</button>
@@ -2024,8 +2029,10 @@ function atualizarTotalVivo() {
   el.innerHTML = `Total por dia: <strong>${fmtG(totalDia(refeicoes))}</strong> em ${plural(refeicoes.length, 'refeição', 'refeições')}`;
 }
 
+let caracteristicasForm = null;
 function preencherFormRacao() {
   const r = racaoDoPet();
+  caracteristicasForm = null;
   $('#racao-erro').hidden = true;
   $('#racao-marca').value = r ? r.marca : '';
   const ul = $('#racao-refeicoes');
@@ -2067,7 +2074,7 @@ $('#form-racao').addEventListener('submit', (ev) => {
   if (msg) { erroEl.textContent = msg; erroEl.hidden = false; return; }
   erroEl.hidden = true;
   const atual = racaoDoPet();
-  const nova = { petId: estado.petAtual, marca, refeicoes, atualizado: hojeISO() };
+  const nova = { petId: estado.petAtual, marca, refeicoes, atualizado: hojeISO(), caracteristicas: caracteristicasForm || atual?.caracteristicas || [] };
   if (atual) Object.assign(atual, nova);
   else estado.racoes.push(nova);
   salvar();
@@ -2093,6 +2100,8 @@ function renderRacao() {
       <span class="rot">por dia · ${plural(r.refeicoes.length, 'refeição', 'refeições')}</span>
     </div>
     ${r.marca ? `<p class="marca">🥣 ${esc(r.marca)}</p>` : ''}
+    ${r.caracteristicas?.length ? `<ul class="motivos">${r.caracteristicas.filter((k) => CARACTERISTICAS_RACAO[k]).map((k) => `<li>${CARACTERISTICAS_RACAO[k][0]}</li>`).join('')}</ul>` : ''}
+    ${r.caracteristicas?.includes('veterinaria') ? '<p class="nota-raca">Ração terapêutica: siga a quantidade e o tempo de uso indicados pelo veterinário.</p>' : ''}
     <ul class="horarios">
       ${r.refeicoes.map((x) => `
         <li class="${prox && x.hora === prox.hora ? 'proxima' : ''}">
@@ -3859,16 +3868,18 @@ async function obterLeitor() {
 }
 
 // Aumenta e deixa em tons de cinza com mais contraste: o OCR erra menos
-function prepararFoto(arquivo) {
+// Texto miúdo de embalagem precisa de resolução: leva o lado maior a ~3200 px (no máx. 2× o original)
+function prepararFoto(arquivo, alvo = 3200) {
   return new Promise((ok, falha) => {
     const url = URL.createObjectURL(arquivo);
     const img = new Image();
     img.onload = () => {
       const lado = Math.max(img.naturalWidth, img.naturalHeight);
-      const f = Math.min(2400 / lado, lado < 1400 ? 1400 / lado : 1);
+      const f = Math.min(alvo / lado, 2);
       const c = document.createElement('canvas');
       c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
       const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
       const dados = ctx.getImageData(0, 0, c.width, c.height);
@@ -3906,7 +3917,20 @@ function limparTextoOcr(t) {
   return t.replace(/\r/g, '')
     .replace(/(\d)[oO](?=\d|\b)/g, (_, d) => d + '0').replace(/(\d)[lI|](?=\d)/g, (_, d) => d + '1')
     .replace(/k\s*c\s*a\s*[l1I]/gi, 'kcal')
-    .replace(/[|]/g, '/');
+    .replace(/[|]/g, '/')
+    .replace(/kcal\s*[l1I\/\\]{0,2}\s*k\s*[g9q](?![a-z])/gi, 'kcal/kg')   // "kcallkg", "kcal kg"
+    .replace(/(\d)\s*[kK]\s*[g9q](?![a-z0-9])/g, (_, d) => d + ' kg');      // "1,5K9" → "1,5 kg"
+}
+
+// Parte do número da energia apagada (reflexo): "3. 2) kcal/kg" — avisa em vez de inventar
+// Devolve { trecho, valor? }: valor só quando os dígitos lidos formam um número plausível ("3.2 20" → 3220)
+function kcalIncompleta(texto) {
+  const t = texto.replace(/\s+/g, ' ');
+  const m = /(?:metaboli|tabolizab|tabolizáv|energ)[a-zá]*[^\d]{0,40}?(\d[.,:;]*\s*[\d.,)\]\s]{1,6}?)\s*kcal\S{0,4}/i.exec(t);
+  if (!m) return null;
+  const digitos = m[1].replace(/\D/g, '');
+  const v = Number(digitos);
+  return { trecho: m[0].slice(m[0].search(/\d/)), valor: digitos.length === 4 && v >= 2500 && v <= 5000 ? v : null };
 }
 
 function extrairKcal(texto) {
@@ -3940,7 +3964,7 @@ function extrairPeso(texto, linhas) {
   const t = texto.toLowerCase().replace(/\s+/g, ' ');
   const conv = (n, u) => (u === 'g' ? n / 1000 : n);
   // "Peso líquido: 10,1 kg" / "Conteúdo líquido 500 g"
-  const re = /(?:peso|conte[uú]do)\s*l[ií]q[a-z.]*\s*[:\-]?\s*(\d[\d.,]{0,5})\s*(kg|g)\b/g;
+  const re = /(?:peso|conte[uú]do)\s*(?:l[ií]q[a-z.]*|neto|net)[^\d]{0,30}?(\d[\d.,]{0,5})\s*(kg|g)\b/g;
   let m;
   while ((m = re.exec(t))) {
     const kg = conv(numeroBR(m[1]), m[2]);
@@ -3964,6 +3988,149 @@ function sugestoesMarca(linhas) {
     .filter((s) => s.length >= 3 && s.length <= 60 && !vistas.has(s.toLowerCase()) && vistas.add(s.toLowerCase()))
     .slice(0, 6)
     .reduce((acc, s, i, arr) => (i === 1 && (arr[0] + ' ' + s).length <= 60 ? [...acc, s, arr[0] + ' ' + s] : [...acc, s]), []);
+}
+
+
+/* ----- Marca: lista de marcas conhecidas (corrige o logotipo lido com erro) ----- */
+const MARCAS_RACAO = ['Royal Canin', 'PremieR Nattu', 'Premier', 'Golden Formula', 'Golden', 'GranPlus', 'Guabi Natural', 'Farmina N&D',
+  "Hill's", 'Pedigree', 'Whiskas', 'Pro Plan', 'Purina', 'Dog Chow', 'Cat Chow', 'Friskies', 'Special Dog', 'Special Cat', 'Biofresh',
+  'Three Dogs', 'Three Cats', 'Quatree', 'Total Max', 'Total Equilíbrio', 'Fórmula Natural', 'Origens', 'Magnus', 'Foster', 'Matisse',
+  'Cibau', 'Optimum', 'Kitekat', 'Baw Waw', 'Vet Life', 'Primocão', 'Primogato', 'Naturalis', 'Hercosul', 'Ultralife', 'Monello',
+  'Fit Formula', 'Premiatta', 'Bionatural', 'Natural Therapy', 'Eukanuba', 'Acana', 'Orijen', 'Taste of the Wild', 'Nutrópica'];
+function distancia(a, b) {
+  const m = a.length, n = b.length;
+  let ant = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(ant[j] + 1, cur[j - 1] + 1, ant[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    ant = cur;
+  }
+  return ant[n];
+}
+// Procura a marca palavra a palavra (nunca juntando pedaços de palavras vizinhas),
+// com tolerância a 1–2 letras erradas nas linhas de letra grande (logotipo)
+function acharMarca(texto, linhas) {
+  const todo = ' ' + normalizar(texto) + ' ';
+  const palavrasGrandes = normalizar([...linhas].sort((a, b) => b.alt - a.alt).slice(0, 15).map((l) => l.texto).join(' ')).split(' ').filter(Boolean);
+  let melhor = null, nota = 0;
+  for (const marca of MARCAS_RACAO) {
+    const alvoPalavras = normalizar(marca).split(' ').filter(Boolean);
+    const alvo = alvoPalavras.join('');
+    if (alvo.length < 5) continue;
+    let pts = todo.split(' ' + alvoPalavras.join(' ') + ' ').length - 1;
+    const tol = alvo.length >= 10 ? 2 : alvo.length >= 7 ? 1 : 0;
+    // junta 1 a 3 palavras seguidas (o OCR às vezes cola ou separa palavras do logotipo)
+    procura: for (let k = 0; k < palavrasGrandes.length; k++) {
+      for (let n = 1; n <= 3 && k + n <= palavrasGrandes.length; n++) {
+        const pedaco = palavrasGrandes.slice(k, k + n).join('');
+        if (Math.abs(pedaco.length - alvo.length) <= tol && distancia(pedaco, alvo) <= tol) { pts += 3; break procura; }
+      }
+    }
+    if (pts > nota) { nota = pts; melhor = marca; }
+  }
+  return melhor;
+}
+// Linhas de produto que entram no nome
+const LINHAS_RACAO = [
+  ['Gastrointestinal', /\S?astro\s*\S{0,3}\s*testinal/i], ['Low Fat', /low\s*fat/i], ['Renal', /\brenal\b/i],
+  ['Urinary', /urinary|urin[aá]ri[oa]/i], ['Hypoallergenic', /hypoallergenic|hipoalerg/i], ['Satiety', /satiety/i],
+  ['Obesity', /\bobesity\b/i], ['Hepatic', /hepatic/i], ['Cardiac', /\bcardiac\b/i], ['Mobility', /mobility/i], ['Diabetic', /diabetic/i],
+  ['Light', /\blight\b/i], ['Raças Pequenas', /ra[cç]as?\s*(pequenas|mini)|small\s*breed/i], ['Raças Grandes', /ra[cç]as?\s*grandes|large\s*breed/i],
+];
+function nomeDaRacao(texto, linhas) {
+  const marca = acharMarca(texto, linhas);
+  const termos = LINHAS_RACAO.filter(([, re]) => re.test(texto)).slice(0, 3).map(([nome]) => nome);
+  return [marca, ...termos].filter(Boolean).join(' ').slice(0, 60);
+}
+
+/* ----- Características especiais ----- */
+const CARACTERISTICAS_RACAO = {
+  veterinaria: ['🩺 Dieta veterinária', /veterinary|coadjuvante|corretor de dieta|terap[eê]utic/i],
+  lowfat: ['🥑 Baixa gordura', /low\s*fat|baix[oa] (teor de )?gordura|bajo (contenido|tenor) de grasa|restringida en grasa/i],
+  gastro: ['🫃 Gastrointestinal', /\S?astro\s*\S{0,3}\s*testinal/i],
+  renal: ['🫘 Renal', /\brenal\b/i],
+  urinaria: ['💧 Urinária', /urinary|urin[aá]ri[oa]/i],
+  hipoalergenica: ['🌿 Hipoalergênica', /hypoallergenic|hipoalerg|anallergenic/i],
+  light: ['⚖️ Controle de peso', /\blight\b|obesity|satiety|controle de peso/i],
+  filhote: ['🐣 Filhotes', /filhote|puppy|kitten|\bjunior\b/i],
+  senior: ['🧓 Sênior', /s[eê]nior|\bmature\b/i],
+  castrados: ['✂️ Castrados', /castrad|sterili[sz]ed|neutered/i],
+  omega: ['🐟 Ômega-3 (EPA/DHA)', /epa\s*[+e&]\s*dha|[oô]mega\s*-?\s*3/i],
+  prebioticos: ['🦠 Prebióticos', /prebi[oó]tic/i],
+  semcorantes: ['Sem corantes artificiais', /sem (adi[cç][aã]o de )?corantes|sin (adici[oó]n de )?colorantes/i],
+  semaromas: ['Sem aromatizantes artificiais', /sem (adi[cç][aã]o de )?aromatizantes|sin (adici[oó]n de )?saborizantes/i],
+  transgenicos: ['Sem transgênicos', /n[aã]o transg[eê]nicos|sem transg[eê]nicos|no transg[eé]nicos/i],
+  graos: ['Sem grãos', /grain\s*free|sem gr[aã]os|livre de gr[aã]os/i],
+};
+function extrairCaracteristicas(texto) {
+  return Object.keys(CARACTERISTICAS_RACAO).filter((k) => CARACTERISTICAS_RACAO[k][1].test(texto));
+}
+
+/* ----- Tabela de alimentação (peso do cão × magro / ideal / sobrepeso) ----- */
+// O OCR costuma ler "107 g" como "1079": cada valor pode ter um "9" no lugar do "g".
+function valoresGramas(tok) {
+  const t = tok.replace(/[.,]$/, '');
+  let m;
+  if ((m = /^(\d{2,3})[gG]$/.exec(t))) return [Number(m[1])];
+  if ((m = /^(\d{2,3})9$/.exec(t))) return [Number(m[1]), Number(t)].filter((v) => v >= 15 && v <= 1500);
+  if (/^\d{2,4}$/.test(t)) return [Number(t)].filter((v) => v >= 15 && v <= 1500);
+  return [];
+}
+function extrairTabela(texto) {
+  const linhas = [];
+  for (const bruta of texto.split('\n')) {
+    const toks = bruta.replace(/[\[\]|/]/g, ' ').split(/\s+/).filter(Boolean).filter((x) => !/[+:]/.test(x));
+    // junta "205" + "g"
+    const v = [];
+    for (let i = 0; i < toks.length; i++) {
+      if (/^\d{2,3}$/.test(toks[i]) && /^[gG9]$/.test(toks[i + 1] || '')) { v.push({ tok: toks[i] + 'g', cands: [Number(toks[i])], g: true }); i++; }
+      else v.push({ tok: toks[i], cands: valoresGramas(toks[i]), g: /[gG9]$/.test(toks[i]) });
+    }
+    for (let i = 0; i + 2 < v.length; i++) {
+      const [a, b, c] = [v[i], v[i + 1], v[i + 2]];
+      if (!a.cands.length || !b.cands.length || !c.cands.length || [a, b, c].filter((x) => x.g).length < 2) continue;
+      let achou = null;
+      for (const x of a.cands) for (const y of b.cands) for (const z of c.cands) {
+        const r1 = x / y, r2 = y / z;
+        if (r1 >= 1.05 && r1 <= 1.35 && r2 >= 1.05 && r2 <= 1.35 && !achou) achou = [x, y, z];
+      }
+      if (!achou) continue;
+      const antes = v[i - 1]?.tok;
+      const kg = antes && /^\d{1,2}([.,]5)?$/.test(antes) ? numeroBR(antes) : null;
+      linhas.push({ kg: kg > 0 && kg <= 90 ? kg : null, g: achou });
+      break;
+    }
+  }
+  // remove repetidas (mesma linha lida duas vezes)
+  const unicas = [];
+  for (const l of linhas) {
+    const igual = unicas.find((u) => Math.abs(u.g[1] - l.g[1]) / u.g[1] < 0.03);
+    if (igual) { if (!igual.kg && l.kg) igual.kg = l.kg; } else unicas.push({ ...l });
+  }
+  const ancoras = unicas.filter((l) => l.kg);
+  if (unicas.length < 2 || !ancoras.length) return null;
+  // Ração por dia cresce com peso^0,75: descobre o peso das linhas em que ele não foi lido
+  const k = ancoras.map((l) => l.g[1] / Math.pow(l.kg, 0.75)).sort((a, b) => a - b)[Math.floor(ancoras.length / 2)];
+  for (const l of unicas) if (!l.kg) { const w = Math.pow(l.g[1] / k, 1 / 0.75); l.kg = w < 4 ? Math.round(w * 2) / 2 : Math.round(w); l.estimado = true; }
+  return unicas.sort((a, b) => a.kg - b.kg);
+}
+// Gramas por dia para um peso: interpola entre as linhas da tabela
+function gramasDaTabela(tabela, kg, coluna) {
+  if (!tabela || !(kg > 0)) return null;
+  const abaixo = [...tabela].reverse().find((l) => l.kg <= kg), acima = tabela.find((l) => l.kg >= kg);
+  if (abaixo && acima && acima.kg !== abaixo.kg) {
+    const f = (kg - abaixo.kg) / (acima.kg - abaixo.kg);
+    return Math.round(abaixo.g[coluna] + f * (acima.g[coluna] - abaixo.g[coluna]));
+  }
+  const ref = abaixo || acima;
+  return Math.round(ref.g[coluna] * Math.pow(kg / ref.kg, 0.75));
+}
+function extrairCopo(texto) {
+  const m = /\S?opo\s*=?\s*240\s*m[il1]\s*=\s*(\d{2,4})/i.exec(texto.replace(/\s+/g, ' '));
+  if (!m) return null;
+  let g = Number(m[1]);
+  if (g > 200 && /9$/.test(m[1])) g = Math.floor(g / 10);
+  return g >= 40 && g <= 200 ? g : null;
 }
 
 function linhasDoResultado(data) {
@@ -4037,22 +4204,48 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
     const leitor = await obterLeitor();
     let texto = '';
     let linhas = [];
+    const canvases = [];
+    let etapa = 'Lendo';
+    // 1ª leitura: bloco único (mantém as linhas da tabela inteiras)
+    await leitor.setParameters({ tessedit_pageseg_mode: '6' });
     for (fotoAtual = 0; fotoAtual < total; fotoAtual++) {
       if (cancelarEmb) break;
       const canvas = await prepararFoto(fotosEmb[fotoAtual].arquivo);
+      canvases.push(canvas);
       const { data } = await leitor.recognize(canvas, {}, { text: true, blocks: true });
-      const alturaRef = canvas.height || 1;
       texto += '\n' + data.text;
-      linhas = linhas.concat(linhasDoResultado(data).map((l) => ({ ...l, alt: l.alt / alturaRef })));
+      linhas = linhas.concat(linhasDoResultado(data).map((l) => ({ ...l, alt: l.alt / (canvas.height || 1) })));
+    }
+    // 2ª leitura só se faltar peso ou energia: modo "texto espalhado" acha letras miúdas soltas
+    let limpo = limparTextoOcr(texto);
+    if (!cancelarEmb && (!extrairPeso(limpo, []) || !extrairKcal(limpo))) {
+      aoProgressoOcr = (m) => { if (m.status === 'recognizing text') progresso((fotoAtual + m.progress) / total, `Procurando detalhes na foto ${fotoAtual + 1} de ${total}…`); };
+      await leitor.setParameters({ tessedit_pageseg_mode: '11' });
+      for (fotoAtual = 0; fotoAtual < total; fotoAtual++) {
+        if (cancelarEmb) break;
+        const { data } = await leitor.recognize(canvases[fotoAtual]);
+        texto += '\n' + data.text;
+      }
+      await leitor.setParameters({ tessedit_pageseg_mode: '6' });
     }
     if (cancelarEmb) { statusEmb('Leitura interrompida.'); return; }
     texto = limparTextoOcr(texto).trim();
     linhas = linhas.map((l) => ({ ...l, texto: limparTextoOcr(l.texto) }));
+    const kcalKg = extrairKcal(texto);
+    const nome = nomeDaRacao(texto, linhas);
+    const sug = sugestoesMarca(linhas);
+    const incompleta = kcalKg ? null : kcalIncompleta(texto);
     mostrarLeituraEmb({
       texto,
-      kcalKg: extrairKcal(texto),
+      kcalKg: kcalKg || incompleta?.valor || null,
+      kcalTrecho: incompleta?.trecho || null,
+      kcalIncerta: !!incompleta?.valor,
       pesoKg: extrairPeso(texto, linhas),
-      marcas: sugestoesMarca(linhas),
+      marcas: [...new Set([nome, ...sug].filter(Boolean))],
+      marcaConfiavel: !!acharMarca(texto, linhas),
+      caracteristicas: extrairCaracteristicas(texto),
+      tabela: extrairTabela(texto),
+      copoG: extrairCopo(texto),
     });
   } catch (e) {
     console.warn('OCR falhou', e);
@@ -4064,14 +4257,26 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
   }
 });
 
+let leituraEmb = null;
+function colunaDoPet() {
+  const ecc = ultimaAvaliacao()?.escore;
+  return ecc ? (ecc <= 4 ? 0 : ecc >= 6 ? 2 : 1) : 1;
+}
+const NOMES_COLUNA = ['magro', 'peso ideal', 'acima do peso'];
 function mostrarLeituraEmb(l) {
-  const achou = [l.pesoKg && 'tamanho do saco', l.kcalKg && 'energia', l.marcas.length && 'marca'].filter(Boolean);
+  leituraEmb = l;
+  const p = petAtual();
+  const pesos = pesosDoPet();
+  const kgPet = pesos.length ? pesos[pesos.length - 1].kg : null;
+  const col = colunaDoPet();
+  l.gramasPet = l.tabela && kgPet ? gramasDaTabela(l.tabela, kgPet, col) : null;
+  const achou = [l.marcaConfiavel && 'marca', l.pesoKg && 'tamanho do saco', l.kcalKg && 'energia', l.tabela && 'tabela de alimentação', l.caracteristicas.length && 'características'].filter(Boolean);
   if (!l.texto || l.texto.replace(/\W/g, '').length < 8) {
     statusEmb('Não consegui ler texto nessa foto. Tente de novo mais perto, com o pacote reto e boa luz (sem reflexo do plástico).', 'erro-leitura');
     return;
   }
   statusEmb(achou.length
-    ? `Encontrei: <strong>${achou.join(', ')}</strong>. Confira e corrija se precisar.`
+    ? `Encontrei: <strong>${achou.join(', ')}</strong>. Confira e corrija se precisar.${l.pesoKg && l.kcalKg ? '' : ' Para o que faltou, fotografe o verso ou a lateral (onde ficam peso líquido e "energia metabolizável").'}`
     : 'Li o texto, mas não achei os dados. Preencha abaixo olhando o texto lido, ou tente uma foto mais nítida do verso.',
   achou.length ? 'ok-leitura' : '');
   const box = $('#embalagem-resultado');
@@ -4089,8 +4294,22 @@ function mostrarLeituraEmb(l) {
         <input type="text" id="emb-kcal" inputmode="numeric" placeholder="ex.: 3800">
       </label>
     </div>
+    ${l.kcalTrecho ? `<p class="nota-raca">${l.kcalIncerta ? `A energia saiu borrada na foto (“${esc(l.kcalTrecho)}”): coloquei <strong>${l.kcalKg}</strong>, mas <strong>confira no pacote</strong>.` : `Achei a energia, mas parte do número ficou apagada (provavelmente reflexo do plástico): “${esc(l.kcalTrecho)}”. Confira no pacote e digite acima.`}</p>` : ''}
+    ${l.caracteristicas.length ? `<p class="dica-campo" style="margin:4px 0 6px">Características:</p><ul class="motivos">${l.caracteristicas.map((k) => `<li>${CARACTERISTICAS_RACAO[k][0]}</li>`).join('')}</ul>` : ''}
+    ${l.caracteristicas.includes('veterinaria') ? '<p class="nota-raca">Ração terapêutica: siga a quantidade e o tempo de uso indicados pelo veterinário.</p>' : ''}
+    ${l.tabela ? `
+      <div class="cartao-tabela">
+        <p class="dica-campo" style="margin:6px 0">Tabela da embalagem (g por dia, só ração seca):</p>
+        <table class="tabela-emb"><thead><tr><th>Peso</th><th>Magro</th><th>Ideal</th><th>Acima</th></tr></thead><tbody>
+          ${l.tabela.map((r) => `<tr><td>${fmtNum(r.kg, r.kg % 1 ? 1 : 0)} kg${r.estimado ? '*' : ''}</td>${r.g.map((g, i) => `<td${i === col ? ' class="col-pet"' : ''}>${g} g</td>`).join('')}</tr>`).join('')}
+        </tbody></table>
+        ${l.tabela.some((r) => r.estimado) ? '<p class="nota">* peso não lido na foto; calculado pelas outras linhas da tabela.</p>' : ''}
+        ${l.gramasPet ? `<p class="comparacao ok" style="margin-top:8px">Para ${esc(p.nome)} (${fmtKg(kgPet)}, ${NOMES_COLUNA[col]}): <strong>${l.gramasPet} g por dia</strong>${l.copoG ? ` ≈ ${fmtNum(l.gramasPet / l.copoG, 1)} copo(s) de 240 ml` : ''}.</p>` : `<p class="nota">${kgPet ? '' : 'Registre o peso do pet para calcular as gramas por dia.'}</p>`}
+      </div>` : ''}
+    ${!l.tabela && l.copoG ? `<p class="nota">1 copo de 240 ml ≈ ${l.copoG} g desta ração.</p>` : ''}
     <p class="erro" id="emb-erro" role="alert" hidden></p>
     <div class="linha-botoes">
+      ${l.gramasPet ? `<button type="button" class="btn" id="btn-usar-gramas">Programar ${l.gramasPet} g/dia no alimentador</button>` : ''}
       <button type="button" class="btn primario" id="btn-usar-embalagem">Usar esses dados</button>
       <button type="button" class="btn" id="btn-descartar-embalagem">Descartar</button>
     </div>
@@ -4105,8 +4324,24 @@ function mostrarLeituraEmb(l) {
   box.hidden = false;
 }
 
+function guardarCaracteristicas(lista) {
+  caracteristicasForm = lista;
+  const r = racaoDoPet();
+  if (r) { r.caracteristicas = lista; salvar(); }
+}
 $('#embalagem-resultado').addEventListener('click', (ev) => {
   if (ev.target.closest('#btn-descartar-embalagem')) { limparEmbalagem(); return; }
+  if (ev.target.closest('#btn-usar-gramas') && leituraEmb?.gramasPet) {
+    const campos = [...document.querySelectorAll('#racao-refeicoes li')];
+    if (!campos.length) { $('#racao-refeicoes').appendChild(linhaRefeicao('08:00')); $('#racao-refeicoes').appendChild(linhaRefeicao('18:00')); }
+    const lis = [...document.querySelectorAll('#racao-refeicoes li')].filter((li) => li.querySelector('.ref-hora').value);
+    const por = Math.round((leituraEmb.gramasPet / lis.length) * 10) / 10;
+    lis.forEach((li) => { li.querySelector('.ref-g').value = String(por).replace('.', ','); });
+    atualizarTotalVivo();
+    statusEmb(`Coloquei ${leituraEmb.gramasPet} g/dia nos horários do alimentador (${String(por).replace('.', ',')} g cada). Toque em "Salvar alimentação" para confirmar.`, 'ok-leitura');
+    $('#form-racao').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   if (!ev.target.closest('#btn-usar-embalagem')) return;
   const erro = $('#emb-erro');
   const marca = $('#emb-marca').value.trim();
@@ -4124,6 +4359,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
   const p = petAtual();
   const feito = [];
   if (marca) { $('#racao-marca').value = marca; feito.push('marca'); }
+  if (leituraEmb?.caracteristicas?.length) { guardarCaracteristicas(leituraEmb.caracteristicas); feito.push('características'); }
   if (kg) {
     $('#saco-kg').value = String(Math.round(kg * 100) / 100).replace('.', ',');
     if (!$('#saco-abertura').value) $('#saco-abertura').value = hojeISO();
