@@ -436,6 +436,53 @@ fieldset { min-width: 0; }
 .foto-campo .botao-arquivo { flex: none; width: auto; }
 .barras li { grid-template-columns: 4.2em 1fr auto; }
 
+/* ---------- Ícones desenhados ---------- */
+svg.ic { width: 1.15em; height: 1.15em; flex: none; display: inline-block; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+h1 svg.ic, h2 svg.ic { color: var(--primaria); margin-right: 8px; }
+h1 { display: flex; align-items: center; }
+.btn svg.ic, .seg svg.ic { margin-right: 6px; }
+.btn.icone svg.ic { margin: 0; width: 1.3em; height: 1.3em; }
+.aba-btn svg.ic { width: 24px; height: 24px; margin: 0; }
+.abas .aba-btn { font-size: 0.7rem; padding: 6px 0; min-width: 0; }
+.ic-lista { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--neutro-fundo); color: var(--primaria); }
+.ic-lista svg.ic { width: 20px; height: 20px; }
+.ic-lista.alerta-ic { background: var(--perigo-fundo); color: var(--erro); }
+.ic-lista.perto-ic { background: var(--aviso-fundo); color: var(--aviso); }
+.ic-lista.ok-ic { background: var(--ok-fundo); color: var(--ok); }
+.alerta svg.ic { margin-top: 2px; }
+.urgente svg.ic, .nota-raca svg.ic { margin-right: 4px; }
+
+/* ---------- Ajuda recolhível ---------- */
+details.ajuda { margin: -4px 0 12px; font-size: 0.88rem; color: var(--texto-2); }
+details.ajuda > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; color: var(--primaria); font-weight: 600; min-height: 32px; }
+details.ajuda > summary::-webkit-details-marker { display: none; }
+details.ajuda > summary svg.ic { width: 1em; height: 1em; }
+details.ajuda[open] > summary { margin-bottom: 4px; }
+details.ajuda p { margin: 0 0 4px; }
+
+/* ---------- Próximos e calendário ---------- */
+.proximos li { align-items: center; }
+.proximos .quando { font-size: 0.78rem; font-weight: 700; white-space: nowrap; text-align: right; color: var(--texto-2); }
+.proximos .quando.hoje { color: var(--erro); }
+.proximos .quando.logo { color: var(--aviso); }
+.proximos li.clicavel { cursor: pointer; }
+.cal-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.cal-cab h2 { margin: 0; text-transform: capitalize; }
+.cal-semana, .cal-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.cal-semana { font-size: 0.72rem; color: var(--texto-2); margin-bottom: 4px; }
+.cal-dia { position: relative; font: inherit; font-size: 0.85rem; min-height: 42px; border-radius: 10px; border: 1px solid transparent; background: var(--fundo); color: var(--texto); cursor: pointer; padding: 4px 0 10px; font-variant-numeric: tabular-nums; }
+.cal-dia.fora { visibility: hidden; }
+.cal-dia.hoje { border-color: var(--primaria); font-weight: 700; }
+.cal-dia.passado { color: var(--texto-2); }
+.cal-dia[aria-pressed="true"] { background: var(--primaria); color: var(--primaria-texto); }
+.cal-pontos { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; justify-content: center; gap: 2px; }
+.cal-pontos span { width: 5px; height: 5px; border-radius: 50%; background: var(--primaria); }
+.cal-pontos span.p-alerta { background: var(--erro); }
+.cal-pontos span.p-perto { background: var(--aviso); }
+.cal-pontos span.p-ok { background: var(--ok); }
+.cal-legenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 0.75rem; color: var(--texto-2); }
+.cal-legenda i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+
 /* ---------- App instalável e backup ---------- */
 .banner-app { display: flex; gap: 10px; align-items: center; background: var(--cartao); border: 1px solid var(--primaria); border-radius: var(--raio); padding: 10px 12px; margin-bottom: 12px; font-size: 0.9rem; }
 .banner-app p { margin: 0; flex: 1; }
@@ -454,6 +501,10 @@ fieldset { min-width: 0; }
 #embalagem-resultado { margin-top: 12px; }
 #embalagem-resultado .linha-botoes { margin-top: 10px; }
 #embalagem-resultado pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.78rem; background: var(--fundo); border-radius: 8px; padding: 8px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; }
+.check { display: flex; gap: 8px; align-items: center; color: var(--texto); }
+.check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
+.itens-nota li { padding: 6px 0; }
+.itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
 .tabela-emb { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .tabela-emb th, .tabela-emb td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--borda); }
 .tabela-emb th:first-child, .tabela-emb td:first-child { text-align: left; }
@@ -465,17 +516,17 @@ fieldset { min-width: 0; }
 </style>
 
   <header class="topo">
-    <h1>🐾 Diário do Pet</h1>
+    <h1><i data-ic="pata"></i>Diário do Pet</h1>
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
-      <button type="button" class="btn icone" id="btn-pets" aria-label="Pets e configurações">⚙️</button>
+      <button type="button" class="btn icone" id="btn-pets" aria-label="Pets e configurações"><i data-ic="config"></i></button>
     </div>
   </header>
 
   <main>
     <div class="banner-app" id="banner-instalar" hidden>
-      <span aria-hidden="true">📲</span>
+      <i data-ic="celular"></i>
       <p id="banner-instalar-txt">Instale o Diário do Pet no celular: abre como app e funciona sem internet.</p>
       <button type="button" class="btn pequeno primario curto" id="btn-instalar" hidden>Instalar</button>
       <button type="button" class="btn pequeno" id="btn-fechar-banner" aria-label="Fechar aviso">✕</button>
@@ -494,8 +545,8 @@ fieldset { min-width: 0; }
         <div class="linha">
           <label>Espécie
             <select id="pet-especie" required>
-              <option value="cao">🐶 Cão</option>
-              <option value="gato">🐱 Gato</option>
+              <option value="cao">Cão</option>
+              <option value="gato">Gato</option>
             </select>
           </label>
           <label>Raça (opcional)
@@ -508,7 +559,7 @@ fieldset { min-width: 0; }
           <div class="avatar-escolha">
             <div class="avatar grande" id="pet-avatar-previa" aria-hidden="true"></div>
             <div class="linha-botoes">
-              <label class="btn pequeno botao-arquivo">📷 Usar foto<input type="file" id="pet-foto" accept="image/*"></label>
+              <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Usar foto<input type="file" id="pet-foto" accept="image/*"></label>
               <button type="button" class="btn pequeno perigo" id="btn-remover-foto" hidden>Remover foto</button>
             </div>
           </div>
@@ -539,18 +590,17 @@ fieldset { min-width: 0; }
       <div class="backup">
         <h3>Aparência</h3>
         <div class="segmentos" role="radiogroup" aria-label="Tema do app">
-          <label class="seg"><input type="radio" name="tema" value="auto"><span>📱 Automático</span></label>
-          <label class="seg"><input type="radio" name="tema" value="claro"><span>☀️ Claro</span></label>
-          <label class="seg"><input type="radio" name="tema" value="escuro"><span>🌙 Escuro</span></label>
+          <label class="seg"><input type="radio" name="tema" value="auto"><span><i data-ic="celular"></i>Automático</span></label>
+          <label class="seg"><input type="radio" name="tema" value="claro"><span><i data-ic="sol"></i>Claro</span></label>
+          <label class="seg"><input type="radio" name="tema" value="escuro"><span><i data-ic="lua"></i>Escuro</span></label>
         </div>
-        <p class="dica-campo">Automático segue o modo claro/escuro do celular.</p>
       </div>
       <div class="backup">
         <h3>Backup</h3>
-        <p class="dica-campo">Seus dados ficam só neste aparelho. Exporte um backup de vez em quando (ou antes de trocar de celular) e guarde no Drive, e-mail ou WhatsApp.</p>
+        <details class="ajuda" data-ajuda="backup"><summary><i data-ic="info"></i>Como funciona</summary><p>Seus dados ficam só neste aparelho. Exporte um backup de vez em quando (ou antes de trocar de celular) e guarde no Drive, e-mail ou WhatsApp.</p></details>
         <div class="linha-botoes">
-          <button type="button" class="btn pequeno" id="btn-exportar">⬇️ Exportar backup</button>
-          <label class="btn pequeno botao-arquivo">⬆️ Importar backup<input type="file" id="arquivo-backup" accept=".json,application/json"></label>
+          <button type="button" class="btn pequeno" id="btn-exportar"><i data-ic="baixar"></i>Exportar backup</button>
+          <label class="btn pequeno botao-arquivo"><i data-ic="enviar"></i>Importar backup<input type="file" id="arquivo-backup" accept=".json,application/json"></label>
         </div>
         <div id="backup-status" class="leitura-status" role="status" aria-live="polite" hidden></div>
       </div>
@@ -563,7 +613,8 @@ fieldset { min-width: 0; }
       <button type="button" class="btn primario" id="btn-primeiro-pet">Cadastrar pet</button>
     </section>
 
-    <!-- ===================== RESUMO DO PET ===================== -->
+    <!-- ===================== INÍCIO ===================== -->
+    <section id="aba-inicio" class="aba" hidden>
     <section id="resumo-pet" class="resumo" hidden>
       <div class="resumo-cab">
         <div class="avatar" id="resumo-emoji" aria-hidden="true"></div>
@@ -579,11 +630,74 @@ fieldset { min-width: 0; }
       </div>
       <ul class="alertas" id="alertas" aria-live="polite"></ul>
     </section>
-
-    <!-- ===================== PESO ===================== -->
-    <section id="aba-peso" class="aba" hidden>
       <div class="cartao">
-        <h2>Registrar peso</h2>
+        <h2><i data-ic="agenda"></i>Próximos</h2>
+        <ul class="lista proximos" id="lista-proximos"></ul>
+        <button type="button" class="btn" id="btn-ver-agenda" style="width:100%;margin-top:8px">Ver calendário completo</button>
+      </div>
+    </section>
+
+    <!-- ===================== AGENDA (CALENDÁRIO) ===================== -->
+    <section id="aba-agenda" class="aba" hidden>
+      <div class="cartao">
+        <div class="cal-cab">
+          <button type="button" class="btn icone" id="cal-ant" aria-label="Mês anterior"><i data-ic="esq"></i></button>
+          <h2 id="cal-titulo" aria-live="polite"></h2>
+          <button type="button" class="btn icone" id="cal-prox" aria-label="Próximo mês"><i data-ic="dir"></i></button>
+        </div>
+        <div class="cal-semana" aria-hidden="true"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+        <div class="cal-grade" id="cal-grade" role="grid" aria-label="Dias do mês"></div>
+        <div class="cal-legenda" id="cal-legenda"></div>
+      </div>
+      <div class="cartao">
+        <div class="cab-gastos">
+          <h2 id="cal-lista-titulo">Próximos compromissos</h2>
+          <button type="button" class="btn pequeno" id="cal-limpar-dia" hidden>Ver todos</button>
+        </div>
+        <ul class="lista proximos" id="cal-lista"></ul>
+      </div>
+      <div class="cartao">
+        <h2 id="form-compromisso-titulo"><i data-ic="mais"></i>Anotar compromisso</h2>
+        <details class="ajuda" data-ajuda="agenda"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>O calendário junta sozinho as próximas vacinas, vermífugos, antipulgas, retornos, fim dos remédios, quando a ração deve acabar, a validade do saco e o aniversário do pet. Aqui você anota o que não está no resto do app, como um banho e tosa ou uma consulta marcada.</p>
+        </details>
+        <form id="form-compromisso" novalidate>
+          <input type="hidden" id="comp-id">
+          <div class="linha">
+            <label>Data<input type="date" id="comp-data" required></label>
+            <label>Hora (opcional)<input type="time" id="comp-hora"></label>
+          </div>
+          <label>Tipo
+            <select id="comp-tipo">
+              <option value="consulta">Consulta / retorno no veterinário</option>
+              <option value="vacina">Vacina marcada</option>
+              <option value="exame">Exame</option>
+              <option value="banho">Banho e tosa</option>
+              <option value="remedio">Remédio / tratamento</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+          <label>Descrição
+            <input type="text" id="comp-desc" maxlength="80" placeholder="ex.: retorno com a Dra. Ana; banho no pet shop">
+          </label>
+          <p class="erro" id="comp-erro" role="alert" hidden></p>
+          <div class="linha-botoes">
+            <button type="submit" class="btn primario" id="btn-salvar-comp">Anotar</button>
+            <button type="button" class="btn" id="btn-cancelar-comp" hidden>Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== PESO E CORPO ===================== -->
+    <section id="aba-peso" class="aba" hidden>
+      <div class="subabas" id="subabas-peso" role="tablist" aria-label="Peso e corpo">
+        <button type="button" class="subaba" data-subaba-peso="registro" aria-selected="true" role="tab">Peso</button>
+        <button type="button" class="subaba" data-subaba-peso="corpo" aria-selected="false" role="tab">Corpo (ECC)</button>
+      </div>
+      <div id="peso-registro">
+      <div class="cartao">
+        <h2><i data-ic="peso"></i>Registrar peso</h2>
         <form id="form-peso" novalidate>
           <div class="linha">
             <label>Data
@@ -611,6 +725,57 @@ fieldset { min-width: 0; }
         <h2>Histórico</h2>
         <ul id="lista-peso" class="lista"></ul>
       </div>
+      </div>
+      <div id="peso-corpo" hidden>
+      <div class="cartao">
+        <h2><i data-ic="alvo"></i>Condição corporal (ECC)</h2>
+        <details class="ajuda" data-ajuda="ecc"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Escore de condição corporal na escala de 1 a 9. Avalie com as mãos e olhando o pet de cima e de lado. O app calcula o peso ideal, as calorias e a ração por dia.</p>
+        </details>
+        <form id="form-ecc" novalidate>
+          <label>Peso atual (kg)
+            <input type="text" id="ecc-peso" inputmode="decimal" placeholder="6,20">
+          </label>
+          <fieldset class="grupo">
+            <legend>Escore (ECC)</legend>
+            <div class="escala" id="ecc-escala" role="radiogroup" aria-label="Escore de condição corporal"></div>
+            <div class="descricao-ecc" id="ecc-descricao" aria-live="polite"></div>
+          </fieldset>
+          <div class="linha">
+            <label>Fase de vida
+              <select id="ecc-fase"></select>
+            </label>
+            <label>Castrado(a)?
+              <select id="ecc-castrado">
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+              </select>
+            </label>
+          </div>
+          <label>Nível de atividade
+            <select id="ecc-atividade">
+              <option value="baixa">Baixo (pouco exercício, idoso)</option>
+              <option value="normal" selected>Normal (passeios diários)</option>
+              <option value="alta">Alto (muito ativo, esporte)</option>
+            </select>
+          </label>
+          <label>Energia da ração (kcal/kg)
+            <input type="text" id="ecc-kcal" inputmode="numeric" placeholder="ex.: 3800">
+          </label>
+          <details class="ajuda" data-ajuda="kcal"><summary><i data-ic="info"></i>Onde achar</summary><p>Na embalagem, procure "Energia metabolizável" (EM). Se estiver em kcal/100 g, multiplique por 10. A leitura por foto da aba Ração preenche sozinha.</p></details>
+        </form>
+      </div>
+
+      <div class="cartao" id="ecc-resultado-cartao">
+        <h2>Resultado</h2>
+        <div id="ecc-resultado"></div>
+      </div>
+
+      <div class="cartao">
+        <h2>Avaliações salvas</h2>
+        <ul class="lista" id="lista-ecc"></ul>
+      </div>
+      </div>
     </section>
 
     <!-- ===================== SAÚDE ===================== -->
@@ -623,7 +788,7 @@ fieldset { min-width: 0; }
 
       <div id="saude-prevencao">
       <div class="cartao">
-        <h2>Banho</h2>
+        <h2><i data-ic="banho"></i>Banho</h2>
         <p class="destaque" id="banho-ultimo"></p>
         <form id="form-banho" novalidate>
           <div class="linha alinhar-base">
@@ -645,9 +810,9 @@ fieldset { min-width: 0; }
         <form id="form-saude" novalidate>
           <input type="hidden" id="saude-id">
           <div class="segmentos" role="radiogroup" aria-label="Tipo">
-            <label class="seg"><input type="radio" name="saude-tipo" value="vacina" checked><span>💉 Vacina</span></label>
-            <label class="seg"><input type="radio" name="saude-tipo" value="vermifugo"><span>💊 Vermífugo</span></label>
-            <label class="seg"><input type="radio" name="saude-tipo" value="antipulgas"><span>🛡️ Antipulgas</span></label>
+            <label class="seg"><input type="radio" name="saude-tipo" value="vacina" checked><span><i data-ic="vacina"></i>Vacina</span></label>
+            <label class="seg"><input type="radio" name="saude-tipo" value="vermifugo"><span><i data-ic="pilula"></i>Vermífugo</span></label>
+            <label class="seg"><input type="radio" name="saude-tipo" value="antipulgas"><span><i data-ic="escudo"></i>Antipulgas</span></label>
           </div>
           <label>Nome / produto
             <input type="text" id="saude-nome" maxlength="60" list="sugestoes-saude" required placeholder="ex.: V10, Antirrábica">
@@ -673,15 +838,15 @@ fieldset { min-width: 0; }
       </div>
 
       <div class="cartao" id="cartao-vacina">
-        <h2>💉 Vacinas</h2>
+        <h2><i data-ic="vacina"></i>Vacinas</h2>
         <ul class="lista" data-lista-tipo="vacina"></ul>
       </div>
       <div class="cartao">
-        <h2>💊 Vermífugo</h2>
+        <h2><i data-ic="pilula"></i>Vermífugo</h2>
         <ul class="lista" data-lista-tipo="vermifugo"></ul>
       </div>
       <div class="cartao">
-        <h2>🛡️ Antipulgas</h2>
+        <h2><i data-ic="escudo"></i>Antipulgas</h2>
         <ul class="lista" data-lista-tipo="antipulgas"></ul>
       </div>
       </div>
@@ -692,7 +857,6 @@ fieldset { min-width: 0; }
           <label>Raça usada no guia
             <select id="raca-guia"></select>
           </label>
-          <p class="urgente remedio-humano"><span aria-hidden="true">💊</span> Nunca dê remédio de uso humano sem orientação do veterinário. Paracetamol é fatal para gatos, e anti-inflamatórios como ibuprofeno e diclofenaco causam úlceras e lesão nos rins de cães e gatos.</p>
           <div id="grupos-cuidados"></div>
         </div>
         <p class="nota aviso-raca">Informações gerais sobre predisposições descritas na literatura veterinária. Não substituem a consulta: leve esta lista ao veterinário e pergunte quais exames fazem sentido para o seu pet.</p>
@@ -700,7 +864,7 @@ fieldset { min-width: 0; }
 
       <div id="saude-clinico" hidden>
         <div class="cartao">
-          <h2>💊 Remédios em uso</h2>
+          <h2><i data-ic="pilula"></i>Remédios em uso</h2>
           <ul class="lista" id="lista-remedios"></ul>
           <details class="historico" id="det-remedios-antigos" hidden>
             <summary>Remédios encerrados</summary>
@@ -749,7 +913,7 @@ fieldset { min-width: 0; }
                   <input type="text" id="remedio-doses-dia" inputmode="decimal" placeholder="ex.: 2">
                 </label>
               </div>
-              <p class="dica-campo">Conte comprimidos, pipetas ou mL. Ao comprar mais, edite e informe o novo total.</p>
+              <details class="ajuda" data-ajuda="estoque-remedio"><summary><i data-ic="info"></i>Como funciona</summary><p>Conte comprimidos, pipetas ou mL. Ao comprar mais, edite e informe o novo total. O app avisa quando estiver acabando.</p></details>
             </fieldset>
             <div class="linha">
               <label>Início
@@ -775,7 +939,7 @@ fieldset { min-width: 0; }
         </div>
 
         <div class="cartao">
-          <h2>🩹 Doenças e condições</h2>
+          <h2><i data-ic="curativo"></i>Doenças e condições</h2>
           <ul class="lista" id="lista-doencas"></ul>
           <details class="historico" id="det-doencas-curadas" hidden>
             <summary>Curadas / resolvidas</summary>
@@ -817,71 +981,22 @@ fieldset { min-width: 0; }
       </div>
     </section>
 
-    <!-- ===================== CALCULADORA ECC ===================== -->
-    <section id="aba-ecc" class="aba" hidden>
-      <div class="cartao">
-        <h2>Calculadora ECC</h2>
-        <p class="intro">Escore de condição corporal na escala de 1 a 9. Avalie com as mãos e olhando o pet de cima e de lado.</p>
-        <form id="form-ecc" novalidate>
-          <label>Peso atual (kg)
-            <input type="text" id="ecc-peso" inputmode="decimal" placeholder="6,20">
-          </label>
-          <fieldset class="grupo">
-            <legend>Escore (ECC)</legend>
-            <div class="escala" id="ecc-escala" role="radiogroup" aria-label="Escore de condição corporal"></div>
-            <div class="descricao-ecc" id="ecc-descricao" aria-live="polite"></div>
-          </fieldset>
-          <div class="linha">
-            <label>Fase de vida
-              <select id="ecc-fase"></select>
-            </label>
-            <label>Castrado(a)?
-              <select id="ecc-castrado">
-                <option value="sim">Sim</option>
-                <option value="nao">Não</option>
-              </select>
-            </label>
-          </div>
-          <label>Nível de atividade
-            <select id="ecc-atividade">
-              <option value="baixa">Baixo (pouco exercício, idoso)</option>
-              <option value="normal" selected>Normal (passeios diários)</option>
-              <option value="alta">Alto (muito ativo, esporte)</option>
-            </select>
-          </label>
-          <label>Energia da ração (kcal/kg)
-            <input type="text" id="ecc-kcal" inputmode="numeric" placeholder="ex.: 3800">
-          </label>
-          <p class="dica-campo">Na embalagem, procure "Energia metabolizável" (EM). Se estiver em kcal/100 g, multiplique por 10.</p>
-        </form>
-      </div>
-
-      <div class="cartao" id="ecc-resultado-cartao">
-        <h2>Resultado</h2>
-        <div id="ecc-resultado"></div>
-      </div>
-
-      <div class="cartao">
-        <h2>Avaliações salvas</h2>
-        <ul class="lista" id="lista-ecc"></ul>
-      </div>
-    </section>
-
     <!-- ===================== RAÇÃO ===================== -->
     <section id="aba-racao" class="aba" hidden>
       <div class="cartao">
-        <h2>Alimentação</h2>
+        <h2><i data-ic="racao"></i>Alimentação</h2>
         <div id="racao-resumo"></div>
       </div>
 
       <div class="cartao" id="cartao-embalagem">
-        <h2>📷 Ler a embalagem</h2>
-        <p class="intro">Fotografe a frente e o verso do pacote (onde aparecem o peso líquido e a "energia metabolizável"). O app lê o texto da foto no próprio aparelho e preenche marca, tamanho do saco e energia da ração.</p>
+        <h2><i data-ic="camera"></i>Ler a embalagem</h2>
+        <details class="ajuda" data-ajuda="emb"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Fotografe a frente, o verso (tabela de alimentação) e a lateral (energia metabolizável), de perto e com o pacote inclinado para não refletir a luz. O app lê o texto no próprio aparelho e preenche marca, tamanho do saco, energia, validade, características e as gramas por dia. Até 3 fotos por leitura.</p>
+        </details>
         <div class="linha-botoes" id="embalagem-botoes">
-          <label class="btn pequeno botao-arquivo">📷 Tirar foto<input type="file" id="embalagem-camera" accept="image/*" capture="environment"></label>
-          <label class="btn pequeno botao-arquivo">🖼️ Escolher da galeria<input type="file" id="embalagem-galeria" accept="image/*" multiple></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="embalagem-camera" accept="image/*" capture="environment"></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="embalagem-galeria" accept="image/*" multiple></label>
         </div>
-        <p class="dica-campo" style="margin-top:8px">Dica: fotografe a frente, o verso (tabela) e a lateral (energia), de perto e com o pacote inclinado para não refletir a luz. Até 3 fotos por leitura.</p>
         <div class="fotos-emb" id="embalagem-fotos"></div>
         <div class="linha-botoes" id="embalagem-acoes" hidden>
           <button type="button" class="btn primario" id="btn-ler-embalagem">Ler embalagem</button>
@@ -892,7 +1007,7 @@ fieldset { min-width: 0; }
       </div>
 
       <div class="cartao">
-        <h2>Estoque de ração</h2>
+        <h2><i data-ic="saco"></i>Estoque de ração</h2>
         <div id="saco-resumo"></div>
         <form id="form-saco" novalidate>
           <div class="linha">
@@ -903,10 +1018,15 @@ fieldset { min-width: 0; }
               <input type="date" id="saco-abertura">
             </label>
           </div>
-          <label>Preço pago (opcional)
-            <input type="text" id="saco-preco" inputmode="decimal" placeholder="ex.: 189,90">
-          </label>
-          <p class="dica-campo">Com o preço, o saco entra sozinho nos gastos.</p>
+          <div class="linha">
+            <label>Preço pago (opcional)
+              <input type="text" id="saco-preco" inputmode="decimal" placeholder="ex.: 189,90">
+            </label>
+            <label>Validade (opcional)
+              <input type="date" id="saco-validade">
+            </label>
+          </div>
+          <details class="ajuda" data-ajuda="saco"><summary><i data-ic="info"></i>Como funciona</summary><p>Com o preço, o saco entra sozinho nos gastos. O app calcula quando a ração acaba e avisa no Início e no calendário, junto com a validade.</p></details>
           <p class="erro" id="saco-erro" role="alert" hidden></p>
           <button type="submit" class="btn primario" id="btn-salvar-saco">Salvar saco</button>
         </form>
@@ -965,7 +1085,7 @@ fieldset { min-width: 0; }
               <input type="text" id="sintoma-obs" maxlength="160" placeholder="ex.: vomitou depois de comer capim">
             </label>
             <div class="foto-campo">
-              <label class="btn pequeno botao-arquivo">📷 Foto (opcional)<input type="file" id="sintoma-foto" accept="image/*"></label>
+              <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Foto (opcional)<input type="file" id="sintoma-foto" accept="image/*"></label>
               <span class="foto-nome" id="sintoma-foto-nome"></span>
             </div>
             <p class="erro" id="sintoma-erro" role="alert" hidden></p>
@@ -1020,7 +1140,7 @@ fieldset { min-width: 0; }
               <label>Retorno em<input type="date" id="consulta-retorno"></label>
             </div>
             <div class="foto-campo">
-              <label class="btn pequeno botao-arquivo">📷 Foto do exame/receita<input type="file" id="consulta-foto" accept="image/*"></label>
+              <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Foto do exame/receita<input type="file" id="consulta-foto" accept="image/*"></label>
               <span class="foto-nome" id="consulta-foto-nome"></span>
             </div>
             <p class="erro" id="consulta-erro" role="alert" hidden></p>
@@ -1040,13 +1160,26 @@ fieldset { min-width: 0; }
       <div id="diario-gastos" hidden>
         <div class="cartao">
           <div class="cab-gastos">
-            <h2>Gastos</h2>
+            <h2><i data-ic="moedas"></i>Gastos</h2>
             <div class="segmentos compacto" role="radiogroup" aria-label="Mostrar gastos de">
               <label class="seg"><input type="radio" name="gastos-escopo" value="pet" checked><span id="gastos-escopo-pet">Este pet</span></label>
               <label class="seg"><input type="radio" name="gastos-escopo" value="todos"><span>Todos</span></label>
             </div>
           </div>
           <div id="gastos-resumo"></div>
+        </div>
+        <div class="cartao" id="cartao-nota">
+          <h2><i data-ic="nota"></i>Ler nota fiscal</h2>
+          <details class="ajuda" data-ajuda="nota"><summary><i data-ic="info"></i>Como funciona</summary>
+            <p>Fotografe a nota ou o cupom inteiro, reto e com boa luz. O app lê no próprio aparelho a data, o valor total, a loja e os itens, sugere a categoria (ração, veterinário, remédios…) e lança o gasto. A foto fica guardada junto com o gasto.</p>
+          </details>
+          <div class="linha-botoes" id="nota-botoes">
+            <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="nota-camera" accept="image/*" capture="environment"></label>
+            <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="nota-galeria" accept="image/*"></label>
+          </div>
+          <div class="fotos-emb" id="nota-fotos"></div>
+          <div class="leitura-status" id="nota-status" role="status" aria-live="polite" hidden></div>
+          <div id="nota-resultado" hidden></div>
         </div>
         <div class="cartao">
           <h2 id="form-gasto-titulo">Adicionar gasto</h2>
@@ -1088,14 +1221,76 @@ fieldset { min-width: 0; }
   </div>
 
   <nav class="abas" id="abas" aria-label="Seções" hidden>
-    <button type="button" class="aba-btn" data-aba="peso" aria-current="page"><span aria-hidden="true">⚖️</span>Peso</button>
-    <button type="button" class="aba-btn" data-aba="racao"><span aria-hidden="true">🥣</span>Ração</button>
-    <button type="button" class="aba-btn" data-aba="saude"><span aria-hidden="true">🩺</span>Saúde<span class="contador" id="contador-saude" hidden></span></button>
-    <button type="button" class="aba-btn" data-aba="diario"><span aria-hidden="true">📓</span>Diário<span class="contador" id="contador-diario" hidden></span></button>
-    <button type="button" class="aba-btn" data-aba="ecc"><span aria-hidden="true">🎯</span>ECC</button>
+    <button type="button" class="aba-btn" data-aba="inicio" aria-current="page"><i data-ic="inicio"></i>Início<span class="contador" id="contador-inicio" hidden></span></button>
+    <button type="button" class="aba-btn" data-aba="agenda"><i data-ic="agenda"></i>Agenda</button>
+    <button type="button" class="aba-btn" data-aba="peso"><i data-ic="peso"></i>Peso</button>
+    <button type="button" class="aba-btn" data-aba="racao"><i data-ic="racao"></i>Ração</button>
+    <button type="button" class="aba-btn" data-aba="saude"><i data-ic="saude"></i>Saúde<span class="contador" id="contador-saude" hidden></span></button>
+    <button type="button" class="aba-btn" data-aba="diario"><i data-ic="diario"></i>Diário<span class="contador" id="contador-diario" hidden></span></button>
   </nav>
 
   <script>
+/* Diário do Pet — ícones de interface (traço simples, mesmo estilo em todos os aparelhos) */
+const IC = {
+  'pata': '<circle cx="6.5" cy="10" r="1.9"/><circle cx="10" cy="6" r="1.9"/><circle cx="14.5" cy="6" r="1.9"/><circle cx="18" cy="10" r="1.9"/><path d="M12 11.5c-2.8 0-5.8 4.2-4.8 6.6.9 2 2.9 1.4 4.8 1.4s3.9.6 4.8-1.4c1-2.4-2-6.6-4.8-6.6z"/>',
+  'config': '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>',
+  'celular': '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>',
+  'camera': '<path d="M3.5 8.5h3.5l2-3h6l2 3h3.5V19h-17z"/><circle cx="12" cy="13.3" r="3.5"/>',
+  'imagem': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="M21 16l-5-5-9 9"/>',
+  'sol': '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  'lua': '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  'baixar': '<path d="M12 4v11M7 10.5l5 5 5-5M4.5 20h15"/>',
+  'enviar': '<path d="M12 20V9M7 13.5l5-5 5 5M4.5 4h15"/>',
+  'peso': '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 10a5 5 0 0 1 8 0"/><path d="M12 10.5l1.6-2.2"/>',
+  'alvo': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  'info': '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+  'agenda': '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17h2"/>',
+  'esq': '<path d="M15 5l-7 7 7 7"/>',
+  'dir': '<path d="M9 5l7 7-7 7"/>',
+  'mais': '<path d="M12 5v14M5 12h14"/>',
+  'racao': '<path d="M3 11.5h18a9 7 0 0 1-18 0z"/><path d="M7.5 11.5c.5-2.2 2.4-3.5 4.5-3.5s4 1.3 4.5 3.5"/><path d="M9 6.5l.5-1M12 5.5V4.5M15 6.5l-.5-1"/>',
+  'saco': '<path d="M7 3h10l1.5 4.5V21h-13V7.5z"/><path d="M5.5 7.5h13"/><path d="M9.5 12.5a2.5 2.5 0 0 0 5 0"/>',
+  'nota': '<path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/>',
+  'vacina': '<path d="M15 3.5l5.5 5.5M17.8 6.2L21 3"/><path d="M13 5.5l5.5 5.5-8.5 8.5H5v-5z"/><path d="M5 19l-2.5 2.5M9.5 9l2 2M7.5 11l2 2"/>',
+  'pilula': '<rect x="2.6" y="8.3" width="18.8" height="7.4" rx="3.7" transform="rotate(-45 12 12)"/><path d="M9.4 9.4l5.2 5.2"/>',
+  'escudo': '<path d="M12 3l7.5 3v5.5c0 4.8-3.3 8.3-7.5 9.5-4.2-1.2-7.5-4.7-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+  'curativo': '<rect x="2.3" y="8" width="19.4" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="M10.5 10.5h.01M13.5 13.5h.01M10.5 13.5h.01M13.5 10.5h.01"/>',
+  'banho': '<path d="M3 12h18v1.5A6.5 6.5 0 0 1 14.5 20h-5A6.5 6.5 0 0 1 3 13.5z"/><path d="M6 12V6a2.5 2.5 0 0 1 5 0"/><path d="M7 20l-1 2M17 20l1 2"/>',
+  'moedas': '<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M15 10.2c3.4.2 6 1.5 6 2.8v5c0 1.7-2.7 3-6 3-2.6 0-4.8-.8-5.6-1.9"/>',
+  'inicio': '<path d="M3.5 11L12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/>',
+  'saude': '<path d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.8c0 5.8-7.5 10.4-7.5 10.4z"/><path d="M7.5 12.5h2.5l1-2 2 4 1-2h2.5"/>',
+  'diario': '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 7.5h6M9 11h4"/>',
+  'alerta': '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.3h.01"/>',
+  'urgente': '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M12 7.5v5.5M12 16.3h.01"/>',
+  'check': '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  'relogio': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  'bolo': '<path d="M4 21h16v-7.5H4z"/><path d="M4 17c1.6.9 3.3.9 5 0s3.4-.9 5 0 3.4.9 6 0"/><path d="M8 13.5V11M12 13.5V11M16 13.5V11"/><path d="M12 8.2c-.9 0-1.4-.8-1.1-1.6L12 4l1.1 2.6c.3.8-.2 1.6-1.1 1.6z"/>',
+  'estetoscopio': '<path d="M6 3H5v5.5a4.5 4.5 0 0 0 9 0V3h-1"/><path d="M9.5 13v1.5a5 5 0 0 0 10 0V12"/><circle cx="19.5" cy="10" r="2"/>',
+  'frasco': '<path d="M9 3h6M10 3v6.5L4.8 18.3A1.8 1.8 0 0 0 6.4 21h11.2a1.8 1.8 0 0 0 1.6-2.7L14 9.5V3"/><path d="M7.5 15h9"/>',
+  'osso': '<path d="M16.5 3a2.6 2.6 0 0 1 2.4 3.6A2.6 2.6 0 1 1 16 10L10 16a2.6 2.6 0 1 1-3.4 2.9A2.6 2.6 0 1 1 5.1 14L11 8.1A2.6 2.6 0 0 1 16.5 3z"/>',
+  'etiqueta': '<path d="M3 12V3.5h8.5L21 13l-8 8z"/><circle cx="7.5" cy="8" r="1.5"/>',
+  'caixa': '<path d="M3.5 7.5L12 3.5l8.5 4v9L12 20.5l-8.5-4z"/><path d="M3.5 7.5L12 11.5l8.5-4M12 11.5v9"/>',
+  'gota': '<path d="M12 3.5c3.3 4.3 6 7.3 6 10.8a6 6 0 0 1-12 0c0-3.5 2.7-6.5 6-10.8z"/>',
+  'olho': '<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="3"/>',
+  'vento': '<path d="M3 8.5h10.5a2.8 2.8 0 1 0-2.8-2.8M3 15.5h14a2.8 2.8 0 1 1-2.8 2.8M3 12h7"/>',
+  'raio': '<path d="M13 2.5L4.5 14H11l-1 7.5L18.5 10H12z"/>',
+  'estomago': '<path d="M9 3v3.2C6.7 7.3 5 9.6 5 12.6 5 16.7 8.3 20 12.5 20c3.9 0 6.5-2.7 6.5-6 0-2.6-1.9-4.4-4.2-4.4-2.1 0-3.6 1.5-3.6 3.4"/><path d="M13.5 3v3.5"/>',
+  'papel': '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/>',
+  'tesoura': '<circle cx="6" cy="7" r="2.8"/><circle cx="6" cy="17" r="2.8"/><path d="M8.3 8.6L20 19M8.3 15.4L20 5"/>',
+  'retorno': '<path d="M20 12a8 8 0 1 1-2.4-5.7L20 8.5M20 3.5v5h-5"/>',
+  'tigela': '<path d="M3 11.5h18a9 7 0 0 1-18 0z"/><path d="M9 7l6 3M15 7l-6 3"/>',
+  'pulmao': '<path d="M12 4v7M12 9c1 2 3 2 3 2"/><path d="M12 9c-1 2-3 2-3 2"/><path d="M15 11c3-3 6-1 6 3v4a3 3 0 0 1-4 2.8L15 20z"/><path d="M9 11c-3-3-6-1-6 3v4a3 3 0 0 0 4 2.8L9 20z"/>',
+  'coceira': '<circle cx="7" cy="8.5" r="1.6"/><circle cx="10.5" cy="5" r="1.6"/><circle cx="15" cy="5.3" r="1.6"/><path d="M11.5 10c-2.5 0-5 3.6-4.2 5.6.8 1.7 2.5 1.2 4.2 1.2"/><path d="M15 12l5-1M15.5 15.5l4.5 1M14.5 18.5l3.5 2.5"/>',
+};
+function ic(nome, classe = '') {
+  const d = IC[nome];
+  return d ? `<svg class="ic${classe ? ' ' + classe : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>` : '';
+}
+function hidratarIcones(raiz = document) {
+  raiz.querySelectorAll('i[data-ic]').forEach((el) => { el.outerHTML = ic(el.dataset.ic); });
+}
+hidratarIcones();
+
 /* Diário do Pet — ícones de raças desenhados em SVG (originais, sem imagens externas).
    Cada ícone é uma combinação de orelha, focinho, pelagem e manchas. */
 'use strict';
@@ -1266,11 +1461,11 @@ function desenharGato(o) {
 'use strict';
 
 const CHAVE = 'diario-pet-v1';
-const ESPECIES = { cao: { nome: 'Cão', emoji: '🐶' }, gato: { nome: 'Gato', emoji: '🐱' } };
+const ESPECIES = { cao: { nome: 'Cão' }, gato: { nome: 'Gato' } };
 
 /* ---------- Estado e armazenamento ---------- */
 function estadoVazio() {
-  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [], checagens: [], sintomas: [], consultas: [], gastos: [] };
+  return { versao: 1, petAtual: null, pets: [], pesos: [], racoes: [], saude: [], banhos: [], doencas: [], remedios: [], ecc: [], checagens: [], sintomas: [], consultas: [], gastos: [], agenda: [] };
 }
 
 function carregar() {
@@ -1278,7 +1473,7 @@ function carregar() {
     const bruto = localStorage.getItem(CHAVE);
     if (!bruto) return estadoVazio();
     const e = Object.assign(estadoVazio(), JSON.parse(bruto));
-    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos']) if (!Array.isArray(e[k])) e[k] = [];
+    for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) if (!Array.isArray(e[k])) e[k] = [];
     return e;
   } catch (e) {
     console.warn('Falha ao ler dados salvos', e);
@@ -1391,7 +1586,7 @@ function renderSeletorPet() {
   }
   sel.disabled = false;
   sel.innerHTML = estado.pets
-    .map((p) => `<option value="${p.id}">${ESPECIES[p.especie].emoji} ${esc(p.nome)}${avisosDoPet(p.id).length ? ' ⚠️' : ''}</option>`)
+    .map((p) => { const n = avisosDoPet(p.id).length; return `<option value="${p.id}">${esc(p.nome)}${n ? ` (${n})` : ''}</option>`; })
     .join('');
   sel.value = estado.petAtual;
 }
@@ -1464,9 +1659,9 @@ function removerPet(id, btn) {
   if (!p) return;
   if (!pedeConfirmacao(btn, 'Apagar tudo?')) return;
   if ($('#pet-id').value === id) limparFormPet();
-  for (const r of [...estado.sintomas, ...estado.consultas]) if (r.petId === id && r.fotoId) FotosDB.apagar(r.fotoId);
+  for (const r of [...estado.sintomas, ...estado.consultas, ...estado.gastos]) if (r.petId === id && r.fotoId) FotosDB.apagar(r.fotoId);
   estado.pets = estado.pets.filter((x) => x.id !== id);
-  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos']) estado[k] = estado[k].filter((r) => r.petId !== id);
+  for (const k of ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) estado[k] = estado[k].filter((r) => r.petId !== id);
   const eraAtual = estado.petAtual === id;
   if (eraAtual) estado.petAtual = estado.pets[0]?.id || null;
   salvar();
@@ -1562,6 +1757,7 @@ $('#form-peso').addEventListener('submit', (ev) => {
   salvar();
   $('#peso-kg').value = '';
   $('#peso-obs').value = '';
+  $('#ecc-peso').value = String(Math.round(kg * 100) / 100).replace('.', ',');
   renderTudo();
 });
 
@@ -1719,9 +1915,9 @@ window.addEventListener('resize', () => {
 
 /* ---------- Saúde: vacinas, vermífugo, antipulgas ---------- */
 const TIPOS = {
-  vacina: { nome: 'Vacina', emoji: '💉', sugestoes: { cao: ['V8', 'V10', 'Antirrábica', 'Gripe canina (tosse dos canis)', 'Giárdia', 'Leishmaniose'], gato: ['V3', 'V4', 'V5', 'Antirrábica'] } },
-  vermifugo: { nome: 'Vermífugo', emoji: '💊', sugestoes: { cao: [], gato: [] } },
-  antipulgas: { nome: 'Antipulgas', emoji: '🛡️', sugestoes: { cao: [], gato: [] } },
+  vacina: { nome: 'Vacina', ic: 'vacina', sugestoes: { cao: ['V8', 'V10', 'Antirrábica', 'Gripe canina (tosse dos canis)', 'Giárdia', 'Leishmaniose'], gato: ['V3', 'V4', 'V5', 'Antirrábica'] } },
+  vermifugo: { nome: 'Vermífugo', ic: 'pilula', sugestoes: { cao: [], gato: [] } },
+  antipulgas: { nome: 'Antipulgas', ic: 'escudo', sugestoes: { cao: [], gato: [] } },
 };
 const AVISO_DIAS = 15; // avisa quando faltarem 15 dias ou menos
 
@@ -1749,10 +1945,10 @@ function vigentes(regs) {
 function statusDose(proxima) {
   if (!proxima) return null;
   const dias = diasEntre(hojeISO(), proxima);
-  if (dias < 0) return { nivel: 'atrasada', icone: '⛔', texto: `Atrasada há ${plural(-dias, 'dia', 'dias')}`, dias };
-  if (dias === 0) return { nivel: 'perto', icone: '⚠️', texto: 'Vence hoje', dias };
-  if (dias <= AVISO_DIAS) return { nivel: 'perto', icone: '⚠️', texto: `Vence em ${plural(dias, 'dia', 'dias')}`, dias };
-  return { nivel: 'ok', icone: '✓', texto: 'Em dia', dias };
+  if (dias < 0) return { nivel: 'atrasada', icone: 'urgente', texto: `Atrasada há ${plural(-dias, 'dia', 'dias')}`, dias };
+  if (dias === 0) return { nivel: 'perto', icone: 'alerta', texto: 'Vence hoje', dias };
+  if (dias <= AVISO_DIAS) return { nivel: 'perto', icone: 'alerta', texto: `Vence em ${plural(dias, 'dia', 'dias')}`, dias };
+  return { nivel: 'ok', icone: 'check', texto: 'Em dia', dias };
 }
 
 function alertasDoPet(petId) {
@@ -1880,7 +2076,7 @@ function eventoVacina(r) {
   const tipo = TIPOS[r.tipo].nome.toLowerCase();
   return {
     uid: `${r.id}-${compacto(r.proxima)}`,
-    titulo: `${TIPOS[r.tipo].emoji} ${nomePet(r.petId)}: ${tipo} ${r.nome}`,
+    titulo: `${nomePet(r.petId)}: ${tipo} ${r.nome}`,
     detalhes: `Próxima dose de ${tipo} (${r.nome}) de ${nomePet(r.petId)}.\nÚltima aplicação: ${fmtData(r.data)}.${r.obs ? '\nObs.: ' + r.obs : ''}\nRegistrado no Diário do Pet.`,
     data: r.proxima,
     alarmes: ['-P2DT15H', 'PT9H'], // 3 dias antes às 9h e no dia às 9h
@@ -1894,14 +2090,14 @@ function baixarICS(r) {
 
 function botoesAgenda(r) {
   if (!r.proxima) return '';
-  const google = `<a class="btn pequeno" href="${esc(linkGoogleAgenda(r))}" target="_blank" rel="noopener">📅 Google Agenda</a>`;
+  const google = `<a class="btn pequeno" href="${esc(linkGoogleAgenda(r))}" target="_blank" rel="noopener">${ic('agenda')}Google Agenda</a>`;
   if (EMBUTIDO) return google;
-  return `<button type="button" class="btn pequeno" data-agenda="${r.id}">📅 Agenda do celular</button>${google}`;
+  return `<button type="button" class="btn pequeno" data-agenda="${r.id}">${ic('agenda')}Agenda do celular</button>${google}`;
 }
 
 function seloStatus(st) {
   if (!st) return '<span class="selo neutro">Sem próxima dose</span>';
-  return `<span class="selo ${st.nivel}"><span aria-hidden="true">${st.icone}</span> ${st.texto}</span>`;
+  return `<span class="selo ${st.nivel}">${ic(st.icone)} ${st.texto}</span>`;
 }
 
 function renderSaude() {
@@ -2099,7 +2295,7 @@ function renderRacao() {
       <span class="numero">${fmtG(total)}</span>
       <span class="rot">por dia · ${plural(r.refeicoes.length, 'refeição', 'refeições')}</span>
     </div>
-    ${r.marca ? `<p class="marca">🥣 ${esc(r.marca)}</p>` : ''}
+    ${r.marca ? `<p class="marca">${ic('racao')} ${esc(r.marca)}</p>` : ''}
     ${r.caracteristicas?.length ? `<ul class="motivos">${r.caracteristicas.filter((k) => CARACTERISTICAS_RACAO[k]).map((k) => `<li>${CARACTERISTICAS_RACAO[k][0]}</li>`).join('')}</ul>` : ''}
     ${r.caracteristicas?.includes('veterinaria') ? '<p class="nota-raca">Ração terapêutica: siga a quantidade e o tempo de uso indicados pelo veterinário.</p>' : ''}
     <ul class="horarios">
@@ -2122,12 +2318,12 @@ try {
 function mostrarSubaba(nome) {
   subabaSaude = nome;
   try { localStorage.setItem('diario-pet-subaba', nome); } catch (e) { /* ignora */ }
-  document.querySelectorAll('.subaba').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subaba === nome)));
+  document.querySelectorAll('[data-subaba]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subaba === nome)));
   $('#saude-prevencao').hidden = nome !== 'prevencao';
   $('#saude-clinico').hidden = nome !== 'clinico';
   $('#saude-raca').hidden = nome !== 'raca';
 }
-document.querySelector('.subabas').addEventListener('click', (ev) => {
+document.querySelector('#aba-saude .subabas').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-subaba]');
   if (b) mostrarSubaba(b.dataset.subaba);
 });
@@ -2267,6 +2463,7 @@ $('#form-remedio').addEventListener('submit', (ev) => {
   const atualEst = existente ? estoqueRemedio(existente) : null;
   if (estoque === null) { dados.estoque = null; dados.estoqueData = ''; }
   else if (!atualEst || Math.abs(atualEst.restante - estoque) > 0.05 || existente.dosesDia !== dosesDia) { dados.estoque = estoque; dados.estoqueData = hojeISO(); }
+  if (estoque !== null) marcarAjuda('estoque-remedio');
   // Término alterado para hoje ou depois (ou em branco) num remédio encerrado: volta a ficar em uso
   if (existente && existente.encerrado && fim !== existente.fim && (!fim || fim >= hojeISO())) dados.encerrado = '';
   if (existente) Object.assign(existente, dados);
@@ -2361,9 +2558,9 @@ function renderClinico() {
           <div class="secundario">Desde ${fmtData(r.inicio)}${para ? ` · para ${esc(para)}` : ''}${r.obs ? ' · ' + esc(r.obs) : ''}</div>
           <span class="selo ${st.classe}">${st.texto}</span>
           ${ativo && estoqueRemedio(r) ? (() => { const e = estoqueRemedio(r); return `<span class="selo ${e.diasRestantes <= 3 ? 'perto' : 'neutro'}">Restam ~${fmtNum(e.restante, e.restante % 1 ? 1 : 0)} doses (${plural(e.diasRestantes, 'dia', 'dias')})</span>`; })() : ''}
-          ${ativo && r.horas && r.horas.length ? `<div class="secundario">⏰ Lembrete: ${r.horas.join(', ')}</div>` : ''}
+          ${ativo && r.horas && r.horas.length ? `<div class="secundario">${ic('relogio')} Lembrete: ${r.horas.join(', ')}</div>` : ''}
           <div class="acoes">
-            ${ativo && r.horas && r.horas.length ? botoesEvento('rem-' + r.id, eventosRemedio(r), (ev) => `📅 ${ev.hora}`) : ''}
+            ${ativo && r.horas && r.horas.length ? botoesEvento('rem-' + r.id, eventosRemedio(r), (ev) => `${ic('agenda')}${ev.hora}`) : ''}
             <button type="button" class="btn pequeno" data-editar-remedio="${r.id}">Editar</button>
             ${ativo && r.inicio <= hojeISO() ? `<button type="button" class="btn pequeno" data-encerrar-remedio="${r.id}">Encerrar</button>` : ''}
             ${!ativo ? `<button type="button" class="btn pequeno" data-reativar-remedio="${r.id}">Voltar a usar</button>` : ''}
@@ -3066,10 +3263,10 @@ function itemCuidado(chave, origem = null, motivos = []) {
       ${motivos.length || origem ? `<ul class="motivos">${origem ? `<li>risco para ${origem}</li>` : ''}${motivos.map((m) => `<li>${m}</li>`).join('')}</ul>` : ''}
       <div class="cuidado-rot">Primeiros sinais</div>
       <ul class="sinais">${c.sinais.map((x) => `<li>${x}</li>`).join('')}</ul>
-      ${c.urgente ? `<p class="urgente"><span aria-hidden="true">🚨</span> ${c.urgente}</p>` : ''}
-      <div class="cuidado-rot">🛡️ Prevenção</div>
+      ${c.urgente ? `<p class="urgente">${ic('urgente')} ${c.urgente}</p>` : ''}
+      <div class="cuidado-rot">Prevenção</div>
       <p class="cuidado-txt">${c.prevenir}</p>
-      <div class="cuidado-rot">🩹 Até chegar ao veterinário</div>
+      <div class="cuidado-rot">Até chegar ao veterinário</div>
       <p class="cuidado-txt">${c.inicial}</p>
       <p class="cuidado-quando"><strong>Quando:</strong> ${c.quando}</p>
       ${c.fontes.length ? `<p class="fontes">Fonte: ${c.fontes.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join(' · ')}</p>` : ''}
@@ -3178,7 +3375,7 @@ $('#raca-guia').addEventListener('change', (ev) => {
 
 $('#saude-raca').addEventListener('click', (ev) => {
   if (ev.target.closest('[data-informar-idade-raca]')) { abrirPainelPets(); editarPet(estado.petAtual); $('#pet-nasc').focus(); }
-  if (ev.target.closest('[data-ir-ecc]')) { mostrarAba('ecc'); window.scrollTo({ top: 0 }); }
+  if (ev.target.closest('[data-ir-ecc]')) { irPara('peso', 'corpo'); }
   let b;
   if ((b = ev.target.closest('[data-checar]'))) {
     const chave = b.dataset.checar;
@@ -3367,9 +3564,10 @@ function salvarPreferenciasNutri() {
 
 $('#form-ecc').addEventListener('submit', (ev) => ev.preventDefault());
 $('#form-ecc').addEventListener('input', renderEcc);
+// 'change' só guarda as preferências: o resultado já é redesenhado a cada 'input'. Redesenhar aqui
+// trocaria o botão "Salvar" no meio do toque (o campo perde o foco ao tocar) e o toque se perderia.
 $('#form-ecc').addEventListener('change', (ev) => {
   if (['ecc-castrado', 'ecc-atividade', 'ecc-kcal'].includes(ev.target.id)) salvarPreferenciasNutri();
-  renderEcc();
 });
 $('#ecc-escala').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-ecc]');
@@ -3452,6 +3650,7 @@ $('#ecc-resultado').addEventListener('click', (ev) => {
       pesoIdeal: r.filhote ? null : Math.round(r.pesoIdeal * 100) / 100,
       kcalMeta: Math.round(r.kcalMeta), gMeta: r.gMeta ? Math.round(r.gMeta) : null, criado: Date.now(),
     });
+    marcarAjuda('ecc'); marcarAjuda('kcal');
     salvar();
     renderTudo();
     const b = $('#btn-salvar-ecc');
@@ -3703,10 +3902,10 @@ function baixarTexto(nome, texto, tipo = 'text/calendar;charset=utf-8') {
 }
 // Botões: no claude.ai só o Google Agenda funciona; como site, também o .ics
 const EVENTOS = new Map();
-function botoesEvento(chave, eventos, rotuloGoogle = (ev) => '📅 Google Agenda') {
+function botoesEvento(chave, eventos, rotuloGoogle = (ev) => `${ic('agenda')}Google Agenda`) {
   EVENTOS.set(chave, eventos);
   const google = eventos.map((ev) => `<a class="btn pequeno" href="${esc(linkGoogle(ev))}" target="_blank" rel="noopener">${rotuloGoogle(ev)}</a>`).join('');
-  return (EMBUTIDO ? '' : `<button type="button" class="btn pequeno" data-agenda-evento="${chave}">📅 Agenda do celular</button>`) + google;
+  return (EMBUTIDO ? '' : `<button type="button" class="btn pequeno" data-agenda-evento="${chave}">${ic('agenda')}Agenda do celular</button>`) + google;
 }
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-agenda-evento]');
@@ -3730,7 +3929,7 @@ function eventosRemedio(r) {
   const inicio = r.inicio > hojeISO() ? r.inicio : hojeISO();
   return (r.horas || []).map((hora) => ({
     uid: `rem-${r.id}-${hora.replace(':', '')}`,
-    titulo: `💊 ${nomePet(r.petId)}: ${r.nome}${r.dose ? ` (${r.dose})` : ''}`,
+    titulo: `${nomePet(r.petId)}: ${r.nome}${r.dose ? ` (${r.dose})` : ''}`,
     detalhes: `Dar ${r.nome}${r.dose ? ', ' + r.dose : ''}${r.horarios ? '. ' + r.horarios : ''}.\nRegistrado no Diário do Pet.`,
     data: inicio, hora, rrule: 'FREQ=DAILY' + ate, alarmes: ['PT0M'],
   }));
@@ -3761,13 +3960,14 @@ function preencherFormSaco() {
   $('#saco-abertura').value = s ? s.abertura : hojeISO();
   $('#saco-abertura').max = hojeISO();
   $('#saco-preco').value = s && s.preco ? String(s.preco.toFixed(2)).replace('.', ',') : '';
+  $('#saco-validade').value = s?.validade || '';
   $('#saco-erro').hidden = true;
   $('#btn-salvar-saco').textContent = s ? 'Salvar alterações do saco' : 'Salvar saco';
 }
 
-function salvarSaco(p, kg, abertura, preco, novo) {
+function salvarSaco(p, kg, abertura, preco, novo, validade = '') {
   const id = novo || !p.saco?.id ? novoId() : p.saco.id;
-  p.saco = { id, kg, abertura, preco: preco || null };
+  p.saco = { id, kg, abertura, preco: preco || null, validade: validade || '' };
   sincronizarGasto({ tipo: 'saco', id }, p.id, preco ? { data: abertura, valor: preco, categoria: 'racao', descricao: `Saco de ração ${fmtNum(kg, kg % 1 ? 1 : 0)} kg` } : null);
 }
 
@@ -3785,7 +3985,8 @@ $('#form-saco').addEventListener('submit', (ev) => {
   else if (abertura > hojeISO()) msg = 'A data de abertura não pode estar no futuro.';
   else if (precoTxt && !(preco > 0)) msg = 'Preço inválido (ex.: 189,90).';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
-  salvarSaco(p, kg, abertura, preco, false);
+  salvarSaco(p, kg, abertura, preco, false, $('#saco-validade').value);
+  marcarAjuda('saco');
   salvar();
   preencherFormSaco();
   renderTudo();
@@ -3795,7 +3996,7 @@ $('#saco-resumo').addEventListener('click', (ev) => {
   const b = ev.target.closest('#btn-saco-novo');
   if (!b || !pedeConfirmacao(b, 'Abri hoje um saco igual?')) return;
   const p = petAtual();
-  salvarSaco(p, p.saco.kg, hojeISO(), p.saco.preco, true);
+  salvarSaco(p, p.saco.kg, hojeISO(), p.saco.preco, true, '');
   salvar();
   preencherFormSaco();
   renderTudo();
@@ -3869,13 +4070,17 @@ async function obterLeitor() {
 
 // Aumenta e deixa em tons de cinza com mais contraste: o OCR erra menos
 // Texto miúdo de embalagem precisa de resolução: leva o lado maior a ~3200 px (no máx. 2× o original)
-function prepararFoto(arquivo, alvo = 3200) {
+function prepararFoto(arquivo, alvo = 3200, minMenor = 0) {
   return new Promise((ok, falha) => {
     const url = URL.createObjectURL(arquivo);
     const img = new Image();
     img.onload = () => {
       const lado = Math.max(img.naturalWidth, img.naturalHeight);
-      const f = Math.min(alvo / lado, 2);
+      const menor = Math.min(img.naturalWidth, img.naturalHeight);
+      let f = Math.min(alvo / lado, 2);
+      if (minMenor) f = Math.max(f, Math.min(minMenor / menor, 2.5));
+      const area = img.naturalWidth * img.naturalHeight * f * f;
+      if (area > 16e6) f *= Math.sqrt(16e6 / area);
       const c = document.createElement('canvas');
       c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
       const ctx = c.getContext('2d', { willReadFrequently: true });
@@ -3894,11 +4099,59 @@ function prepararFoto(arquivo, alvo = 3200) {
       const esc_ = max > min ? 255 / (max - min) : 1;
       for (let i = 0; i < px.length; i += 4) { const y = (px[i] - min) * esc_; px[i] = px[i + 1] = px[i + 2] = y; }
       ctx.putImageData(dados, 0, 0);
-      ok(c);
+      ok(endireitar(c));
     };
     img.onerror = () => { URL.revokeObjectURL(url); falha(new Error('imagem')); };
     img.src = url;
   });
+}
+
+// Foto torta: acha o ângulo em que as linhas de texto ficam mais "retas"
+// (perfil horizontal com picos mais marcados) e gira a imagem.
+function anguloDoTexto(c) {
+  const esc_ = Math.min(1, 700 / Math.max(c.width, c.height));
+  const w = Math.max(1, Math.round(c.width * esc_)), h = Math.max(1, Math.round(c.height * esc_));
+  const t = document.createElement('canvas'); t.width = w; t.height = h;
+  const tc = t.getContext('2d', { willReadFrequently: true });
+  tc.drawImage(c, 0, 0, w, h);
+  const px = tc.getImageData(0, 0, w, h).data;
+  // só bordas de letras (mudança brusca de claro para escuro), ignora fundo e sombras
+  const xs = [], ys = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w - 2; x++) {
+    const i = (y * w + x) * 4;
+    if (Math.abs(px[i] - px[i + 8]) > 45) { xs.push(x - w / 2); ys.push(y); }
+  }
+  if (xs.length < 200) return 0;
+  const passo = Math.max(1, Math.floor(xs.length / 40000));
+  let melhor = 0, notaMelhor = -1, notaZero = 0;
+  for (let a = -8; a <= 8.001; a += 0.5) {
+    const tg = Math.tan((a * Math.PI) / 180);
+    const bins = new Float64Array(h + 2 * w);
+    for (let i = 0; i < xs.length; i += passo) bins[Math.round(ys[i] - xs[i] * tg) + w]++;
+    let nota = 0;
+    for (let i = 1; i < bins.length; i++) { const d = bins[i] - bins[i - 1]; nota += d * d; }
+    if (Math.abs(a) < 0.01) notaZero = nota;
+    if (nota > notaMelhor * 1.0005) { notaMelhor = nota; melhor = a; }
+  }
+  anguloDoTexto.ganho = notaZero > 0 ? notaMelhor / notaZero : 1;
+  return melhor;
+}
+function endireitar(c) {
+  let a;
+  try { a = anguloDoTexto(c); } catch (e) { return c; }
+  // até ~2° o leitor se vira sozinho; girar suaviza a imagem e pode apagar dígitos frágeis
+  if (Math.abs(a) < 2.5 || anguloDoTexto.ganho < 1.3) return c;
+  const r = (-a * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(r)), sin = Math.abs(Math.sin(r));
+  const n = document.createElement('canvas');
+  n.width = Math.round(c.width * cos + c.height * sin);
+  n.height = Math.round(c.width * sin + c.height * cos);
+  const nc = n.getContext('2d');
+  nc.fillStyle = '#fff'; nc.fillRect(0, 0, n.width, n.height);
+  nc.translate(n.width / 2, n.height / 2);
+  nc.rotate(r);
+  nc.drawImage(c, -c.width / 2, -c.height / 2);
+  return n;
 }
 
 // "3.800" → 3800 · "3,8" → 3.8 · "10,1" → 10.1
@@ -3919,7 +4172,7 @@ function limparTextoOcr(t) {
     .replace(/k\s*c\s*a\s*[l1I]/gi, 'kcal')
     .replace(/[|]/g, '/')
     .replace(/kcal\s*[l1I\/\\]{0,2}\s*k\s*[g9q](?![a-z])/gi, 'kcal/kg')   // "kcallkg", "kcal kg"
-    .replace(/(\d)\s*[kK]\s*[g9q](?![a-z0-9])/g, (_, d) => d + ' kg');      // "1,5K9" → "1,5 kg"
+    .replace(/(\d)\s*[kK]{1,2}\s*[g9q](?![a-z0-9])/g, (_, d) => d + ' kg'); // "1,5K9", "7,5Kkg" → "… kg"
 }
 
 // Parte do número da energia apagada (reflexo): "3. 2) kcal/kg" — avisa em vez de inventar
@@ -3943,7 +4196,7 @@ function extrairKcal(texto) {
     return n * 1000; // kcal/g
   };
   // "3.800 kcal/kg", "380 kcal/100 g", "3,8 kcal/g"
-  const re1 = /(\d[\d.,]{0,6})\s*kcal\s*(?:\/|por|em)?\s*(k{1,2}\s*[gq9]|100\s*[gq9]|g)(?![a-z])/g;
+  const re1 = /(\d[\d.,]{0,6})\s*(?:[a-z]{1,2})?kcal\s*(?:\/|por|em)?\s*(k{1,2}\s*[gq9]|100\s*[gq9]|g)(?![a-z])/g;
   let m;
   while ((m = re1.exec(t))) cands.push({ v: conv(numeroBR(m[1]), m[2]), pos: m.index });
   // "energia metabolizável (kcal/kg): 3.800" — unidade antes do número
@@ -4045,18 +4298,18 @@ function nomeDaRacao(texto, linhas) {
 
 /* ----- Características especiais ----- */
 const CARACTERISTICAS_RACAO = {
-  veterinaria: ['🩺 Dieta veterinária', /veterinary|coadjuvante|corretor de dieta|terap[eê]utic/i],
-  lowfat: ['🥑 Baixa gordura', /low\s*fat|baix[oa] (teor de )?gordura|bajo (contenido|tenor) de grasa|restringida en grasa/i],
-  gastro: ['🫃 Gastrointestinal', /\S?astro\s*\S{0,3}\s*testinal/i],
-  renal: ['🫘 Renal', /\brenal\b/i],
-  urinaria: ['💧 Urinária', /urinary|urin[aá]ri[oa]/i],
-  hipoalergenica: ['🌿 Hipoalergênica', /hypoallergenic|hipoalerg|anallergenic/i],
-  light: ['⚖️ Controle de peso', /\blight\b|obesity|satiety|controle de peso/i],
-  filhote: ['🐣 Filhotes', /filhote|puppy|kitten|\bjunior\b/i],
-  senior: ['🧓 Sênior', /s[eê]nior|\bmature\b/i],
-  castrados: ['✂️ Castrados', /castrad|sterili[sz]ed|neutered/i],
-  omega: ['🐟 Ômega-3 (EPA/DHA)', /epa\s*[+e&]\s*dha|[oô]mega\s*-?\s*3/i],
-  prebioticos: ['🦠 Prebióticos', /prebi[oó]tic/i],
+  veterinaria: ['Dieta veterinária', /veterinary|coadjuvante|corretor de dieta|terap[eê]utic/i],
+  lowfat: ['Baixa gordura', /low\s*fat|baix[oa] (teor de )?gordura|bajo (contenido|tenor) de grasa|restringida en grasa/i],
+  gastro: ['Gastrointestinal', /\S?astro\s*\S{0,3}\s*testinal/i],
+  renal: ['Renal', /\brenal\b/i],
+  urinaria: ['Urinária', /urinary|urin[aá]ri[oa]/i],
+  hipoalergenica: ['Hipoalergênica', /hypoallergenic|hipoalerg|anallergenic/i],
+  light: ['Controle de peso', /\blight\b|obesity|satiety|controle de peso/i],
+  filhote: ['Filhotes', /filhote|puppy|kitten|\bjunior\b/i],
+  senior: ['Sênior', /s[eê]nior|\bmature\b/i],
+  castrados: ['Castrados', /castrad|sterili[sz]ed|neutered/i],
+  omega: ['Ômega-3 (EPA/DHA)', /epa\s*[+e&]\s*dha|[oô]mega\s*-?\s*3/i],
+  prebioticos: ['Prebióticos', /prebi[oó]tic/i],
   semcorantes: ['Sem corantes artificiais', /sem (adi[cç][aã]o de )?corantes|sin (adici[oó]n de )?colorantes/i],
   semaromas: ['Sem aromatizantes artificiais', /sem (adi[cç][aã]o de )?aromatizantes|sin (adici[oó]n de )?saborizantes/i],
   transgenicos: ['Sem transgênicos', /n[aã]o transg[eê]nicos|sem transg[eê]nicos|no transg[eé]nicos/i],
@@ -4086,6 +4339,19 @@ function extrairTabela(texto) {
       if (/^\d{2,3}$/.test(toks[i]) && /^[gG9]$/.test(toks[i + 1] || '')) { v.push({ tok: toks[i] + 'g', cands: [Number(toks[i])], g: true }); i++; }
       else v.push({ tok: toks[i], cands: valoresGramas(toks[i]), g: /[gG9]$/.test(toks[i]) });
     }
+    // faixa "80 a 95 g" (Premier, Golden…): mais para magro, meio para ideal, menos para acima do peso
+    const faixa = /(?:^|\s)(?:(\d{1,2}(?:[.,]5)?)\s*(?:kg)?\s+)?(\d{2,3})\s*[gG9]?\s*(?:a|à|-|–|até)\s*(\d{2,4})\s*[gG9]?(?!\d)/.exec(bruta.replace(/[\[\]|]/g, ' '));
+    const letras = (bruta.match(/[a-zà-ú]/gi) || []).length;
+    if (faixa && !/%/.test(bruta) && (/[gG9]$/.test(faixa[0].trim()) || letras <= 4)) {
+      const ini = Number(faixa[2]);
+      const fimC = [Number(faixa[3]), /9$/.test(faixa[3]) ? Math.floor(Number(faixa[3]) / 10) : null].filter((x) => x && x >= ini * 1.02 && x <= ini * 1.6);
+      if (ini >= 15 && fimC.length) {
+        const fim = fimC[0];
+        const kg = faixa[1] ? numeroBR(faixa[1]) : null;
+        linhas.push({ kg: kg > 0 && kg <= 90 ? kg : null, g: [fim, Math.round((ini + fim) / 2), ini] });
+        continue;
+      }
+    }
     for (let i = 0; i + 2 < v.length; i++) {
       const [a, b, c] = [v[i], v[i + 1], v[i + 2]];
       if (!a.cands.length || !b.cands.length || !c.cands.length || [a, b, c].filter((x) => x.g).length < 2) continue;
@@ -4108,7 +4374,7 @@ function extrairTabela(texto) {
     if (igual) { if (!igual.kg && l.kg) igual.kg = l.kg; } else unicas.push({ ...l });
   }
   const ancoras = unicas.filter((l) => l.kg);
-  if (unicas.length < 2 || !ancoras.length) return null;
+  if (!ancoras.length) return null;
   // Ração por dia cresce com peso^0,75: descobre o peso das linhas em que ele não foi lido
   const k = ancoras.map((l) => l.g[1] / Math.pow(l.kg, 0.75)).sort((a, b) => a - b)[Math.floor(ancoras.length / 2)];
   for (const l of unicas) if (!l.kg) { const w = Math.pow(l.g[1] / k, 1 / 0.75); l.kg = w < 4 ? Math.round(w * 2) / 2 : Math.round(w); l.estimado = true; }
@@ -4131,6 +4397,25 @@ function extrairCopo(texto) {
   let g = Number(m[1]);
   if (g > 200 && /9$/.test(m[1])) g = Math.floor(g / 10);
   return g >= 40 && g <= 200 ? g : null;
+}
+
+// Validade: "VAL: 12/2027", "Validade 05/03/27", "Vencimiento: 15.08.2027"
+function extrairValidade(texto) {
+  const t = texto.replace(/\s+/g, ' ');
+  const hoje = hojeISO();
+  const ok = (iso) => iso >= somarDias(hoje, -400) && iso <= somarDias(hoje, 365 * 5) ? iso : null;
+  let m = /(?:val(?:idade)?|venc(?:imento|imiento)?|vto|exp(?:ira|iry)?|consumir (?:at[eé]|antes de))\.?\s*:?\s*(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/i.exec(t);
+  if (m) {
+    const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    const d = Number(m[1]), mes = Number(m[2]);
+    if (d >= 1 && d <= 31 && mes >= 1 && mes <= 12) return ok(`${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+  }
+  m = /(?:val(?:idade)?|venc(?:imento|imiento)?|vto|exp)\.?\s*:?\s*(\d{1,2})[\/.\-](\d{4})/i.exec(t);
+  if (m) {
+    const mes = Number(m[1]), ano = Number(m[2]);
+    if (mes >= 1 && mes <= 12) return ok(`${ano}-${String(mes).padStart(2, '0')}-${String(new Date(ano, mes, 0).getDate()).padStart(2, '0')}`);
+  }
+  return null;
 }
 
 function linhasDoResultado(data) {
@@ -4216,18 +4501,34 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
       texto += '\n' + data.text;
       linhas = linhas.concat(linhasDoResultado(data).map((l) => ({ ...l, alt: l.alt / (canvas.height || 1) })));
     }
-    // 2ª leitura só se faltar peso ou energia: modo "texto espalhado" acha letras miúdas soltas
-    let limpo = limparTextoOcr(texto);
-    if (!cancelarEmb && (!extrairPeso(limpo, []) || !extrairKcal(limpo))) {
-      aoProgressoOcr = (m) => { if (m.status === 'recognizing text') progresso((fotoAtual + m.progress) / total, `Procurando detalhes na foto ${fotoAtual + 1} de ${total}…`); };
-      await leitor.setParameters({ tessedit_pageseg_mode: '11' });
+    // Leituras extras, só quando falta algo (cada modo enxerga coisas diferentes)
+    const extra = async (rotulo, psm, lado, comLinhas = false) => {
+      aoProgressoOcr = (m) => { if (m.status === 'recognizing text') progresso((fotoAtual + m.progress) / total, `${rotulo} (foto ${fotoAtual + 1} de ${total})…`); };
+      await leitor.setParameters({ tessedit_pageseg_mode: psm });
       for (fotoAtual = 0; fotoAtual < total; fotoAtual++) {
         if (cancelarEmb) break;
-        const { data } = await leitor.recognize(canvases[fotoAtual]);
+        const cv = lado ? await prepararFoto(fotosEmb[fotoAtual].arquivo, lado) : canvases[fotoAtual];
+        const { data } = await leitor.recognize(cv, {}, { text: true, blocks: comLinhas });
         texto += '\n' + data.text;
+        if (comLinhas) linhas = linhas.concat(linhasDoResultado(data).map((l) => ({ ...l, alt: l.alt / (cv.height || 1) })));
       }
       await leitor.setParameters({ tessedit_pageseg_mode: '6' });
+    };
+    let limpo = limparTextoOcr(texto);
+    // marca em letras enormes (logotipo): o leitor só enxerga em resolução baixa
+    if (!cancelarEmb && !acharMarca(limpo, linhas.map((l) => ({ ...l, texto: limparTextoOcr(l.texto) })))) {
+      await extra('Procurando a marca', '11', 1000, true);
+      limpo = limparTextoOcr(texto);
     }
+    // tabela de alimentação: modo colunas + resolução média
+    const temTabela = /peso\s*d[oa]\s*(c[aã]o|gato|pet|animal)|quantidade\s*di[aá]ria|como\s*alimentar|g\s*\/\s*dia|gramas?\s*por\s*dia|por\s*dia|tabela/i.test(limpo);
+    if (!cancelarEmb && temTabela && !extrairTabela(limpo)) {
+      await extra('Lendo a tabela', '4', 0);
+      if (!extrairTabela(limparTextoOcr(texto))) await extra('Lendo a tabela de novo', '6', 1600);
+      limpo = limparTextoOcr(texto);
+    }
+    // peso ou energia em letra miúda: modo "texto espalhado"
+    if (!cancelarEmb && (!extrairPeso(limpo, []) || !extrairKcal(limpo))) await extra('Procurando detalhes', '11', 0);
     if (cancelarEmb) { statusEmb('Leitura interrompida.'); return; }
     texto = limparTextoOcr(texto).trim();
     linhas = linhas.map((l) => ({ ...l, texto: limparTextoOcr(l.texto) }));
@@ -4239,6 +4540,7 @@ $('#btn-ler-embalagem').addEventListener('click', async () => {
       texto,
       kcalKg: kcalKg || incompleta?.valor || null,
       kcalTrecho: incompleta?.trecho || null,
+      validade: extrairValidade(texto),
       kcalIncerta: !!incompleta?.valor,
       pesoKg: extrairPeso(texto, linhas),
       marcas: [...new Set([nome, ...sug].filter(Boolean))],
@@ -4294,6 +4596,9 @@ function mostrarLeituraEmb(l) {
         <input type="text" id="emb-kcal" inputmode="numeric" placeholder="ex.: 3800">
       </label>
     </div>
+    <label>Validade do saco
+      <input type="date" id="emb-validade">
+    </label>
     ${l.kcalTrecho ? `<p class="nota-raca">${l.kcalIncerta ? `A energia saiu borrada na foto (“${esc(l.kcalTrecho)}”): coloquei <strong>${l.kcalKg}</strong>, mas <strong>confira no pacote</strong>.` : `Achei a energia, mas parte do número ficou apagada (provavelmente reflexo do plástico): “${esc(l.kcalTrecho)}”. Confira no pacote e digite acima.`}</p>` : ''}
     ${l.caracteristicas.length ? `<p class="dica-campo" style="margin:4px 0 6px">Características:</p><ul class="motivos">${l.caracteristicas.map((k) => `<li>${CARACTERISTICAS_RACAO[k][0]}</li>`).join('')}</ul>` : ''}
     ${l.caracteristicas.includes('veterinaria') ? '<p class="nota-raca">Ração terapêutica: siga a quantidade e o tempo de uso indicados pelo veterinário.</p>' : ''}
@@ -4320,10 +4625,13 @@ function mostrarLeituraEmb(l) {
   $('#emb-marca').value = l.marcas[0] || '';
   $('#emb-kg').value = l.pesoKg ? String(l.pesoKg).replace('.', ',') : '';
   $('#emb-kcal').value = l.kcalKg ? String(l.kcalKg) : '';
+  $('#emb-validade').value = l.validade || '';
   $('#emb-texto').textContent = l.texto;
+  marcarAjuda('emb');
   box.hidden = false;
 }
 
+let feitoValidade = false;
 function guardarCaracteristicas(lista) {
   caracteristicasForm = lista;
   const r = racaoDoPet();
@@ -4347,6 +4655,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
   const marca = $('#emb-marca').value.trim();
   const kgTxt = $('#emb-kg').value.trim();
   const kcalTxt = $('#emb-kcal').value.trim();
+  const validade = $('#emb-validade').value;
   const kg = kgTxt ? lerNumero(kgTxt) : null;
   const kcal = kcalTxt ? lerKcal(kcalTxt) : null;
   let msg = '';
@@ -4354,9 +4663,10 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
   else if (kcalTxt && !(kcal >= 500 && kcal <= 6000)) msg = kcal >= 50 && kcal < 600
     ? `Energia: ${kcalTxt} parece estar em kcal por 100 g. Multiplique por 10 (${Math.round(kcal * 10)}).`
     : 'Energia: informe em kcal/kg (ração seca costuma ter entre 3.000 e 4.500).';
-  else if (!marca && !kgTxt && !kcalTxt) msg = 'Preencha pelo menos um dos campos.';
+  else if (!marca && !kgTxt && !kcalTxt && !validade) msg = 'Preencha pelo menos um dos campos.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   const p = petAtual();
+  if (validade) { $('#saco-validade').value = validade; feitoValidade = true; }
   const feito = [];
   if (marca) { $('#racao-marca').value = marca; feito.push('marca'); }
   if (leituraEmb?.caracteristicas?.length) { guardarCaracteristicas(leituraEmb.caracteristicas); feito.push('características'); }
@@ -4365,6 +4675,7 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
     if (!$('#saco-abertura').value) $('#saco-abertura').value = hojeISO();
     feito.push('tamanho do saco');
   }
+  if (feitoValidade) { feito.push('validade'); feitoValidade = false; }
   if (kcal) {
     p.nutri = { castrado: p.nutri?.castrado ?? true, atividade: p.nutri?.atividade || 'normal', kcalKg: Math.round(kcal) };
     salvar();
@@ -4372,17 +4683,347 @@ $('#embalagem-resultado').addEventListener('click', (ev) => {
     renderTudo();
   }
   limparEmbalagem();
-  const falta = [kg && '"Salvar saco"', marca && '"Salvar alimentação"'].filter(Boolean);
+  const falta = [(kg || validade) && '"Salvar saco"', marca && '"Salvar alimentação"'].filter(Boolean);
   statusEmb(`Preenchido: ${feito.join(', ')}.${falta.length ? ` Confira os campos abaixo e toque em ${falta.join(' e ')}.` : ''}`, 'ok-leitura');
-  (kg ? $('#form-saco') : $('#form-racao')).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  (kg || validade ? $('#form-saco') : $('#form-racao')).scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 renderFotosEmb();
 
+
+/* ---------- Nota fiscal por foto (OCR no aparelho) ---------- */
+let lendoNota = false;
+let leituraNota = null;
+let arquivoNota = null;
+
+function valorBR(txt) {
+  let t = String(txt).replace(/\s/g, '').replace(/[oO]/g, '0');
+  if (/,\d{2}$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+  else if (/\.\d{2}$/.test(t)) t = t.replace(/,/g, '');
+  else return NaN;
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
+const RE_VALOR = /(\d{1,3}(?:\.\d{3})*,\s?\d{2}|\d+[,.]\s?\d{2})(?!\d)/g;
+function valoresDaLinha(l) { return [...l.matchAll(RE_VALOR)].map((m) => valorBR(m[1])).filter((v) => v > 0 && v < 100000); }
+
+function limparTextoNota(t) {
+  return t.replace(/\r/g, '')
+    .replace(/\bR\s?[S5$8]\s?(?=\d)/g, 'R$ ')                 // "RS 189,90", "R5189,90"
+    .replace(/(\d)[oO](?=[\d,.])/g, (_, d) => d + '0')
+    .replace(/([,.])\s?[oO](\d)/g, (_, s_, d) => s_ + '0' + d)
+    .replace(/(\d) ([,.]\d{2})\b/g, '$1$2')                    // "189 ,90"
+    .replace(/(\d[,.]) (\d{2})\b/g, '$1$2');                   // "189, 90"
+}
+
+// Data da compra: prefere a que vem perto de "emissão"/"data"
+function extrairDataNota(texto) {
+  const hoje = hojeISO();
+  const cands = [];
+  const re = /(\d{2})\s?[\/.\-]\s?(\d{2})\s?[\/.\-]\s?(\d{4}|\d{2})(?!\d)/g;
+  let m;
+  while ((m = re.exec(texto))) {
+    const d = Number(m[1]), mes = Number(m[2]);
+    const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    if (d < 1 || d > 31 || mes < 1 || mes > 12) continue;
+    const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (iso > somarDias(hoje, 1) || iso < somarDias(hoje, -3 * 365)) continue;
+    const antes = texto.slice(Math.max(0, m.index - 40), m.index).toLowerCase();
+    const nota = /emiss|data|dt\.?|emitid|compra|venda/.test(antes) ? 3 : /validade|\bval\b|\bval\.|\bvenc(imento)?\b|\bvto\b/.test(antes) ? -5 : 0;
+    cands.push({ iso, nota, pos: m.index });
+  }
+  if (!cands.length) return null;
+  cands.sort((a, b) => b.nota - a.nota || a.pos - b.pos);
+  return cands[0].nota < 0 ? null : cands[0].iso;
+}
+
+// Valor total: linha com "total"/"a pagar", sem cair em "total de itens", tributos, troco…
+function extrairTotalNota(linhas) {
+  const cands = [];
+  linhas.forEach((l, i) => {
+    const t = l.toLowerCase();
+    if (/(qtd|quant|itens|tributo|imposto|lei\s*1|aprox|ibpt|troco|desconto|acr[eé]sc|economi|cpf|cnpj)/.test(t)) return;
+    let nota = 0;
+    if (/(valor|total)\s*(a|à)\s*pagar/.test(t)) nota = 6;
+    else if (/valor\s*total|vl\.?\s*total|total\s*(geral|da\s*nota|r\$|:)/.test(t)) nota = 5;
+    else if (/\btotal\b/.test(t) && !/sub\s*-?\s*total/.test(t)) nota = 4;
+    else if (/sub\s*-?\s*total/.test(t)) nota = 2;
+    else if (/valor\s*pago|pagamento|cart[aã]o|cr[eé]dito|d[eé]bito|\bpix\b/.test(t)) nota = 1;
+    if (!nota) return;
+    let vs = valoresDaLinha(l);
+    const prox = linhas[i + 1];
+    if (!vs.length && prox && !/(tributo|imposto|lei\s*1|aprox|troco|desconto|qtd|itens)/i.test(prox)) vs = valoresDaLinha(prox);
+    if (vs.length) cands.push({ v: vs[vs.length - 1], nota });
+  });
+  if (cands.length) {
+    cands.sort((a, b) => b.nota - a.nota || b.v - a.v);
+    return cands[0].v;
+  }
+  const todos = linhas.flatMap(valoresDaLinha);
+  return todos.length ? Math.max(...todos) : null;
+}
+
+const LOJAS_PET = ['Petz', 'Cobasi', 'Petlove', 'Petland', 'Pet Center', 'Agropet', 'Dog Hero', 'Drogasil', 'Drogaria São Paulo', 'Raia', 'Pague Menos', 'Carrefour', 'Assaí', 'Atacadão', 'Extra', 'Pão de Açúcar', 'Amazon', 'Mercado Livre', 'Magalu'];
+const RE_CABECALHO = /cnpj|cpf|\bie\b|inscri|endere|\brua\b|\bav\.?\b|avenida|cep|tel\b|fone|documento|nfc|nf-?e|nota fiscal|cupom|extrato|consumidor|danfe|\bsat\b|chave|protocolo|serie|série|\bccf\b|\bcoo\b|www|http|\d{5,}/i;
+function extrairLoja(linhas, texto) {
+  const norm = ' ' + normalizar(texto) + ' ';
+  for (const loja of LOJAS_PET) if (norm.includes(' ' + normalizar(loja) + ' ')) return loja;
+  for (const l of linhas.slice(0, 8)) {
+    const limpa = l.replace(/[^\p{L}\p{N}\s&'.-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if ((limpa.match(/\p{L}/gu) || []).length >= 4 && !RE_CABECALHO.test(limpa) && !/total|valor|item|c[oó]digo|descri/i.test(limpa)) {
+      return limpa.slice(0, 40).toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase());
+    }
+  }
+  return '';
+}
+
+// Categoria por palavras-chave (ordem importa: o mais específico primeiro)
+const REGRAS_CATEGORIA = [
+  ['vacinas', /vacina|\bv8\b|\bv10\b|\bv4\b|\bv5\b|antirr[aá]bica|giardia|leish|gripe\s*canina/i],
+  ['exames', /exame|hemograma|ultrass|raio\s*-?\s*x|bioqu[ií]mic|urin[aá]lise|coprol|ecocardio|eletrocard|laborat[oó]r|citolog|bi[oó]psia/i],
+  ['remedios', /medicament|comprimido|\bcomp\.?\b|\bcpr\b|\b\d+\s?mg\b|gotas|drogaria|farm[aá]cia|simparic|nexgard|bravecto|credeli|apoquel|drontal|milbemax|frontline|revolution|vermifug|verm[ií]fugo|antipulga|seresto|scalibor|prednis|cefalex|meloxic|omepra|dipirona|endogard|cytopoint|pomada|col[ií]rio|antibi[oó]t/i],
+  ['racao', /(^|[^a-z])ra[cç][aã]o|\brac\b|royal\s*canin|premier|golden|granplus|gran\s*plus|guabi|farmina|pedigree|whiskas|pro\s*plan|purina|special\s*(dog|cat)|biofresh|three\s*(dogs|cats)|quatree|equil[ií]brio|origens|magnus|\bn&d\b|hill'?s|sach[eê]|\bpat[eê]\b/i],
+  ['higiene', /banho|tosa|shampoo|xampu|condicionador|areia|tapete\s*higi|len[cç]o|perfume|escova\s*dent|creme\s*dental|fralda|higi[eê]n/i],
+  ['petiscos', /petisco|bifinho|\bosso\b|brinquedo|bolinha|snack|biscoito|mordedor|pel[uú]cia|dental\s*stick|bastão|palito/i],
+  ['acessorios', /coleira|\bguia\b|peitoral|\bcama\b|comedouro|bebedouro|transporte|arranhador|roupa|casinha|tigela|fonte|caixa\s*de\s*areia/i],
+  ['veterinario', /consulta|atendimento|cl[ií]nica|veterin[aá]ri|cirurgia|castra|interna[cç]|plant[aã]o|honor[aá]ri|procedimento|retorno/i],
+];
+function categoriaDe(txt) {
+  for (const [cat, re] of REGRAS_CATEGORIA) if (re.test(txt)) return cat;
+  return null;
+}
+// Itens: linhas com descrição e preço no fim
+const RE_NAO_ITEM = /total|subtotal|troco|dinheiro|cart[aã]o|cr[eé]dito|d[eé]bito|\bpix\b|pagamento|pago|desconto|acr[eé]sc|tributo|imposto|lei\s*1|ibpt|aprox|cnpj|cpf|qtd|quant\.?\s*total|itens|valor\s*a\s*pagar|forma|parcela|saldo|cashback/i;
+function extrairItens(linhas) {
+  const itens = [];
+  let pendente = ''; // descrição numa linha, quantidade e preço na de baixo
+  for (const l of linhas) {
+    if (RE_NAO_ITEM.test(l)) { pendente = ''; continue; }
+    const vs = [...l.matchAll(RE_VALOR)];
+    if (!vs.length) {
+      const d = l.replace(/^\s*\d{1,3}\s+/, '').replace(/\b\d{8,14}\b/g, ' ').trim();
+      const valida = (d.match(/\p{L}/gu) || []).length >= 3 && !RE_CABECALHO.test(d) && !/c[oó]digo|descri/i.test(d);
+      // nome longo quebra em várias linhas: junta (ex.: "RACAO GOLDEN FORMULA" + "ADULTO 15KG")
+      pendente = valida ? (pendente ? pendente + ' ' + d : d).slice(0, 80) : '';
+      continue;
+    }
+    const ultimo = vs[vs.length - 1];
+    const valor = valorBR(ultimo[1]);
+    if (!(valor > 0)) continue;
+    let desc = l.slice(0, vs[0].index)
+      .replace(/^\s*\d{1,3}\s+/, '')                     // nº do item
+      .replace(/\b\d{8,14}\b/g, ' ')                     // código de barras
+      .replace(/\b\d+([.,]\d+)?\s*(un|und|unid|pc|p[cç]|x)\b.*$/i, ' ')
+      .replace(/[^\p{L}\p{N}\s&'./-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    if ((desc.match(/\p{L}/gu) || []).length < 3 || /^(un|und|x|pc|kg|cx)\b/i.test(desc)) {
+      if (!pendente) continue;
+      desc = pendente.replace(/[^\p{L}\p{N}\s&'./,-]/gu, ' ').replace(/\s+/g, ' ').trim();
+    }
+    pendente = '';
+    const kg = /(\d+(?:[.,]\d+)?)\s?kg\b/i.exec(desc);
+    itens.push({ desc: desc.slice(0, 50), valor, categoria: categoriaDe(desc), kg: kg ? numeroBR(kg[1]) : null });
+  }
+  return itens;
+}
+
+function extrairNota(texto) {
+  const limpo = limparTextoNota(texto);
+  const linhas = limpo.split('\n').map((l) => l.trim()).filter(Boolean);
+  const data = extrairDataNota(limpo);
+  let total = extrairTotalNota(linhas);
+  const loja = extrairLoja(linhas, limpo);
+  let itens = extrairItens(linhas).filter((it) => !total || it.valor <= total * 1.5 + 0.01);
+  // tira itens duplicados (2ª leitura)
+  const vistos = new Set();
+  itens = itens.filter((it) => { const k = normalizar(it.desc).slice(0, 12) + it.valor; if (vistos.has(k)) return false; vistos.add(k); return true; });
+  const somaItens = itens.reduce((s, it) => s + it.valor, 0);
+  const porCat = {};
+  for (const it of itens) { const c = it.categoria || 'outros'; porCat[c] = (porCat[c] || 0) + it.valor; }
+  let categoria = Object.entries(porCat).filter(([c]) => c !== 'outros').sort((a, b) => b[1] - a[1])[0]?.[0]
+    || categoriaDe(loja) || categoriaDe(limpo) || 'outros';
+  // Confere o total por outros caminhos: soma dos itens e dinheiro − troco
+  const linhaDe = (re) => linhas.find((l) => re.test(l));
+  const lTroco = linhaDe(/troco/i), lDinheiro = linhaDe(/dinheiro|esp[eé]cie/i);
+  const troco = lTroco ? valoresDaLinha(lTroco.replace(/(\d):(\d{2})\b/, '$1,$2')).pop() : null;
+  const dinheiro = lDinheiro ? valoresDaLinha(lDinheiro).pop() : null;
+  const pagoMenosTroco = troco && dinheiro && dinheiro > troco ? Math.round((dinheiro - troco) * 100) / 100 : null;
+  const iguais = (a, b) => a && b && Math.abs(a - b) < 0.011;
+  if (itens.length >= 2 && iguais(somaItens, pagoMenosTroco) && !iguais(total, somaItens)) total = Math.round(somaItens * 100) / 100;
+  else if (!total && pagoMenosTroco) total = pagoMenosTroco;
+  else if (!total && itens.length) total = Math.round(somaItens * 100) / 100;
+  const bate = total && itens.length && Math.abs(somaItens - total) <= Math.max(0.05, total * 0.03);
+  const racaoItem = itens.find((it) => it.categoria === 'racao' && it.kg >= 0.1 && it.kg <= 50);
+  return { texto: limpo.trim(), data, total, loja, itens, porCat, categoria, separavel: bate && Object.keys(porCat).length > 1, racaoItem };
+}
+
+function statusNota(html, classe = '') {
+  const el = $('#nota-status');
+  el.className = 'leitura-status' + (classe ? ' ' + classe : '');
+  el.innerHTML = html;
+  el.hidden = !html;
+}
+function limparNota() {
+  arquivoNota = null;
+  leituraNota = null;
+  $('#nota-fotos').innerHTML = '';
+  $('#nota-resultado').hidden = true;
+  $('#nota-resultado').innerHTML = '';
+  statusNota('');
+}
+
+async function lerNota(arquivo) {
+  if (lendoNota) return;
+  lendoNota = true;
+  arquivoNota = arquivo;
+  const url = URL.createObjectURL(arquivo);
+  $('#nota-fotos').innerHTML = `<img src="${url}" alt="Foto da nota">`;
+  $('#nota-resultado').hidden = true;
+  $('#nota-botoes').querySelectorAll('input').forEach((i) => { i.disabled = true; });
+  const progresso = (pct, txt) => statusNota(`${esc(txt)}<div class="progresso-ocr"><span style="width:${Math.round(pct * 100)}%"></span></div>`);
+  aoProgressoOcr = (m) => {
+    if (m.status === 'recognizing text') progresso(0.05 + m.progress * 0.9, 'Lendo a nota…');
+    else if (/load|initializ/i.test(m.status)) progresso(0.02, 'Preparando o leitor (só na primeira vez demora um pouco)…');
+  };
+  progresso(0.01, 'Preparando o leitor…');
+  try {
+    const leitor = await obterLeitor();
+    const canvas = await prepararFoto(arquivo, 3000, 1500);
+    await leitor.setParameters({ tessedit_pageseg_mode: '6' });
+    let { data } = await leitor.recognize(canvas);
+    let texto = data.text;
+    let r = extrairNota(texto);
+    if (!r.total || !r.data) {
+      aoProgressoOcr = (m) => { if (m.status === 'recognizing text') progresso(0.05 + m.progress * 0.9, 'Procurando detalhes…'); };
+      await leitor.setParameters({ tessedit_pageseg_mode: '4' });
+      ({ data } = await leitor.recognize(canvas));
+      await leitor.setParameters({ tessedit_pageseg_mode: '6' });
+      const r2 = extrairNota(data.text);
+      texto += '\n' + data.text;
+      r = { ...r2, ...Object.fromEntries(Object.entries(r).filter(([, v]) => v && (!Array.isArray(v) || v.length))) };
+      if (!r.itens.length && r2.itens.length) Object.assign(r, { itens: r2.itens, porCat: r2.porCat, separavel: r2.separavel });
+      r.texto = limparTextoNota(texto).trim();
+    }
+    mostrarNota(r);
+    marcarAjuda('nota');
+  } catch (e) {
+    console.warn('OCR da nota falhou', e);
+    statusNota('Não foi possível carregar o leitor de fotos. Verifique a internet na primeira vez que usar e tente de novo.', 'erro-leitura');
+  } finally {
+    lendoNota = false;
+    aoProgressoOcr = () => {};
+    $('#nota-botoes').querySelectorAll('input').forEach((i) => { i.disabled = false; });
+  }
+}
+for (const sel of ['#nota-camera', '#nota-galeria']) {
+  $(sel).addEventListener('change', (ev) => {
+    const arq = ev.target.files[0];
+    ev.target.value = '';
+    if (arq && arq.type.startsWith('image/')) lerNota(arq);
+  });
+}
+
+function mostrarNota(r) {
+  leituraNota = r;
+  const achou = [r.data && 'data', r.total && 'valor total', r.loja && 'loja', r.itens.length && plural(r.itens.length, 'item', 'itens')].filter(Boolean);
+  if (!r.texto || r.texto.replace(/\W/g, '').length < 10) {
+    statusNota('Não consegui ler texto nessa foto. Tente de novo com a nota reta, inteira e com boa luz.', 'erro-leitura');
+    return;
+  }
+  const hoje = hojeISO();
+  const duplicada = r.total && estado.gastos.find((g) => g.petId === estado.petAtual && Math.abs(g.valor - r.total) < 0.01 && (!r.data || g.data === r.data));
+  statusNota(achou.length ? `Encontrei: <strong>${achou.join(', ')}</strong>. Confira antes de lançar.` : 'Li o texto, mas não achei os dados. Preencha abaixo olhando o texto lido.', achou.length ? 'ok-leitura' : '');
+  const opcoesCat = (sel) => Object.entries(CATEGORIAS).map(([k, v]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${v}</option>`).join('');
+  const box = $('#nota-resultado');
+  box.innerHTML = `
+    <div class="linha">
+      <label>Data<input type="date" id="nota-data" max="${hoje}"></label>
+      <label>Valor total (R$)<input type="text" id="nota-valor" inputmode="decimal" placeholder="ex.: 189,90"></label>
+    </div>
+    <label>Categoria<select id="nota-categoria">${opcoesCat(r.categoria)}</select></label>
+    <label>Descrição<input type="text" id="nota-desc" maxlength="80" placeholder="ex.: Petz — ração e petisco"></label>
+    ${r.itens.length ? `
+      <p class="dica-campo" style="margin:6px 0">Itens lidos:</p>
+      <ul class="lista itens-nota">${r.itens.slice(0, 12).map((it) => `<li><span class="ic-lista">${ic(CAT_IC[it.categoria || 'outros'])}</span><div class="info"><div class="principal">${esc(it.desc)}</div><div class="secundario">${CATEGORIAS[it.categoria || 'outros']}</div></div><span class="quando">${fmtReais(it.valor)}</span></li>`).join('')}</ul>` : ''}
+    ${r.separavel ? `<p class="nota">A nota tem itens de ${plural(Object.keys(r.porCat).length, 'categoria', 'categorias')}: ${Object.entries(r.porCat).map(([c, v]) => `${CATEGORIAS[c]} ${fmtReais(v)}`).join(' · ')}.</p>` : ''}
+    ${r.racaoItem ? `<label class="check"><input type="checkbox" id="nota-saco"> Registrar também como saco de ração de ${fmtNum(r.racaoItem.kg, r.racaoItem.kg % 1 ? 1 : 0)} kg aberto hoje (estoque e calendário)</label>` : ''}
+    <label class="check"><input type="checkbox" id="nota-guardar-foto" checked> Guardar a foto da nota junto com o gasto</label>
+    ${duplicada ? `<p class="nota-raca">${ic('alerta')} Já existe um gasto de ${fmtReais(duplicada.valor)} em ${fmtData(duplicada.data)}. Confira se essa nota já não foi lançada.</p>` : ''}
+    <p class="erro" id="nota-erro" role="alert" hidden></p>
+    <div class="linha-botoes">
+      ${r.separavel ? `<button type="button" class="btn" id="btn-nota-separar">Lançar ${plural(Object.keys(r.porCat).length, 'gasto', 'gastos')} por categoria</button>` : ''}
+      <button type="button" class="btn primario" id="btn-nota-lancar">Lançar gasto</button>
+      <button type="button" class="btn" id="btn-nota-descartar">Descartar</button>
+    </div>
+    <details class="historico"><summary>Ver texto lido</summary><pre id="nota-texto"></pre></details>`;
+  let dataNota = r.data || '';
+  if (dataNota > hoje) dataNota = hoje;
+  $('#nota-data').value = dataNota || hoje;
+  $('#nota-valor').value = r.total ? r.total.toFixed(2).replace('.', ',') : '';
+  const principais = r.itens.slice(0, 2).map((it) => it.desc.toLowerCase()).join(', ');
+  $('#nota-desc').value = [r.loja, principais].filter(Boolean).join(' — ').slice(0, 80);
+  $('#nota-texto').textContent = r.texto;
+  if (!r.data) $('#nota-data').insertAdjacentHTML('afterend', '<small class="dica-campo">data não lida: confira</small>');
+  box.hidden = false;
+}
+
+async function lancarNota(separar) {
+  const erro = $('#nota-erro');
+  const data = $('#nota-data').value;
+  const valor = lerValor($('#nota-valor').value);
+  const categoria = $('#nota-categoria').value;
+  const descricao = $('#nota-desc').value.trim();
+  let msg = '';
+  if (!data) msg = 'Informe a data da nota.';
+  else if (data > hojeISO()) msg = 'A data não pode estar no futuro.';
+  else if (!(valor > 0)) msg = 'Informe o valor total (ex.: 189,90).';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  const p = petAtual();
+  const r = leituraNota;
+  let fotoId = '';
+  if ($('#nota-guardar-foto').checked && arquivoNota) {
+    try {
+      fotoId = 'gas-' + novoId();
+      const urlFoto = await comprimirImagem(arquivoNota, 1600, 0.8);
+      await FotosDB.salvar(fotoId, urlFoto);
+      cacheFotos.set(fotoId, urlFoto);
+    } catch (e) { fotoId = ''; }
+  }
+  // Ração pelo estoque: o saco já lança o próprio gasto
+  let racaoPeloSaco = 0;
+  if ($('#nota-saco')?.checked && r.racaoItem) {
+    racaoPeloSaco = r.racaoItem.valor;
+    salvarSaco(p, r.racaoItem.kg, hojeISO(), r.racaoItem.valor, true, '');
+  }
+  const novos = [];
+  if (separar && r.separavel) {
+    for (const [cat, v] of Object.entries(r.porCat)) {
+      const val = Math.round((cat === 'racao' ? v - racaoPeloSaco : v) * 100) / 100;
+      if (val <= 0.009) continue;
+      const nomes = r.itens.filter((it) => (it.categoria || 'outros') === cat).map((it) => it.desc.toLowerCase()).slice(0, 2).join(', ');
+      novos.push({ categoria: cat, valor: val, descricao: [r.loja, nomes].filter(Boolean).join(' — ').slice(0, 80) });
+    }
+  } else {
+    const val = Math.round((valor - racaoPeloSaco) * 100) / 100;
+    if (val > 0.009) novos.push({ categoria, valor: val, descricao });
+  }
+  for (const g of novos) estado.gastos.push({ id: novoId(), petId: p.id, data, ...g, fotoId, criado: Date.now() });
+  if (!novos.length && fotoId) FotosDB.apagar(fotoId);
+  salvar();
+  limparNota();
+  statusNota(`Lançado: ${novos.length ? novos.map((g) => `${CATEGORIAS[g.categoria]} ${fmtReais(g.valor)}`).join(', ') : ''}${racaoPeloSaco ? `${novos.length ? ' e ' : ''}saco de ração no estoque (${fmtReais(racaoPeloSaco)})` : ''}, em ${fmtData(data)}.`, 'ok-leitura');
+  renderTudo();
+}
+$('#nota-resultado').addEventListener('click', (ev) => {
+  if (ev.target.closest('#btn-nota-descartar')) { limparNota(); return; }
+  if (ev.target.closest('#btn-nota-lancar')) lancarNota(false);
+  if (ev.target.closest('#btn-nota-separar')) lancarNota(true);
+});
+
 /* ---------- Gastos ---------- */
 const CATEGORIAS = {
-  racao: '🥣 Ração', veterinario: '🩺 Veterinário', exames: '🧪 Exames', vacinas: '💉 Vacinas', remedios: '💊 Remédios',
-  higiene: '🛁 Banho e tosa', petiscos: '🦴 Petiscos e brinquedos', acessorios: '🎒 Acessórios', outros: '📦 Outros',
+  racao: 'Ração', veterinario: 'Veterinário', exames: 'Exames', vacinas: 'Vacinas', remedios: 'Remédios',
+  higiene: 'Banho e tosa', petiscos: 'Petiscos e brinquedos', acessorios: 'Acessórios', outros: 'Outros',
 };
+const CAT_IC = { racao: 'racao', veterinario: 'estetoscopio', exames: 'frasco', vacinas: 'vacina', remedios: 'pilula', higiene: 'banho', petiscos: 'osso', acessorios: 'etiqueta', outros: 'caixa' };
 // Mantém um gasto automático ligado a uma origem (consulta, saco de ração)
 function sincronizarGasto(origem, petId, dados) {
   const i = estado.gastos.findIndex((g) => g.origem && g.origem.tipo === origem.tipo && g.origem.id === origem.id);
@@ -4453,7 +5094,9 @@ $('#diario-gastos').addEventListener('click', (ev) => {
   }
   if ((b = ev.target.closest('[data-remover-gasto]')) && pedeConfirmacao(b)) {
     if ($('#gasto-id').value === b.dataset.removerGasto) limparFormGasto();
+    const fotoG = estado.gastos.find((x) => x.id === b.dataset.removerGasto)?.fotoId;
     estado.gastos = estado.gastos.filter((x) => x.id !== b.dataset.removerGasto);
+    if (fotoG && !estado.gastos.some((x) => x.fotoId === fotoG)) FotosDB.apagar(fotoG);
     salvar();
     renderTudo();
   }
@@ -4499,36 +5142,39 @@ function renderGastos() {
     const auto = g.origem ? (g.origem.tipo === 'consulta' ? 'veio de Consultas' : 'veio do estoque de ração') : '';
     return `
       <li>
+        <span class="ic-lista">${ic(CAT_IC[g.categoria] || 'caixa')}</span>
         <div class="info">
           <div class="principal">${fmtReais(g.valor)} <span class="delta">${CATEGORIAS[g.categoria] || g.categoria}</span></div>
           <div class="secundario">${fmtData(g.data)}${g.descricao ? ' · ' + esc(g.descricao) : ''}${todos ? ' · ' + esc(nomePet(g.petId)) : ''}${auto ? ` · <em>${auto}</em>` : ''}</div>
         </div>
         ${auto ? '' : `<button type="button" class="btn pequeno" data-editar-gasto="${g.id}">Editar</button>
         <button type="button" class="btn pequeno perigo" data-remover-gasto="${g.id}">Excluir</button>`}
+        ${miniatura(g.fotoId)}
       </li>`;
   };
   const antigos = regs.filter((g) => mesDe(g.data) !== mesAtual);
   $('#lista-gastos').innerHTML = doMes.length ? doMes.map(item).join('') : '<li class="vazio">Nenhum gasto neste mês.</li>';
   $('#det-gastos-antigos').hidden = !antigos.length;
   $('#lista-gastos-antigos').innerHTML = antigos.map(item).join('');
+  carregarFotos($('#diario-gastos'));
 }
 
 /* ---------- Sintomas ---------- */
 const SINTOMAS = {
-  vomito: { nome: 'Vômito', emoji: '🤮' },
-  diarreia: { nome: 'Diarreia', emoji: '💩' },
-  coceira: { nome: 'Coceira', emoji: '🐾' },
-  tosse: { nome: 'Tosse', emoji: '😮‍💨' },
-  espirro: { nome: 'Espirros', emoji: '🤧' },
-  apetite: { nome: 'Sem apetite', emoji: '🍽️' },
-  apatia: { nome: 'Apatia / cansaço', emoji: '😴' },
-  mancando: { nome: 'Mancando', emoji: '🦵' },
-  olho: { nome: 'Olho vermelho ou com secreção', emoji: '👁️' },
-  xixi: { nome: 'Xixi alterado', emoji: '🚽', urgente: 'Gato macho que tenta urinar e não sai nada é emergência: vá ao veterinário agora.' },
-  sangue: { nome: 'Sangue nas fezes, urina ou vômito', emoji: '🩸', urgente: 'Sangue no vômito, nas fezes ou na urina: procure o veterinário hoje.' },
-  convulsao: { nome: 'Convulsão', emoji: '⚡', urgente: 'Durante a crise, afaste objetos e não coloque a mão na boca dele. Cronometre. Mais de 5 minutos ou crises seguidas: emergência.' },
-  respiracao: { nome: 'Dificuldade para respirar', emoji: '🫁', urgente: 'Respiração difícil, gato respirando de boca aberta ou gengiva azulada: emergência.' },
-  outro: { nome: 'Outro', emoji: '📝' },
+  vomito: { nome: 'Vômito', ic: 'estomago' },
+  diarreia: { nome: 'Diarreia', ic: 'estomago' },
+  coceira: { nome: 'Coceira', ic: 'coceira' },
+  tosse: { nome: 'Tosse', ic: 'vento' },
+  espirro: { nome: 'Espirros', ic: 'vento' },
+  apetite: { nome: 'Sem apetite', ic: 'tigela' },
+  apatia: { nome: 'Apatia / cansaço', ic: 'lua' },
+  mancando: { nome: 'Mancando', ic: 'curativo' },
+  olho: { nome: 'Olho vermelho ou com secreção', ic: 'olho' },
+  xixi: { nome: 'Xixi alterado', ic: 'gota', urgente: 'Gato macho que tenta urinar e não sai nada é emergência: vá ao veterinário agora.' },
+  sangue: { nome: 'Sangue nas fezes, urina ou vômito', ic: 'gota', urgente: 'Sangue no vômito, nas fezes ou na urina: procure o veterinário hoje.' },
+  convulsao: { nome: 'Convulsão', ic: 'raio', urgente: 'Durante a crise, afaste objetos e não coloque a mão na boca dele. Cronometre. Mais de 5 minutos ou crises seguidas: emergência.' },
+  respiracao: { nome: 'Dificuldade para respirar', ic: 'pulmao', urgente: 'Respiração difícil, gato respirando de boca aberta ou gengiva azulada: emergência.' },
+  outro: { nome: 'Outro', ic: 'papel' },
 };
 const INTENSIDADES = { leve: 'leve', moderada: 'moderada', forte: 'forte' };
 
@@ -4539,12 +5185,12 @@ function sintomasDoPet(petId = estado.petAtual) {
 function atualizarAlertaSintoma() {
   const t = SINTOMAS[$('#sintoma-tipo').value];
   $('#sintoma-alerta').hidden = !t?.urgente;
-  $('#sintoma-alerta').textContent = t?.urgente ? '🚨 ' + t.urgente : '';
+  $('#sintoma-alerta').innerHTML = t?.urgente ? ic('urgente') + ' ' + esc(t.urgente) : '';
 }
 function limparFormSintoma() {
   $('#form-sintoma').reset();
   $('#sintoma-id').value = '';
-  $('#sintoma-tipo').innerHTML = Object.entries(SINTOMAS).map(([k, v]) => `<option value="${k}">${v.emoji} ${v.nome}</option>`).join('');
+  $('#sintoma-tipo').innerHTML = Object.entries(SINTOMAS).map(([k, v]) => `<option value="${k}">${v.nome}</option>`).join('');
   $('#sintoma-data').value = hojeISO();
   $('#sintoma-data').max = hojeISO();
   $('#sintoma-hora').value = agoraHM();
@@ -4646,13 +5292,13 @@ function renderSintomas() {
   const chips = Object.entries(cont).sort((a, b) => b[1] - a[1]);
   $('#sintomas-resumo').innerHTML = chips.length ? `
     <p class="dica-campo">Últimos 7 dias:</p>
-    <ul class="motivos chips-sintomas">${chips.map(([k, n]) => `<li class="${n >= 3 ? 'repetido' : ''}">${SINTOMAS[k].emoji} ${SINTOMAS[k].nome} ×${n}</li>`).join('')}</ul>
+    <ul class="motivos chips-sintomas">${chips.map(([k, n]) => `<li class="${n >= 3 ? 'repetido' : ''}">${SINTOMAS[k].nome} ×${n}</li>`).join('')}</ul>
     ${chips.some(([, n]) => n >= 3) ? '<p class="nota-raca">Sintoma repetido 3 vezes ou mais em uma semana: vale marcar uma consulta. Mostre este diário ao veterinário.</p>' : ''}` : '';
   const item = (s) => {
     const t = SINTOMAS[s.tipo] || SINTOMAS.outro;
     return `
       <li class="item-sintoma">
-        <span class="emoji-sintoma" aria-hidden="true">${t.emoji}</span>
+        <span class="ic-lista">${ic(t.ic)}</span>
         <div class="info">
           <div class="principal">${t.nome} <span class="delta">${INTENSIDADES[s.intensidade] || ''}</span></div>
           <div class="secundario">${fmtData(s.data)}${s.hora ? ' às ' + s.hora : ''}${s.obs ? ' · ' + esc(s.obs) : ''}</div>
@@ -4664,7 +5310,7 @@ function renderSintomas() {
         ${miniatura(s.fotoId)}
       </li>`;
   };
-  $('#lista-sintomas').innerHTML = recentes.length ? recentes.map(item).join('') : '<li class="vazio">Nenhum sintoma nos últimos 30 dias. 🎉</li>';
+  $('#lista-sintomas').innerHTML = recentes.length ? recentes.map(item).join('') : '<li class="vazio">Nenhum sintoma nos últimos 30 dias.</li>';
   $('#det-sintomas-antigos').hidden = !antigos.length;
   $('#lista-sintomas-antigos').innerHTML = antigos.map(item).join('');
   carregarFotos($('#diario-sintomas'));
@@ -4672,12 +5318,12 @@ function renderSintomas() {
 
 /* ---------- Consultas e exames ---------- */
 const TIPOS_CONSULTA = {
-  consulta: { nome: 'Consulta', emoji: '🩺', categoria: 'veterinario' },
-  retorno: { nome: 'Retorno', emoji: '🔁', categoria: 'veterinario' },
-  exame: { nome: 'Exame', emoji: '🧪', categoria: 'exames' },
-  vacinacao: { nome: 'Vacinação', emoji: '💉', categoria: 'vacinas' },
-  cirurgia: { nome: 'Cirurgia', emoji: '🏥', categoria: 'veterinario' },
-  emergencia: { nome: 'Emergência', emoji: '🚑', categoria: 'veterinario' },
+  consulta: { nome: 'Consulta', ic: 'estetoscopio', categoria: 'veterinario' },
+  retorno: { nome: 'Retorno', ic: 'retorno', categoria: 'veterinario' },
+  exame: { nome: 'Exame', ic: 'frasco', categoria: 'exames' },
+  vacinacao: { nome: 'Vacinação', ic: 'vacina', categoria: 'vacinas' },
+  cirurgia: { nome: 'Cirurgia', ic: 'curativo', categoria: 'veterinario' },
+  emergencia: { nome: 'Emergência', ic: 'urgente', categoria: 'veterinario' },
 };
 function consultasDoPet(petId = estado.petAtual) {
   return estado.consultas.filter((c) => c.petId === petId).sort((a, b) => b.data.localeCompare(a.data) || b.criado - a.criado);
@@ -4691,7 +5337,7 @@ function retornoPendente(c) {
 function eventoRetorno(c) {
   return {
     uid: `ret-${c.id}`,
-    titulo: `🩺 ${nomePet(c.petId)}: retorno${c.clinica ? ' — ' + c.clinica : ''}`,
+    titulo: `${nomePet(c.petId)}: retorno${c.clinica ? ' — ' + c.clinica : ''}`,
     detalhes: `Retorno da consulta de ${fmtData(c.data)}${c.motivo ? ' (' + c.motivo + ')' : ''}.\nRegistrado no Diário do Pet.`,
     data: c.retorno, alarmes: ['-PT15H', 'PT8H'],
   };
@@ -4805,8 +5451,9 @@ function renderConsultas() {
     }
     return `
       <li class="item-consulta">
+        <span class="ic-lista">${ic(t.ic)}</span>
         <div class="info">
-          <div class="principal">${t.emoji} ${t.nome}${c.motivo ? ': ' + esc(c.motivo) : ''}</div>
+          <div class="principal">${t.nome}${c.motivo ? ': ' + esc(c.motivo) : ''}</div>
           <div class="secundario">${fmtData(c.data)}${c.clinica ? ' · ' + esc(c.clinica) : ''}${c.valor ? ' · ' + fmtReais(c.valor) : ''}</div>
           ${c.resultado ? `<p class="resultado">${esc(c.resultado)}</p>` : ''}
           ${retorno}
@@ -4857,33 +5504,38 @@ function avisosDoPet(petId) {
   for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x) && x.inicio <= hoje)) {
     const e = estoqueRemedio(r);
     if (e && e.diasRestantes <= 3 && (!r.fim || e.acaba < r.fim)) {
-      lista.push({ nivel: e.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: '💊', aba: 'saude', ordem: e.diasRestantes,
+      lista.push({ nivel: e.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'pilula', aba: 'saude', ordem: e.diasRestantes,
         html: `<strong>${esc(r.nome)}</strong> — ${e.restante <= 0 ? 'o estoque acabou' : `acaba em ~${plural(e.diasRestantes, 'dia', 'dias')}`}: compre mais` });
     }
     if (r.fim) {
       const d = diasEntre(hoje, r.fim);
-      if (d === 0 || d === 1) lista.push({ nivel: 'perto', icone: '💊', aba: 'saude', ordem: d,
+      if (d === 0 || d === 1) lista.push({ nivel: 'perto', icone: 'pilula', aba: 'saude', ordem: d,
         html: `<strong>${esc(r.nome)}</strong> — ${d === 0 ? 'último dia hoje' : 'termina amanhã'}` });
     }
   }
   const er = estoqueRacao(p);
   if (er && er.diasRestantes !== null && er.diasRestantes <= 5) {
-    lista.push({ nivel: er.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: '🥣', aba: 'racao', ordem: er.diasRestantes,
+    lista.push({ nivel: er.diasRestantes <= 1 ? 'atrasada' : 'perto', icone: 'racao', aba: 'racao', ordem: er.diasRestantes,
       html: er.diasRestantes <= 0 ? '<strong>Ração</strong> — o saco já deve ter acabado: registre o novo'
         : `<strong>Ração</strong> — acaba em ~${plural(er.diasRestantes, 'dia', 'dias')} (${fmtData(er.acaba)})` });
   }
+  if (p.saco?.validade) {
+    const d = diasEntre(hoje, p.saco.validade);
+    if (d <= 15) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: 'saco', aba: 'racao', ordem: d,
+      html: `<strong>Validade da ração</strong> — ${d < 0 ? `venceu em ${fmtData(p.saco.validade)}` : d === 0 ? 'vence hoje' : `vence em ${plural(d, 'dia', 'dias')} (${fmtData(p.saco.validade)})`}` });
+  }
   for (const c of consultasDoPet(petId).filter(retornoPendente)) {
     const d = diasEntre(hoje, c.retorno);
-    if (d <= 7 && d >= -30) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: '🩺', aba: 'diario', ordem: d,
+    if (d <= 7 && d >= -30) lista.push({ nivel: d < 0 ? 'atrasada' : 'perto', icone: 'estetoscopio', aba: 'diario', ordem: d,
       html: `<strong>Retorno${c.clinica ? ' — ' + esc(c.clinica) : ''}</strong> — ${d < 0 ? `atrasado (era ${fmtData(c.retorno)})` : d === 0 ? 'hoje' : `em ${plural(d, 'dia', 'dias')} (${fmtData(c.retorno)})`}` });
   }
   const cont = repeticoesSintomas(petId);
   for (const [k, n] of Object.entries(cont)) {
-    if (n >= 3) lista.push({ nivel: 'perto', icone: SINTOMAS[k].emoji, aba: 'diario', ordem: 2,
+    if (n >= 3) lista.push({ nivel: 'perto', icone: SINTOMAS[k].ic, aba: 'diario', ordem: 2,
       html: `<strong>${SINTOMAS[k].nome}</strong> — ${n} vezes em 7 dias: vale consultar o veterinário` });
   }
   const urgente = estado.sintomas.find((s) => s.petId === petId && SINTOMAS[s.tipo]?.urgente && s.data >= somarDias(hoje, -1));
-  if (urgente) lista.push({ nivel: 'atrasada', icone: '🚨', aba: 'diario', ordem: -99,
+  if (urgente) lista.push({ nivel: 'atrasada', icone: 'urgente', aba: 'diario', ordem: -99,
     html: `<strong>${SINTOMAS[urgente.tipo].nome}</strong> registrado: ${SINTOMAS[urgente.tipo].urgente}` });
   return lista.sort((a, b) => (a.nivel === b.nivel ? a.ordem - b.ordem : a.nivel === 'atrasada' ? -1 : 1));
 }
@@ -4913,17 +5565,17 @@ function renderResumo() {
   const emUso = estado.remedios.filter((r) => r.petId === p.id && remedioAtivo(r) && r.inicio <= hojeISO());
   $('#resumo-remedios').hidden = !emUso.length;
   $('#resumo-remedios').innerHTML = emUso.length
-    ? `<span aria-hidden="true">💊</span> <span><strong>Em uso:</strong> ${emUso.map((r) => esc(r.nome) + (r.frequencia ? ` (${esc(r.frequencia)})` : '')).join(', ')}</span>`
+    ? `${ic('pilula')} <span><strong>Em uso:</strong> ${emUso.map((r) => esc(r.nome) + (r.frequencia ? ` (${esc(r.frequencia)})` : '')).join(', ')}</span>`
     : '';
 
   const al = avisosDoPet(p.id);
   $('#alertas').innerHTML = al.map((a) => `
       <li class="alerta ${a.nivel}">
-        <span aria-hidden="true">${a.icone}</span>
+        ${ic(a.icone)}
         <span>${a.html}</span>
       </li>`).join('');
-  for (const [aba, el] of [['saude', '#contador-saude'], ['diario', '#contador-diario']]) {
-    const n = al.filter((a) => a.aba === aba).length;
+  for (const [aba, el] of [['inicio', '#contador-inicio'], ['saude', '#contador-saude'], ['diario', '#contador-diario']]) {
+    const n = aba === 'inicio' ? al.filter((a) => a.nivel === 'atrasada').length : al.filter((a) => a.aba === aba).length;
     $(el).hidden = !n;
     $(el).textContent = n;
     $(el).setAttribute('aria-label', `${n} aviso(s)`);
@@ -4950,13 +5602,293 @@ $('#resumo-fatos').addEventListener('click', (ev) => {
   }
 });
 
+
+/* ---------- Sub-abas de Peso: Peso | Corpo (ECC) ---------- */
+let subabaPeso = 'registro';
+try { if (localStorage.getItem('diario-pet-subaba-peso') === 'corpo') subabaPeso = 'corpo'; } catch (e) { /* ignora */ }
+function mostrarSubabaPeso(nome) {
+  subabaPeso = nome === 'corpo' ? 'corpo' : 'registro';
+  try { localStorage.setItem('diario-pet-subaba-peso', subabaPeso); } catch (e) { /* ignora */ }
+  document.querySelectorAll('[data-subaba-peso]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.subabaPeso === subabaPeso)));
+  $('#peso-registro').hidden = subabaPeso !== 'registro';
+  $('#peso-corpo').hidden = subabaPeso !== 'corpo';
+  if (subabaPeso === 'corpo' && petAtual()) { preencherFormEcc(); renderListaEcc(); }
+  if (subabaPeso === 'registro' && petAtual()) desenharGrafico($('#grafico-peso'), pesosDoPet(), ultimaAvaliacao()?.pesoIdeal || null);
+}
+$('#subabas-peso').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-subaba-peso]');
+  if (b) mostrarSubabaPeso(b.dataset.subabaPeso);
+});
+// Navegação entre abas (e sub-abas) a partir de avisos, próximos e calendário
+function irPara(aba, sub) {
+  if (aba === 'peso' && sub) mostrarSubabaPeso(sub);
+  if (aba === 'saude' && sub) mostrarSubaba(sub);
+  if (aba === 'diario' && sub) mostrarSubabaDiario(sub);
+  mostrarAba(aba);
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- Ajuda recolhível: aberta até o primeiro uso ---------- */
+function ajudaVista(chave) { try { return localStorage.getItem('diario-pet-ajuda-' + chave) === '1'; } catch (e) { return false; } }
+function marcarAjuda(chave) { try { localStorage.setItem('diario-pet-ajuda-' + chave, '1'); } catch (e) { /* ignora */ } }
+document.querySelectorAll('details.ajuda').forEach((d) => {
+  d.open = !ajudaVista(d.dataset.ajuda);
+  d.addEventListener('toggle', () => { if (!d.open) marcarAjuda(d.dataset.ajuda); });
+});
+
+/* ---------- Calendário: tudo o que está por vir, de todo o app ---------- */
+const NOMES_MES_LONGO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const TIPOS_COMPROMISSO = {
+  consulta: { nome: 'Veterinário', ic: 'estetoscopio' }, vacina: { nome: 'Vacina', ic: 'vacina' }, exame: { nome: 'Exame', ic: 'frasco' },
+  banho: { nome: 'Banho e tosa', ic: 'banho' }, remedio: { nome: 'Remédio', ic: 'pilula' }, outro: { nome: 'Compromisso', ic: 'agenda' },
+};
+
+// Eventos entre ini e fim (ISO). Cada um: { chave, data, hora?, ic, titulo, detalhe, nivel, aba, sub, compromisso? }
+function eventosDoPet(petId, ini, fim) {
+  const p = estado.pets.find((x) => x.id === petId);
+  if (!p) return [];
+  const hoje = hojeISO();
+  const ev = [];
+  const dentro = (d) => d && d >= ini && d <= fim;
+  // Vacinas, vermífugos, antipulgas: próxima dose do registro mais recente
+  const regs = saudeDoPet(petId);
+  const ids = vigentes(regs);
+  for (const r of regs.filter((x) => ids.has(x.id) && x.proxima)) {
+    if (!dentro(r.proxima)) continue;
+    const st = statusDose(r.proxima);
+    ev.push({ chave: 'sau-' + r.id, data: r.proxima, ic: TIPOS[r.tipo].ic, titulo: `${TIPOS[r.tipo].nome}: ${r.nome}`,
+      detalhe: r.proxima < hoje ? 'atrasada' : 'próxima dose', nivel: st.nivel === 'atrasada' ? 'alerta' : st.nivel === 'perto' ? 'perto' : '',
+      aba: 'saude', sub: 'prevencao', google: eventoVacina(r) });
+  }
+  // Retornos marcados nas consultas
+  for (const c of consultasDoPet(petId).filter(retornoPendente)) {
+    if (!dentro(c.retorno)) continue;
+    ev.push({ chave: 'ret-' + c.id, data: c.retorno, ic: 'estetoscopio', titulo: 'Retorno no veterinário',
+      detalhe: [c.clinica, c.motivo].filter(Boolean).join(' · '), nivel: c.retorno < hoje ? 'alerta' : '', aba: 'diario', sub: 'consultas', google: eventoRetorno(c) });
+  }
+  // Ração: fim teórico do saco e validade
+  const er = estoqueRacao(p);
+  if (er && er.acaba && dentro(er.acaba)) {
+    ev.push({ chave: 'rac-fim', data: er.acaba, ic: 'racao', titulo: 'Ração deve acabar', detalhe: `${racaoDoPet(petId)?.marca || 'saco atual'} · ${fmtG(er.consumo)}/dia`,
+      nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'racao' });
+  }
+  if (p.saco?.validade && dentro(p.saco.validade)) {
+    ev.push({ chave: 'rac-val', data: p.saco.validade, ic: 'saco', titulo: 'Validade da ração', detalhe: racaoDoPet(petId)?.marca || '',
+      nivel: p.saco.validade < hoje ? 'alerta' : diasEntre(hoje, p.saco.validade) <= 15 ? 'perto' : '', aba: 'racao' });
+  }
+  // Remédios: último dia e fim do estoque
+  for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x))) {
+    if (r.fim && dentro(r.fim)) ev.push({ chave: 'rem-fim-' + r.id, data: r.fim, ic: 'pilula', titulo: `Último dia: ${r.nome}`, detalhe: r.dose || '', nivel: '', aba: 'saude', sub: 'clinico' });
+    const e = estoqueRemedio(r);
+    if (e && dentro(e.acaba) && (!r.fim || e.acaba < r.fim)) ev.push({ chave: 'rem-est-' + r.id, data: e.acaba, ic: 'pilula', titulo: `${r.nome} acaba`, detalhe: 'compre mais antes', nivel: e.diasRestantes <= 3 ? 'perto' : '', aba: 'saude', sub: 'clinico' });
+  }
+  // Aniversário
+  if (p.nascimento) {
+    const [an, mn, dn] = p.nascimento.split('-').map(Number);
+    for (let a = Number(ini.slice(0, 4)); a <= Number(fim.slice(0, 4)); a++) {
+      const ult = new Date(a, mn, 0).getDate();
+      const d = `${a}-${String(mn).padStart(2, '0')}-${String(Math.min(dn, ult)).padStart(2, '0')}`;
+      if (!dentro(d) || a <= an) continue;
+      ev.push({ chave: 'niver-' + a, data: d, ic: 'bolo', titulo: `Aniversário de ${p.nome}`, detalhe: `${p.nascAprox ? '≈ ' : ''}${plural(a - an, 'ano', 'anos')}`, nivel: 'ok', aba: 'inicio',
+        google: { uid: `niver-${p.id}-${a}`, titulo: `Aniversário de ${p.nome}`, detalhes: `${p.nome} faz ${a - an} anos.\nRegistrado no Diário do Pet.`, data: d, alarmes: ['PT9H'] } });
+    }
+  }
+  // Compromissos anotados
+  for (const c of estado.agenda.filter((x) => x.petId === petId)) {
+    if (!dentro(c.data)) continue;
+    const t = TIPOS_COMPROMISSO[c.tipo] || TIPOS_COMPROMISSO.outro;
+    ev.push({ chave: 'cmp-' + c.id, data: c.data, hora: c.hora || '', ic: t.ic, titulo: c.descricao || t.nome, detalhe: c.descricao ? t.nome : '',
+      nivel: c.feito ? 'ok' : '', aba: 'agenda', compromisso: c,
+      google: { uid: `cmp-${c.id}`, titulo: `${nomePet(petId)}: ${c.descricao || t.nome}`, detalhes: `${t.nome}${c.descricao ? ': ' + c.descricao : ''}.\nRegistrado no Diário do Pet.`, data: c.data, hora: c.hora || undefined, alarmes: c.hora ? ['-PT1H'] : ['-PT15H', 'PT8H'] } });
+  }
+  return ev.sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
+}
+
+// Um botão só: no app instalado gera o lembrete para a agenda do celular; dentro do Claude, Google Agenda
+function botaoAgenda(chave, ev) {
+  EVENTOS.set(chave, [ev]);
+  return EMBUTIDO
+    ? `<a class="btn pequeno" href="${esc(linkGoogle(ev))}" target="_blank" rel="noopener">${ic('agenda')}Google Agenda</a>`
+    : `<button type="button" class="btn pequeno" data-agenda-evento="${chave}">${ic('agenda')}Pôr na agenda</button>`;
+}
+function quandoTexto(d) {
+  const n = diasEntre(hojeISO(), d);
+  if (n < 0) return ['atrasado', 'hoje'];
+  if (n === 0) return ['hoje', 'hoje'];
+  if (n === 1) return ['amanhã', 'logo'];
+  if (n <= 7) return [`em ${n} dias`, 'logo'];
+  return [`em ${n} dias`, ''];
+}
+function itemEvento(e, { acoes = false } = {}) {
+  const d = dataLocal(e.data);
+  const [q, cls] = quandoTexto(e.data);
+  const nivelIc = e.nivel === 'alerta' ? ' alerta-ic' : e.nivel === 'perto' ? ' perto-ic' : e.nivel === 'ok' ? ' ok-ic' : '';
+  const c = e.compromisso;
+  return `
+    <li class="clicavel" data-ir-evento="${e.aba}|${e.sub || ''}">
+      <span class="ic-lista${nivelIc}">${ic(e.ic)}</span>
+      <div class="info">
+        <div class="principal">${esc(e.titulo)}${c?.feito ? ' <span class="delta">feito</span>' : ''}</div>
+        <div class="secundario">${DIAS_SEMANA[d.getDay()]}, ${fmtData(e.data)}${e.hora ? ' às ' + e.hora : ''}${e.detalhe ? ' · ' + esc(e.detalhe) : ''}</div>
+        ${acoes && (c || (e.google && e.data >= hojeISO())) ? `<div class="acoes">
+          ${e.google && e.data >= hojeISO() ? botaoAgenda('cal-' + e.chave, e.google) : ''}
+          ${c ? `<button type="button" class="btn pequeno" data-feito-comp="${c.id}">${c.feito ? 'Desmarcar' : 'Feito'}</button>
+          <button type="button" class="btn pequeno" data-editar-comp="${c.id}">Editar</button>
+          <button type="button" class="btn pequeno perigo" data-remover-comp="${c.id}">Excluir</button>` : ''}
+        </div>` : ''}
+      </div>
+      <span class="quando ${cls}">${q}</span>
+    </li>`;
+}
+function irDoEvento(ev) {
+  if (ev.target.closest('button, a')) return;
+  const li = ev.target.closest('[data-ir-evento]');
+  if (!li) return;
+  const [aba, sub] = li.dataset.irEvento.split('|');
+  if (aba === 'agenda' && abaAtual === 'agenda') return;
+  irPara(aba, sub || undefined);
+}
+
+/* Início: próximos 60 dias (+ atrasados ainda pendentes) */
+function renderProximos() {
+  const hoje = hojeISO();
+  const evs = eventosDoPet(estado.petAtual, somarDias(hoje, -60), somarDias(hoje, 60))
+    .filter((e) => e.data >= hoje || (e.nivel === 'alerta' && !e.compromisso))
+    .filter((e) => !e.compromisso?.feito);
+  $('#lista-proximos').innerHTML = evs.length
+    ? evs.slice(0, 8).map((e) => itemEvento(e)).join('') + (evs.length > 8 ? `<li class="vazio">e mais ${evs.length - 8} no calendário</li>` : '')
+    : '<li class="vazio">Nada marcado para os próximos 60 dias. Registre vacinas com a próxima dose, retornos e o saco de ração para eles aparecerem aqui.</li>';
+}
+$('#lista-proximos').addEventListener('click', irDoEvento);
+$('#btn-ver-agenda').addEventListener('click', () => irPara('agenda'));
+
+/* Aba Agenda: mês + lista */
+let mesCal = hojeISO().slice(0, 7);
+let diaCal = '';
+function renderAgenda() {
+  const [a, m] = mesCal.split('-').map(Number);
+  const ini = `${mesCal}-01`;
+  const ult = new Date(a, m, 0).getDate();
+  const fim = `${mesCal}-${String(ult).padStart(2, '0')}`;
+  $('#cal-titulo').textContent = `${NOMES_MES_LONGO[m - 1]} ${a}`;
+  const evsMes = eventosDoPet(estado.petAtual, ini, fim);
+  const porDia = {};
+  for (const e of evsMes) (porDia[e.data] = porDia[e.data] || []).push(e);
+  const primeiro = new Date(a, m - 1, 1).getDay();
+  const hoje = hojeISO();
+  let html = '';
+  for (let i = 0; i < primeiro; i++) html += '<span class="cal-dia fora"></span>';
+  for (let d = 1; d <= ult; d++) {
+    const iso = `${mesCal}-${String(d).padStart(2, '0')}`;
+    const evs = porDia[iso] || [];
+    const cls = ['cal-dia', iso === hoje ? 'hoje' : '', iso < hoje ? 'passado' : ''].filter(Boolean).join(' ');
+    html += `<button type="button" class="${cls}" data-dia="${iso}" aria-pressed="${iso === diaCal}" aria-label="${d} de ${NOMES_MES_LONGO[m - 1]}${evs.length ? ': ' + plural(evs.length, 'compromisso', 'compromissos') : ''}">${d}${evs.length ? `<span class="cal-pontos">${evs.slice(0, 3).map((e) => `<span class="${e.nivel ? 'p-' + e.nivel : ''}"></span>`).join('')}</span>` : ''}</button>`;
+  }
+  $('#cal-grade').innerHTML = html;
+  $('#cal-legenda').innerHTML = '<span><i style="background:var(--erro)"></i>atrasado</span><span><i style="background:var(--aviso)"></i>perto</span><span><i style="background:var(--primaria)"></i>agendado</span><span><i style="background:var(--ok)"></i>aniversário / feito</span>';
+  // Lista: o dia escolhido, ou os próximos 90 dias
+  let evs, titulo;
+  if (diaCal) {
+    evs = eventosDoPet(estado.petAtual, diaCal, diaCal);
+    titulo = `${DIAS_SEMANA[dataLocal(diaCal).getDay()]}, ${fmtData(diaCal)}`;
+  } else {
+    evs = eventosDoPet(estado.petAtual, somarDias(hoje, -60), somarDias(hoje, 90)).filter((e) => e.data >= hoje || (e.nivel === 'alerta' && !e.compromisso));
+    titulo = 'Próximos compromissos';
+  }
+  $('#cal-lista-titulo').textContent = titulo;
+  $('#cal-limpar-dia').hidden = !diaCal;
+  $('#cal-lista').innerHTML = evs.length ? evs.map((e) => itemEvento(e, { acoes: true })).join('')
+    : `<li class="vazio">${diaCal ? 'Nada neste dia.' : 'Nada nos próximos 90 dias.'}</li>`;
+}
+$('#cal-ant').addEventListener('click', () => { const [a, m] = mesCal.split('-').map(Number); const d = new Date(a, m - 2, 1); mesCal = paraISO(d).slice(0, 7); diaCal = ''; renderAgenda(); });
+$('#cal-prox').addEventListener('click', () => { const [a, m] = mesCal.split('-').map(Number); const d = new Date(a, m, 1); mesCal = paraISO(d).slice(0, 7); diaCal = ''; renderAgenda(); });
+$('#cal-grade').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-dia]');
+  if (!b) return;
+  diaCal = diaCal === b.dataset.dia ? '' : b.dataset.dia;
+  if (diaCal && diaCal >= hojeISO() && !$('#comp-id').value) $('#comp-data').value = diaCal;
+  renderAgenda();
+});
+$('#cal-limpar-dia').addEventListener('click', () => { diaCal = ''; renderAgenda(); });
+$('#cal-lista').addEventListener('click', (ev) => {
+  let b;
+  if ((b = ev.target.closest('[data-feito-comp]'))) {
+    const c = estado.agenda.find((x) => x.id === b.dataset.feitoComp);
+    if (c) { c.feito = !c.feito; salvar(); renderTudo(); }
+    return;
+  }
+  if ((b = ev.target.closest('[data-editar-comp]'))) { editarCompromisso(b.dataset.editarComp); return; }
+  if ((b = ev.target.closest('[data-remover-comp]'))) {
+    if (!pedeConfirmacao(b)) return;
+    if ($('#comp-id').value === b.dataset.removerComp) limparFormCompromisso();
+    estado.agenda = estado.agenda.filter((x) => x.id !== b.dataset.removerComp);
+    salvar(); renderTudo();
+    return;
+  }
+  irDoEvento(ev);
+});
+
+/* Compromissos anotados à mão */
+function limparFormCompromisso() {
+  $('#form-compromisso').reset();
+  $('#comp-id').value = '';
+  $('#comp-data').value = diaCal && diaCal >= hojeISO() ? diaCal : '';
+  $('#comp-data').min = somarDias(hojeISO(), -365);
+  $('#form-compromisso-titulo').innerHTML = `${ic('mais')}Anotar compromisso`;
+  $('#btn-salvar-comp').textContent = 'Anotar';
+  $('#btn-cancelar-comp').hidden = true;
+  $('#comp-erro').hidden = true;
+}
+function editarCompromisso(id) {
+  const c = estado.agenda.find((x) => x.id === id);
+  if (!c) return;
+  $('#comp-id').value = c.id;
+  $('#comp-data').value = c.data;
+  $('#comp-hora').value = c.hora || '';
+  $('#comp-tipo').value = c.tipo;
+  $('#comp-desc').value = c.descricao || '';
+  $('#form-compromisso-titulo').innerHTML = `${ic('agenda')}Editar compromisso`;
+  $('#btn-salvar-comp').textContent = 'Salvar alterações';
+  $('#btn-cancelar-comp').hidden = false;
+  $('#form-compromisso').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+$('#btn-cancelar-comp').addEventListener('click', limparFormCompromisso);
+$('#form-compromisso').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const erro = $('#comp-erro');
+  const data = $('#comp-data').value;
+  const hora = $('#comp-hora').value || '';
+  const tipo = $('#comp-tipo').value;
+  const descricao = $('#comp-desc').value.trim();
+  let msg = '';
+  if (!data) msg = 'Informe a data.';
+  else if (!TIPOS_COMPROMISSO[tipo]) msg = 'Escolha o tipo.';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  const id = $('#comp-id').value;
+  const existente = id && estado.agenda.find((x) => x.id === id);
+  if (existente) Object.assign(existente, { data, hora, tipo, descricao });
+  else estado.agenda.push({ id: novoId(), petId: estado.petAtual, data, hora, tipo, descricao, feito: false, criado: Date.now() });
+  salvar();
+  marcarAjuda('agenda');
+  mesCal = data.slice(0, 7);
+  diaCal = '';
+  limparFormCompromisso();
+  renderTudo();
+});
+limparFormCompromisso();
+
 /* ---------- Abas ---------- */
-let abaAtual = 'peso';
-try { abaAtual = localStorage.getItem('diario-pet-aba') || 'peso'; } catch (e) { /* sem armazenamento */ }
+const ABAS = ['inicio', 'agenda', 'peso', 'racao', 'saude', 'diario'];
+let abaAtual = 'inicio';
+try { abaAtual = localStorage.getItem('diario-pet-aba') || 'inicio'; } catch (e) { /* sem armazenamento */ }
+if (abaAtual === 'ecc') { abaAtual = 'peso'; try { localStorage.setItem('diario-pet-subaba-peso', 'corpo'); } catch (e) { /* ignora */ } }
+if (!ABAS.includes(abaAtual)) abaAtual = 'inicio';
 function mostrarAba(nome) {
+  if (!ABAS.includes(nome)) nome = 'inicio';
   abaAtual = nome;
   if (nome === 'racao') preencherFormRacao();
-  if (nome === 'ecc') preencherFormEcc();
+  if (nome === 'peso') preencherFormEcc();
   if (nome === 'racao') preencherFormSaco();
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
@@ -4982,7 +5914,9 @@ function aoTrocarPet() {
   limparFormSintoma();
   limparFormConsulta();
   limparFormGasto();
+  limparFormCompromisso();
   if (!lendoEmb) limparEmbalagem();
+  if (!lendoNota) limparNota();
   renderTudo();
 }
 
@@ -5000,6 +5934,7 @@ window.addEventListener('storage', (ev) => {
 /* ---------- Virada do dia com o app aberto ---------- */
 let diaAtual = hojeISO();
 const CAMPOS_DATA = ['#peso-data', '#banho-data', '#saude-data', '#sintoma-data', '#consulta-data', '#gasto-data'];
+// (#comp-data é data futura: não entra aqui)
 function atualizarDia() {
   const hoje = hojeISO();
   if (hoje !== diaAtual) {
@@ -5021,17 +5956,14 @@ function renderTudo() {
   $('#sem-pets').hidden = temPet;
   $('#resumo-pet').hidden = !temPet;
   $('#abas').hidden = !temPet;
-  $('#aba-peso').hidden = !temPet || abaAtual !== 'peso';
-  $('#aba-saude').hidden = !temPet || abaAtual !== 'saude';
-  $('#aba-racao').hidden = !temPet || abaAtual !== 'racao';
-  $('#aba-ecc').hidden = !temPet || abaAtual !== 'ecc';
-  $('#aba-diario').hidden = !temPet || abaAtual !== 'diario';
+  for (const a of ABAS) $('#aba-' + a).hidden = !temPet || abaAtual !== a;
   if (!temPet) return;
   renderResumo();
-  if (abaAtual === 'peso') renderPeso();
+  if (abaAtual === 'inicio') renderProximos();
+  else if (abaAtual === 'agenda') renderAgenda();
+  else if (abaAtual === 'peso') { renderPeso(); renderEcc(); renderListaEcc(); }
   else if (abaAtual === 'racao') { renderRacao(); renderSaco(); }
   else if (abaAtual === 'diario') renderDiario();
-  else if (abaAtual === 'ecc') { renderEcc(); renderListaEcc(); }
   else { renderSaude(); renderClinico(); renderRaca(); }
 }
 
@@ -5045,7 +5977,8 @@ mostrarSubabaDiario(subabaDiario);
 limparFormSintoma();
 limparFormConsulta();
 limparFormGasto();
-mostrarAba(['peso', 'racao', 'saude', 'ecc', 'diario'].includes(abaAtual) ? abaAtual : 'peso');
+mostrarSubabaPeso(subabaPeso);
+mostrarAba(abaAtual);
 limparFormDoenca();
 limparFormRemedio();
 limparFormSaude();
@@ -5061,7 +5994,7 @@ let backupPendente = null;
 
 $('#btn-exportar').addEventListener('click', async () => {
   const fotos = {};
-  for (const r of [...estado.sintomas, ...estado.consultas]) {
+  for (const r of [...estado.sintomas, ...estado.consultas, ...estado.gastos]) {
     if (!r.fotoId) continue;
     try { const u = await FotosDB.ler(r.fotoId); if (u) fotos[r.fotoId] = u; } catch (e) { /* sem foto */ }
   }
@@ -5079,6 +6012,7 @@ $('#btn-exportar').addEventListener('click', async () => {
   } catch (e) {
     if (e && e.name === 'AbortError') return;
   }
+  marcarAjuda('backup');
   baixarTexto(nome, texto, 'application/json');
   statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads).`, 'ok-leitura');
 });
@@ -5108,7 +6042,7 @@ $('#backup-status').addEventListener('click', async (ev) => {
   const b = ev.target.closest('#btn-confirmar-import');
   if (!b || !backupPendente || !pedeConfirmacao(b, 'Tem certeza? Toque de novo')) return;
   const novo = Object.assign(estadoVazio(), backupPendente.estado);
-  for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos']) if (!Array.isArray(novo[k])) novo[k] = [];
+  for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) if (!Array.isArray(novo[k])) novo[k] = [];
   for (const [id, url] of Object.entries(backupPendente.fotos || {})) {
     if (typeof url === 'string' && url.startsWith('data:image/')) { try { await FotosDB.salvar(id, url); cacheFotos.set(id, url); } catch (e) { /* segue */ } }
   }

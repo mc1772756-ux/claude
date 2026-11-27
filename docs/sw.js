@@ -2,7 +2,7 @@
    Página: busca a versão nova quando há internet (e guarda), senão usa a guardada.
    Demais arquivos (ícones, leitor de fotos): usa o guardado e atualiza em segundo plano.
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v1';
+const VERSAO = 'diario-pet-v2';
 const ARQUIVOS = [
   './',
   './index.html',
