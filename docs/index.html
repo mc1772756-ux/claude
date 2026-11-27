@@ -112,7 +112,27 @@ body {
 }
 .topo h1 { font-size: 1.15rem; margin: 0; }
 .seletor-pet { display: flex; gap: 6px; align-items: center; flex: 1 1 180px; justify-content: flex-end; }
-.seletor-pet select { flex: 1; max-width: 240px; }
+.seletor-pet select { flex: 1; min-width: 0; max-width: 240px; }
+@media (max-width: 420px) { .topo .titulo-app { display: none; } .seletor-pet select { max-width: none; } }
+/* Aviso de instalar e lembrete de backup: só no Início */
+body:not([data-aba="inicio"]) #banner-instalar { display: none; }
+.lembrete-backup { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lembrete-backup p { flex: 1 1 200px; margin: 0; }
+/* Relatório para o veterinário */
+.relatorio { position: fixed; inset: 0; z-index: 60; overflow: auto; background: #fff; color: #111; padding: 20px max(16px, env(safe-area-inset-left, 0px)); }
+.relatorio-conteudo { max-width: 760px; margin: 0 auto; font-size: 0.95rem; }
+.relatorio h1 { font-size: 1.3rem; margin: 0 0 4px; }
+.relatorio h2 { font-size: 1.05rem; margin: 18px 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+.relatorio table { width: 100%; border-collapse: collapse; }
+.relatorio th, .relatorio td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+.relatorio .vazio-rel { color: #666; margin: 0; }
+.relatorio-botoes { display: flex; gap: 8px; justify-content: flex-end; max-width: 760px; margin: 0 auto 12px; }
+@media print {
+  body.imprimindo > *:not(#relatorio) { display: none !important; }
+  body.imprimindo::before { display: none; }
+  .relatorio { position: static; padding: 0; overflow: visible; }
+  .relatorio-botoes { display: none; }
+}
 
 main { max-width: 640px; margin: 0 auto; padding-block: 12px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--cartao); }
@@ -594,7 +614,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 </head>
 <body>
   <header class="topo">
-    <h1><i data-ic="pata"></i>Diário do Pet</h1>
+    <h1><i data-ic="pata"></i><span class="titulo-app">Diário do Pet</span></h1>
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
@@ -723,6 +743,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 
     <!-- ===================== INÍCIO ===================== -->
     <section id="aba-inicio" class="aba" hidden>
+    <div class="cartao lembrete-backup" id="lembrete-backup" hidden>
+      <p id="lembrete-backup-txt"></p>
+      <button type="button" class="btn pequeno primario" id="btn-backup-agora"><i data-ic="baixar"></i>Fazer backup agora</button>
+    </div>
     <section id="resumo-pet" class="resumo" hidden>
       <div class="resumo-cab">
         <div class="avatar" id="resumo-emoji" aria-hidden="true"></div>
@@ -742,6 +766,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
         <h2><i data-ic="agenda"></i>Próximos</h2>
         <ul class="lista proximos" id="lista-proximos"></ul>
         <button type="button" class="btn" id="btn-ver-agenda" style="width:100%;margin-top:8px">Ver calendário completo</button>
+        <button type="button" class="btn" id="btn-relatorio" style="width:100%;margin-top:8px"><i data-ic="diario"></i>Relatório para o veterinário</button>
       </div>
     </section>
 
@@ -1364,6 +1389,14 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
   <div class="visor" id="visor-foto" hidden role="dialog" aria-label="Foto ampliada">
     <img alt="">
     <button type="button" class="btn">Fechar</button>
+  </div>
+
+  <div class="relatorio" id="relatorio" role="dialog" aria-modal="true" aria-label="Relatório para o veterinário" hidden>
+    <div class="relatorio-botoes">
+      <button type="button" class="btn pequeno primario" id="btn-rel-imprimir">Imprimir / salvar PDF</button>
+      <button type="button" class="btn pequeno" id="btn-rel-fechar">Fechar</button>
+    </div>
+    <div class="relatorio-conteudo" id="relatorio-conteudo"></div>
   </div>
 
   <div class="tutorial" id="tutorial" hidden>
@@ -6427,8 +6460,8 @@ function eventosDoPet(petId, ini, fim) {
     const e = estoqueRemedio(r);
     if (e && dentro(e.acaba) && (!r.fim || e.acaba < r.fim)) ev.push({ chave: 'rem-est-' + r.id, data: e.acaba, ic: 'pilula', titulo: `${r.nome} acaba`, detalhe: 'compre mais antes', nivel: e.diasRestantes <= 3 ? 'perto' : '', aba: 'saude', sub: 'clinico' });
   }
-  // Aniversário
-  if (p.nascimento) {
+  // Aniversário (só com data de nascimento real: com idade aproximada a data seria inventada)
+  if (p.nascimento && !p.nascAprox) {
     const [an, mn, dn] = p.nascimento.split('-').map(Number);
     for (let a = Number(ini.slice(0, 4)); a <= Number(fim.slice(0, 4)); a++) {
       const ult = new Date(a, mn, 0).getDate();
@@ -6649,6 +6682,8 @@ function mostrarAba(nome) {
   if (nome === 'racao' || nome === 'alimentos') { mostrarSubabaPeso(nome); nome = 'peso'; }
   if (!ABAS.includes(nome)) nome = 'inicio';
   abaAtual = nome;
+  document.body.dataset.aba = nome;
+  if (typeof atualizarLembreteBackup === 'function') atualizarLembreteBackup();
   if (nome === 'peso') { preencherFormEcc(); preencherFormRacao(); preencherFormSaco(); }
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
@@ -6743,6 +6778,70 @@ limparFormRemedio();
 limparFormSaude();
 
 /* ---------- Backup (exportar / importar) ---------- */
+// Lembrete no Início: 1º backup após 7 dias de uso, depois a cada 30 dias
+function lerLS(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function gravarLS(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignora */ } }
+if (!lerLS('diario-pet-primeiro-uso')) gravarLS('diario-pet-primeiro-uso', hojeISO());
+function diasDesde(iso) { return iso ? Math.floor((new Date(hojeISO() + 'T12:00') - new Date(iso + 'T12:00')) / 86400000) : 0; }
+function atualizarLembreteBackup() {
+  const el = $('#lembrete-backup');
+  if (!el) return;
+  const ultimo = lerLS('diario-pet-ultimo-backup');
+  const adiado = lerLS('diario-pet-backup-adiado');
+  const dias = diasDesde(ultimo || lerLS('diario-pet-primeiro-uso'));
+  const mostrar = estado.pets.length > 0 && dias >= (ultimo ? 30 : 7) && adiado !== hojeISO();
+  el.hidden = !mostrar;
+  if (mostrar) {
+    $('#lembrete-backup-txt').innerHTML = ultimo
+      ? `<strong>Faz ${dias} dias desde o último backup.</strong> Os dados ficam só neste celular: se ele for perdido ou o app apagado, tudo some.`
+      : '<strong>Você ainda não fez backup.</strong> Os dados ficam só neste celular: se ele for perdido ou o app apagado, tudo some.';
+  }
+}
+function marcarBackupFeito() { gravarLS('diario-pet-ultimo-backup', hojeISO()); atualizarLembreteBackup(); }
+$('#btn-backup-agora').addEventListener('click', () => {
+  gravarLS('diario-pet-backup-adiado', hojeISO()); // se cancelar, não insiste de novo hoje
+  $('#btn-exportar').click();
+  $('#lembrete-backup').hidden = true;
+});
+
+/* ---------- Relatório para o veterinário (imprimir ou salvar em PDF) ---------- */
+function montarRelatorio(p) {
+  const de = (lista) => lista.filter((r) => r.petId === p.id);
+  const ordem = (a, b) => String(b.data || b.inicio || '').localeCompare(String(a.data || a.inicio || ''));
+  const tabela = (cab, linhas) => linhas.length
+    ? `<table><thead><tr>${cab.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${linhas.map((l) => `<tr>${l.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    : '<p class="vazio-rel">Nenhum registro.</p>';
+  const d = (iso) => (iso ? fmtData(iso) : '—');
+  const pesos = de(estado.pesos).sort(ordem).slice(0, 12);
+  const saude = (tipo) => de(estado.saude).filter((r) => r.tipo === tipo).sort(ordem);
+  const remedios = de(estado.remedios).sort(ordem);
+  const doencas = de(estado.doencas);
+  const sintomas = de(estado.sintomas).sort(ordem).slice(0, 20);
+  const consultas = de(estado.consultas).sort(ordem).slice(0, 10);
+  const info = [ESPECIES[p.especie]?.nome, sexoTexto(p), p.raca, idadeDoPet(p)].filter(Boolean).map(esc).join(' · ');
+  const prev = (tipo) => tabela(['Nome', 'Aplicada', 'Próxima', 'Obs.'], saude(tipo).map((r) => [esc(r.nome), d(r.data), d(r.proxima), esc(r.obs || '')]));
+  return `<h1>${esc(p.nome)}</h1>
+    <p>${info}${p.nascimento && !p.nascAprox ? ` · nasc. ${fmtData(p.nascimento)}` : ''}</p>
+    <p style="color:#666;font-size:.85rem">Relatório do Diário do Pet gerado em ${fmtData(hojeISO())}.</p>
+    <h2>Peso (últimos registros)</h2>${tabela(['Data', 'Peso', 'Obs.'], pesos.map((r) => [d(r.data), `${fmtNum(r.kg, 2)} kg`, esc(r.obs || '')]))}
+    <h2>Doenças / diagnósticos</h2>${tabela(['Doença', 'Situação', 'Obs.'], doencas.map((r) => [esc(r.nome), esc(r.situacao || ''), esc(r.obs || '')]))}
+    <h2>Remédios</h2>${tabela(['Remédio', 'Dose', 'Início', 'Fim', 'Em uso'], remedios.map((r) => [esc(r.nome), esc(r.dose || ''), d(r.inicio), d(r.fim), remedioAtivo(r) ? 'sim' : 'não']))}
+    <h2>Vacinas</h2>${prev('vacina')}
+    <h2>Vermífugo</h2>${prev('vermifugo')}
+    <h2>Antipulgas</h2>${prev('antipulgas')}
+    <h2>Sintomas recentes</h2>${tabela(['Data', 'Sintoma', 'Intensidade', 'Obs.'], sintomas.map((r) => [d(r.data) + (r.hora ? ' ' + esc(r.hora) : ''), esc(nomeSintoma(r)), esc(r.intensidade || ''), esc(r.obs || '')]))}
+    <h2>Consultas e exames</h2>${tabela(['Data', 'Tipo', 'Clínica', 'Motivo / resultado'], consultas.map((r) => [d(r.data), esc((TIPOS_CONSULTA[r.tipo] || TIPOS_CONSULTA.consulta).nome), esc(r.clinica || ''), esc([r.motivo, r.resultado].filter(Boolean).join(' — '))]))}`;
+}
+$('#btn-relatorio').addEventListener('click', () => {
+  const p = petAtual();
+  if (!p) return;
+  $('#relatorio-conteudo').innerHTML = montarRelatorio(p);
+  $('#relatorio').hidden = false;
+  document.body.classList.add('imprimindo');
+});
+$('#btn-rel-fechar').addEventListener('click', () => { $('#relatorio').hidden = true; document.body.classList.remove('imprimindo'); });
+$('#btn-rel-imprimir').addEventListener('click', () => window.print());
+
 function statusBackup(html, classe = '') {
   const el = $('#backup-status');
   el.className = 'leitura-status' + (classe ? ' ' + classe : '');
@@ -6765,6 +6864,7 @@ $('#btn-exportar').addEventListener('click', async () => {
     const arq = new File([texto], nome, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [arq] })) {
       await navigator.share({ files: [arq], title: 'Backup do Diário do Pet' });
+      marcarBackupFeito();
       statusBackup('Backup pronto ✓', 'ok-leitura');
       return;
     }
@@ -6773,6 +6873,7 @@ $('#btn-exportar').addEventListener('click', async () => {
   }
   marcarAjuda('backup');
   baixarTexto(nome, texto, 'application/json');
+  marcarBackupFeito();
   statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads).`, 'ok-leitura');
 });
 
