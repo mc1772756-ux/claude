@@ -50,19 +50,18 @@ self.addEventListener('fetch', (ev) => {
   }
 
   const doLeitor = new URL(req.url).pathname.includes('/ocr/');
-  ev.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((guardado) => {
-      if (guardado && doLeitor) return guardado;
-      const rede = fetch(req)
-        .then((resp) => {
-          if (resp.ok) { const copia = resp.clone(); ev.waitUntil(caches.open(VERSAO).then((c) => c.put(req, copia))); }
-          return resp;
-        })
-        .catch(() => guardado);
-      return guardado || rede;
-    }),
-  );
+  const guardadoP = caches.match(req, { ignoreSearch: true });
+  let gravar = Promise.resolve();
+  // Rede (para atualizar a cópia): não busca de novo o leitor de fotos que já está guardado
+  const redeP = guardadoP.then((guardado) => (guardado && doLeitor ? null : fetch(req).then((resp) => {
+    if (resp.ok) { const copia = resp.clone(); gravar = caches.open(VERSAO).then((c) => c.put(req, copia)); }
+    return resp;
+  })));
+  // registrado já (e não depois da resposta), para o navegador esperar a gravação terminar
+  ev.waitUntil(redeP.then(() => gravar).catch(() => {}));
+  ev.respondWith(guardadoP.then((guardado) => guardado || redeP).catch(() => guardadoP));
 });
+
 
 /* ---------- Avisos de lembretes com o app fechado (Android/Chrome com o app instalado) ----------
    A página guarda em CACHE_LEMBRETES um resumo dos próximos lembretes de todos os pets.

@@ -1838,7 +1838,8 @@ function estadoVazio() {
   return e;
 }
 // Dados vindos de fora (backup, outro aparelho) entram em HTML: ids e fotos precisam ser seguros
-const ID_SEGURO = /^[A-Za-z0-9_-]{1,80}$/;
+const RE_ID_SEGURO = /^[A-Za-z0-9_-]{1,80}$/;
+const ID_SEGURO = { test: (x) => typeof x === 'string' && RE_ID_SEGURO.test(x) }; // RegExp.test(undefined) aceitaria "undefined"
 const FOTO_SEGURA = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
 function sanearEstado(e) {
   normalizarEstado(e);
@@ -1854,6 +1855,10 @@ function sanearEstado(e) {
     e[k] = e[k].filter((r) => r && typeof r === 'object' && (r.id === undefined || ID_SEGURO.test(r.id)) && petsOk.has(r.petId));
     for (const r of e[k]) if (r.fotoId && !ID_SEGURO.test(r.fotoId)) delete r.fotoId;
   }
+  // campos de lista fechada entram em HTML e em buscas por tabela
+  for (const g of e.gastos) if (!Object.prototype.hasOwnProperty.call(CATEGORIAS, g.categoria)) g.categoria = 'outros';
+  e.saude = e.saude.filter((r) => Object.prototype.hasOwnProperty.call(TIPOS, r.tipo));
+  for (const sx of e.sintomas) if (!Object.prototype.hasOwnProperty.call(SINTOMAS, sx.tipo)) sx.tipo = 'outro';
   if (e.petAtual && !petsOk.has(e.petAtual)) e.petAtual = e.pets[0]?.id || null;
   return e;
 }
@@ -3165,7 +3170,7 @@ $('#form-remedio').addEventListener('submit', (ev) => {
   if (estoque !== null) marcarAjuda('estoque-remedio');
   // Término alterado para hoje ou depois (ou em branco) num remédio encerrado: volta a ficar em uso
   if (existente && existente.encerrado && fim !== existente.fim && (!fim || fim >= hojeISO())) dados.encerrado = '';
-  if (existente) Object.assign(existente, dados);
+  if (existente) { Object.assign(existente, dados); delete existente.fimAntes; } // a data digitada vale mais que a guardada
   else estado.remedios.push({ id: novoId(), petId: estado.petAtual, ...dados, criado: Date.now() });
   salvar();
   limparFormRemedio();
@@ -3201,7 +3206,7 @@ function encerrarRemedio(id) {
   if (!r) return;
   const hoje = hojeISO();
   r.encerrado = hoje;
-  if ((!r.fim || r.fim > hoje) && r.inicio <= hoje) { r.fimAntes = r.fim || ''; r.fim = hoje; }
+  if ((!r.fim || r.fim >= hoje) && r.inicio <= hoje) { r.fimAntes = r.fim || ''; r.fim = hoje; }
   salvar();
   renderTudo();
 }
@@ -3210,7 +3215,7 @@ function reativarRemedio(id) {
   if (!r) return;
   r.encerrado = '';
   if (r.fimAntes !== undefined) { r.fim = r.fimAntes && r.fimAntes >= hojeISO() ? r.fimAntes : ''; delete r.fimAntes; }
-  else if (r.fim && r.fim <= hojeISO()) r.fim = '';
+  else if (r.fim && r.fim < hojeISO()) r.fim = '';
   salvar();
   renderTudo();
 }
@@ -4887,7 +4892,7 @@ function perfilAlimentar(p) {
   const veterinaria = carac.includes('veterinaria');
   const poucaGordura = carac.includes('lowfat') || /pancreat|hiperlip|gastro|colite|enterit/.test(doencas);
   const diabetes = /diabet/.test(doencas);
-  const renal = carac.includes('renal') || /\b(renal|rins?)\b/.test(doencas);
+  const renal = carac.includes('renal') || /\b(renal|rim|rins)\b/.test(doencas);
   const engorda = RACAS_ENGORDAM.includes(raca) || (ecc !== null && ecc >= 6);
   const braqui = RACAS_BRAQUI.includes(raca);
   // calorias do dia: meta da avaliação ECC ou estimativa pela fórmula de energia
@@ -5839,7 +5844,7 @@ async function lerNota(arquivo) {
       r = { ...r2, ...Object.fromEntries(Object.entries(r1).filter(([, v]) => v && (!Array.isArray(v) || v.length))) };
       // itens, categorias e "dá para separar" vêm sempre juntos da mesma leitura
       const fonte = r1.itens.length || !r2.itens.length ? r1 : r2;
-      Object.assign(r, { itens: fonte.itens, porCat: fonte.porCat, separavel: fonte.separavel });
+      Object.assign(r, { itens: fonte.itens, porCat: fonte.porCat, separavel: fonte.separavel, categoria: fonte.categoria, racaoItem: fonte.racaoItem });
       r.texto = limparTextoNota(texto).trim();
     }
     mostrarNota(r);
@@ -7213,6 +7218,15 @@ $('#backup-status').addEventListener('click', async (ev) => {
   backupPendente = null;
   // O backup entra como está: sem marcar os registros como editados agora
   // (senão ele "venceria" edições mais novas do outro aparelho na próxima sincronização)
+  // Mas o que existia aqui e não está no backup foi apagado de propósito: vira lápide,
+  // para não voltar do outro aparelho na próxima sincronização
+  const agoraImp = Date.now();
+  for (const k of COLECOES) {
+    const novosIds = new Set(novo[k].map((r) => r && r.id));
+    for (const id of (typeof fotografia !== 'undefined' ? fotografia.get(k)?.keys() : null) || []) {
+      if (!novosIds.has(id)) novo.sync.apagados[k + ':' + id] = agoraImp;
+    }
+  }
   if (typeof tirarFotografia === 'function') tirarFotografia();
   salvar();
   aoTrocarPet();
@@ -7472,17 +7486,18 @@ function venceRemoto(r, l) {
   if (mr !== ml) return mr > ml;
   return jsonSemCarimbo(r) > jsonSemCarimbo(l); // empate: escolha igual nos dois aparelhos
 }
-const origem_local_tem = (local, k, id) => local[k].some((r) => r && r.id === id);
 function juntarEstados(local, remotoBruto) {
   const remoto = sanearEstado(Object.assign(estadoVazio(), remotoBruto));
   const lapides = { ...local.sync.apagados };
   for (const [c, t] of Object.entries(remoto.sync.apagados)) if (typeof t === 'number' && !(lapides[c] >= t)) lapides[c] = t;
   const stats = { novos: 0, atualizados: 0, apagados: 0 };
   const res = { ...local, sync: { ...local.sync, apagados: lapides } };
+  const origens = {};
   for (const k of COLECOES) {
     const porId = new Map();
     const ordem = [];
-    const origem = new Map(); // id → 'l' | 'r' | 'lr'
+    const origem = new Map(); // id → 'l' (já estava aqui) | 'r' (veio do outro)
+    origens[k] = origem;
     for (const r of local[k]) { if (r && r.id && !porId.has(r.id)) { porId.set(r.id, r); ordem.push(r.id); origem.set(r.id, 'l'); } }
     for (const r of remoto[k]) {
       if (!r || typeof r !== 'object') continue;
@@ -7510,7 +7525,8 @@ function juntarEstados(local, remotoBruto) {
     res[k] = res[k].filter((r) => {
       if (!r.petId || vivos.has(r.petId)) return true;
       lapides[k + ':' + r.id] = Math.max(lapides[k + ':' + r.id] || 0, r._m || 0, agora);
-      if (origem_local_tem(local, k, r.id)) stats.apagados++;
+      if (origens[k].get(r.id) === 'l') stats.apagados++;
+      else stats.novos--; // tinha sido contado como novo
       return false;
     });
   }
@@ -8118,9 +8134,12 @@ $('#btn-notif-teste').addEventListener('click', () => {
 });
 
 // O service worker não lê o localStorage: deixamos um resumo dos lembretes no Cache Storage
+// Tipos de lembrete que o app mostra como "atrasado" depois que a data passa
+// (vacina/vermífugo/antipulgas, plano de vacinas, retorno e validade da ração)
+const PODE_ATRASAR = /^(sau-|plano-|ret-|rac-val)/;
 function dadosParaAvisos() {
   return pendencias(estado.pets.map((p) => p.id), 45)
-    .map((e) => ({ data: e.data, hora: e.hora || '', titulo: e.titulo, pet: nomePet(e.petId), atrasavel: e.nivel === 'alerta' && !e.compromisso }));
+    .map((e) => ({ data: e.data, hora: e.hora || '', titulo: e.titulo, pet: nomePet(e.petId), atrasavel: PODE_ATRASAR.test(e.chave) }));
 }
 let timerAvisos = 0;
 function gravarLembretesParaAvisos() {
@@ -8373,7 +8392,7 @@ function padroesGastos(p) {
     const [cat, dif] = Object.keys(a).map((c) => [c, a[c] - (b[c] || 0)]).sort((x, y) => y[1] - x[1])[0] || [];
     out.push({ chave: `gasto-alta-${p.id}-${hoje.slice(0, 7)}`, nivel: 'info', ic: 'moedas', aba: 'diario', sub: 'gastos',
       titulo: `Gastos subiram ${fmtPct(((ult - ant) / ant) * 100)}`,
-      texto: `${fmtReais(ult)} nos últimos 3 meses, contra ${fmtReais(ant)} nos 3 anteriores.${cat && dif > 0 ? ` O que mais cresceu: ${CATEGORIAS[cat] || cat} (+${fmtReais(dif)}).` : ''}`,
+      texto: `${fmtReais(ult)} nos últimos 3 meses, contra ${fmtReais(ant)} nos 3 anteriores.${cat && dif > 0 ? ` O que mais cresceu: ${esc(CATEGORIAS[cat] || cat)} (+${fmtReais(dif)}).` : ''}`,
       como: 'Soma dos gastos deste pet em dois períodos de 90 dias.' });
   }
   const desde = primeiro > somarDias(hoje, -364) ? primeiro : somarDias(hoje, -364);
@@ -8386,7 +8405,7 @@ function padroesGastos(p) {
     const [top, v] = Object.entries(cats).sort((x, y) => y[1] - x[1])[0] || [];
     out.push({ chave: `gasto-ano-${p.id}-${hoje.slice(0, 7)}`, nivel: 'info', ic: 'moedas', aba: 'diario', sub: 'gastos',
       titulo: `≈ ${fmtReais(ano)} por ano`,
-      texto: `No ritmo dos últimos ${dias >= 360 ? '12 meses' : tempoTexto(dias)}, ${esc(p.nome)} custa cerca de ${fmtReais(ano / 12)} por mês.${top ? ` A maior parte vai para ${(CATEGORIAS[top] || top).toLowerCase()} (${fmtNum((v / total) * 100, 0)}%).` : ''}`,
+      texto: `No ritmo dos últimos ${dias >= 360 ? '12 meses' : tempoTexto(dias)}, ${esc(p.nome)} custa cerca de ${fmtReais(ano / 12)} por mês.${top ? ` A maior parte vai para ${esc((CATEGORIAS[top] || top).toLowerCase())} (${fmtNum((v / total) * 100, 0)}%).` : ''}`,
       como: `${fmtReais(total)} registrados desde ${fmtData(desde)}, projetados para 365 dias.` });
   }
   return out;
