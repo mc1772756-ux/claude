@@ -5428,8 +5428,9 @@ const FotosDB = (() => {
           const req = indexedDB.open('diario-pet-fotos', 1);
           req.onupgradeneeded = () => req.result.createObjectStore('fotos');
           req.onsuccess = () => ok(req.result);
-          req.onerror = () => falha(req.error);
-        } catch (e) { falha(e); }
+          req.onerror = () => { conexao = null; falha(req.error); };
+          req.onblocked = () => { conexao = null; falha(new Error('bloqueado')); };
+        } catch (e) { conexao = null; falha(e); }
       });
     }
     return conexao;
@@ -5605,7 +5606,7 @@ function linkGoogle(ev) {
 const nomeArquivo = (...partes) => partes.join('-').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function baixarTexto(nome, texto, tipo = 'text/calendar;charset=utf-8') {
-  const url = URL.createObjectURL(new Blob([texto], { type: tipo }));
+  const url = URL.createObjectURL(texto instanceof Blob ? texto : new Blob([texto], { type: tipo }));
   const a = document.createElement('a');
   a.href = url; a.download = nome;
   document.body.appendChild(a); a.click(); a.remove();
@@ -8235,10 +8236,12 @@ function idsDeFotos(e = estado) {
   // fotos de carteira, ração e nota fiscal não entram na sincronização nem no backup
   return [...new Set([...e.sintomas, ...e.consultas, ...e.gastos].map((r) => r.fotoId).filter(Boolean))];
 }
+// Limite de tempo por foto: se o banco de fotos travar (comum em alguns iPhones), o backup segue sem ela
+const comLimite = (promessa, ms) => Promise.race([promessa, new Promise((_, f) => setTimeout(() => f(new Error('tempo')), ms))]);
 async function fotosDoEstado(e = estado) {
   const fotos = {};
   for (const id of idsDeFotos(e)) {
-    try { const u = await FotosDB.ler(id); if (u) fotos[id] = u; } catch (er) { /* sem foto */ }
+    try { const u = await comLimite(FotosDB.ler(id), 4000); if (u) fotos[id] = u; } catch (er) { /* sem foto */ }
   }
   return fotos;
 }
@@ -8256,30 +8259,45 @@ $('#btn-exportar').addEventListener('click', async () => {
   const senha = $('#backup-senha').value;
   if (comSenha && senha.length < 4) { statusBackup('Escolha uma senha com pelo menos 4 caracteres.', 'erro-leitura'); $('#backup-senha').focus(); return; }
   statusBackup('Preparando o backup…');
-  const fotos = await fotosDoEstado();
-  let dados = { app: 'diario-do-pet', formato: 1, exportadoEm: new Date().toISOString(), estado, fotos };
-  if (comSenha) {
-    try { dados = await Cofre.cifrar(dados, senha); } catch (e) { statusBackup('Este navegador não consegue criptografar. Exporte sem senha.', 'erro-leitura'); return; }
-  }
-  const nome = `diario-do-pet-backup-${hojeISO()}${comSenha ? '-com-senha' : ''}.json`;
-  const texto = JSON.stringify(dados);
-  // No celular, oferece "compartilhar" (salvar no Drive, enviar no WhatsApp...)
+  let arq, nome;
   try {
-    const arq = new File([texto], nome, { type: 'application/json' });
-    if (navigator.canShare && navigator.canShare({ files: [arq] })) {
-      await navigator.share({ files: [arq], title: 'Backup do Diário do Pet' });
-      marcarBackupFeito();
-      statusBackup(`Backup pronto ✓${comSenha ? ' (com senha)' : ''}`, 'ok-leitura');
-      return;
-    }
+    const fotos = await fotosDoEstado();
+    let dados = { app: 'diario-do-pet', formato: 1, exportadoEm: new Date().toISOString(), estado, fotos };
+    if (comSenha) dados = await Cofre.cifrar(dados, senha);
+    nome = `diario-do-pet-backup-${hojeISO()}${comSenha ? '-com-senha' : ''}.json`;
+    arq = new File([JSON.stringify(dados)], nome, { type: 'application/json' });
   } catch (e) {
-    if (e && e.name === 'AbortError') { statusBackup(''); return; }
+    statusBackup(comSenha ? 'Não consegui criar o backup com senha neste navegador. Tente sem senha.' : 'Não consegui criar o backup neste navegador. Feche outras abas do app e tente de novo.', 'erro-leitura');
+    return;
   }
-  marcarAjuda('backup');
-  baixarTexto(nome, texto, 'application/json');
-  marcarBackupFeito();
-  statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads).`, 'ok-leitura');
+  // No celular, o compartilhar só abre com o toque do usuário: por isso o botão, em vez de chamar direto
+  if (navigator.canShare && navigator.canShare({ files: [arq] })) {
+    statusBackup(`Backup pronto (${Math.max(1, Math.round(arq.size / 1024))} KB). <button type="button" class="btn pequeno primario" id="btn-backup-compartilhar">Salvar ou compartilhar</button>`, 'ok-leitura');
+    $('#btn-backup-compartilhar').addEventListener('click', async () => {
+      try {
+        await navigator.share({ files: [arq], title: 'Backup do Diário do Pet' });
+        marcarBackupFeito();
+        statusBackup(`Backup pronto ✓${comSenha ? ' (com senha)' : ''}`, 'ok-leitura');
+      } catch (e) {
+        if (e && e.name === 'AbortError') { statusBackup('Backup pronto. Toque em “Salvar ou compartilhar” quando quiser.', 'ok-leitura'); return; }
+        baixarBackup(arq, nome);
+      }
+    }, { once: true });
+    return;
+  }
+  baixarBackup(arq, nome);
 });
+// Em navegadores sem compartilhar: baixa o arquivo; se o download não sair, mostra o texto para copiar
+function baixarBackup(arq, nome) {
+  marcarAjuda('backup');
+  try {
+    baixarTexto(nome, arq, arq.type);
+    marcarBackupFeito();
+    statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads). Se não apareceu, use “Compartilhar” no seu celular.`, 'ok-leitura');
+  } catch (e) {
+    statusBackup('Este navegador não deixou salvar o arquivo. Abra o app no Safari (fora da tela de início) e exporte de novo.', 'erro-leitura');
+  }
+}
 
 function validarBackup(b) {
   if (!b || b.app !== 'diario-do-pet' || !b.estado || typeof b.estado !== 'object' || !Array.isArray(b.estado.pets)) throw new Error('formato');
@@ -8801,17 +8819,26 @@ async function codificarSDP(tipo, sdp) {
   return 'DP1' + tipo + modo + paraB64(bytes, true);
 }
 async function decodificarSDP(txt) {
-  const t = String(txt).trim().replace(/\s/g, '');
-  const m = /^DP1([OR])([ZT])([A-Za-z0-9_-]+)$/.exec(t);
-  if (!m) throw new Error('codigo');
-  let bytes = deB64(m[3]);
-  if (m[2] === 'Z') {
-    if (!TEM_COMPRESSAO) throw new Error('compressao');
-    bytes = await descomprimir(bytes);
+  // Aceita o código sozinho ou dentro de um texto (ex.: “Segue o código: DP1…”), com espaços ou quebras de linha
+  const texto = String(txt);
+  // Primeiro tenta só a palavra do código; se ele veio partido por espaços/quebras, junta o resto do trecho
+  const tentativas = [/DP1([OR])([ZT])([A-Za-z0-9_-]+)/.exec(texto), /DP1([OR])([ZT])([A-Za-z0-9_\-\s]+)/.exec(texto)]
+    .filter(Boolean).map((m) => ({ tipo: m[1], modo: m[2], corpo: m[3].replace(/\s/g, '') }));
+  if (!tentativas.length) throw new Error('codigo');
+  let ultimo = new Error('codigo');
+  for (const { tipo, modo, corpo } of tentativas) {
+    try {
+      let bytes = deB64(corpo);
+      if (modo === 'Z') {
+        if (!TEM_COMPRESSAO) throw new Error('compressao');
+        bytes = await descomprimir(bytes);
+      }
+      const sdp = new TextDecoder().decode(bytes);
+      if (!sdp.startsWith('v=0')) throw new Error('codigo');
+      return { tipo: tipo === 'O' ? 'offer' : 'answer', sdp };
+    } catch (e) { ultimo = e; if (e.message === 'compressao') throw e; }
   }
-  const sdp = new TextDecoder().decode(bytes);
-  if (!sdp.startsWith('v=0')) throw new Error('codigo');
-  return { tipo: m[1] === 'O' ? 'offer' : 'answer', sdp };
+  throw ultimo;
 }
 
 /* ----- QR code: desenha (qrcode-generator) e lê (BarcodeDetector ou jsQR) ----- */
@@ -8849,10 +8876,10 @@ async function obterDetectorQR() {
   if (typeof jsQR !== 'function') await carregarScript('qr/jsQR.min.js');
   const c = document.createElement('canvas');
   const ctx = c.getContext('2d', { willReadFrequently: true });
-  detectorQR = async (fonte) => {
+  detectorQR = async (fonte, maior = 1100) => {
     const w = fonte.videoWidth || fonte.naturalWidth || fonte.width, h = fonte.videoHeight || fonte.naturalHeight || fonte.height;
     if (!w || !h) return '';
-    const f = Math.min(1, 1100 / Math.max(w, h));
+    const f = Math.min(1, maior / Math.max(w, h));
     c.width = Math.round(w * f); c.height = Math.round(h * f);
     ctx.drawImage(fonte, 0, 0, c.width, c.height);
     const img = ctx.getImageData(0, 0, c.width, c.height);
@@ -8891,7 +8918,7 @@ async function abrirCamera() {
     if (!Sync.lendo || minha !== sessaoCamera) return;
     try {
       const txt = video.readyState >= 2 ? await detectar(video) : '';
-      if (txt && txt.startsWith('DP1')) { pararCamera(); receberCodigo(txt); return; }
+      if (txt && /DP1[OR][ZT]/.test(txt)) { pararCamera(); receberCodigo(txt); return; }
     } catch (e) { /* tenta o próximo quadro */ }
     setTimeout(passo, 180);
   };
@@ -8911,7 +8938,11 @@ async function lerQRDeFoto(arquivo) {
     const img = new Image();
     await new Promise((ok, falha) => { img.onload = ok; img.onerror = falha; img.src = url; });
     const detectar = await obterDetectorQR();
-    const txt = await detectar(img);
+    let txt = '';
+    for (const tamanho of [1100, 2400, 600]) {
+      txt = await detectar(img, tamanho);
+      if (txt) break;
+    }
     if (!txt) throw new Error('nada');
     receberCodigo(txt);
   } catch (e) {
