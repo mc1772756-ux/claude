@@ -1097,6 +1097,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
       <div class="cartao" id="cartao-vacina">
         <h2><i data-ic="vacina"></i>Vacinas</h2>
         <ul class="lista" data-lista-tipo="vacina"></ul>
+        <div class="linha-botoes">
+          <button type="button" class="btn pequeno" id="btn-agenda-vacinas"><i data-ic="agenda"></i>Pôr todas as vacinas na agenda</button>
+        </div>
+        <p class="dica-campo" id="agenda-vacinas-status" role="status" hidden></p>
       </div>
       <div class="cartao">
         <h2><i data-ic="pilula"></i>Vermífugo</h2>
@@ -3295,6 +3299,43 @@ $('#carteira-resultado').addEventListener('change', (ev) => {
   const ok = ev.target.closest('[data-carteira-ok]');
   if (ok) ok.closest('.carteira-item').classList.toggle('desmarcado', !ok.checked);
 });
+
+/* ---------- Agenda das vacinas: um arquivo com todas as próximas doses ---------- */
+// Doses registradas com próxima data a partir de hoje + doses sugeridas pelo plano
+function eventosVacinasAgenda(p) {
+  const hoje = hojeISO();
+  const registradas = estado.saude
+    .filter((r) => r.petId === p.id && r.tipo === 'vacina' && r.proxima && r.proxima >= hoje)
+    .map(eventoVacina);
+  const sugeridas = eventosPlano(p, (iso) => iso >= hoje).map((e) => e.google);
+  return [...registradas, ...sugeridas];
+}
+
+async function agendaVacinas() {
+  const p = petAtual();
+  const msg = $('#agenda-vacinas-status');
+  const mostrar = (texto) => { msg.innerHTML = texto; msg.hidden = false; };
+  if (!p) return;
+  const evs = eventosVacinasAgenda(p);
+  if (!evs.length) { mostrar('Nenhuma vacina com próxima dose para pôr na agenda.'); return; }
+  const texto = arquivoICS(evs);
+  const nome = nomeArquivo('vacinas', p.nome) + '.ics';
+  // No celular: compartilhar o arquivo abre a agenda direto
+  try {
+    const arq = new File([texto], nome, { type: 'text/calendar' });
+    if (navigator.canShare && navigator.canShare({ files: [arq] })) {
+      await navigator.share({ files: [arq], title: `Vacinas de ${p.nome}` });
+      mostrar(`${plural(evs.length, 'evento enviado', 'eventos enviados')} para a agenda.`);
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  if (EMBUTIDO) { mostrar('Dentro do claude.ai o download é bloqueado. Abra o app pelo site para baixar a agenda.'); return; }
+  baixarTexto(nome, texto);
+  mostrar(`${plural(evs.length, 'evento pronto', 'eventos prontos')}: abra o arquivo <strong>${esc(nome)}</strong> para adicionar à agenda.`);
+}
+$('#btn-agenda-vacinas').addEventListener('click', agendaVacinas);
 
 /* ---------- Banho ---------- */
 function banhosDoPet() {
