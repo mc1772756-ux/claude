@@ -1690,8 +1690,9 @@ function estadoVazio() {
 }
 
 function carregar() {
+  let bruto = null;
   try {
-    const bruto = localStorage.getItem(CHAVE);
+    bruto = localStorage.getItem(CHAVE);
     if (!bruto) return estadoVazio();
     const e = Object.assign(estadoVazio(), JSON.parse(bruto));
     for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) if (!Array.isArray(e[k])) e[k] = [];
@@ -1700,6 +1701,8 @@ function carregar() {
     return e;
   } catch (e) {
     console.warn('Falha ao ler dados salvos', e);
+    // Não deixa o próximo salvar apagar os dados ilegíveis: guarda uma cópia antes
+    if (bruto) { try { localStorage.setItem(CHAVE + '-copia-' + Date.now(), bruto); } catch (err) { /* sem espaço: segue */ } }
     return estadoVazio();
   }
 }

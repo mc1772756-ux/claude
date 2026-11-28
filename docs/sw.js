@@ -4,7 +4,7 @@
    Leitor de fotos (ocr/, ~10 MB, inclui digitos.json: rede de dígitos à mão): só é baixado na primeira vez que alguém usa o leitor
    e depois sai sempre do guardado (sem baixar de novo a cada uso).
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v18';
+const VERSAO = 'diario-pet-v19';
 const ARQUIVOS = [
   './',
   './index.html',
