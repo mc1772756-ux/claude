@@ -3182,15 +3182,17 @@ function jaRegistrada(p, cat, nome, data) {
 
 function linhaCarteira(it, i, p) {
   const dup = jaRegistrada(p, it.cat, it.nome, it.data);
+  const incompleta = !it.nome || !it.data;
+  const desmarcar = dup || incompleta;
   const hoje = hojeISO();
-  return `<div class="carteira-item${dup ? ' desmarcado' : ''}" data-carteira-item="${i}">
-    <label class="check"><input type="checkbox" data-carteira-ok${dup ? '' : ' checked'}> Registrar esta dose</label>
+  return `<div class="carteira-item${desmarcar ? ' desmarcado' : ''}" data-carteira-item="${i}">
+    <label class="check"><input type="checkbox" data-carteira-ok${desmarcar ? '' : ' checked'}> Registrar esta dose</label>
     <label>Vacina<input type="text" data-c="nome" maxlength="60" list="sugestoes-saude" value="${esc(it.nome || '')}" placeholder="ex.: V10, Antirrábica"></label>
     <div class="linha">
       <label>Data aplicada<input type="date" data-c="data" max="${hoje}" value="${it.data || ''}"></label>
       <label>Próxima dose<input type="date" data-c="proxima" value="${it.proxima || ''}"></label>
     </div>
-    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : ''}
+    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : !it.proxima && it.nome && it.data ? '<p class="dica-campo">Próxima dose não lida: o app vai calcular pelo plano. Confira com a carteira.</p>' : ''}
   </div>`;
 }
 
