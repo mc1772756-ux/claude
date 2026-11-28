@@ -1,10 +1,10 @@
 /* Diário do Pet — service worker: deixa o app funcionando sem internet.
    Página: busca a versão nova quando há internet (e guarda), senão usa a guardada.
    Ícones e manifesto: usa o guardado e atualiza em segundo plano.
-   Leitor de fotos (ocr/, ~10 MB): só é baixado na primeira vez que alguém usa o leitor
+   Leitor de fotos (ocr/, ~10 MB, inclui digitos.json: rede de dígitos à mão): só é baixado na primeira vez que alguém usa o leitor
    e depois sai sempre do guardado (sem baixar de novo a cada uso).
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v5';
+const VERSAO = 'diario-pet-v12';
 const CACHE_LEMBRETES = 'diario-pet-lembretes'; // resumo dos lembretes escrito pela página (não apagar na atualização)
 const ARQUIVOS = [
   './',
@@ -36,7 +36,7 @@ self.addEventListener('fetch', (ev) => {
 
   if (req.mode === 'navigate') {
     ev.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' }) // confere sempre no servidor (o GitHub Pages guarda a página por 10 min)
         .then((resp) => {
           // só a própria página do app substitui a cópia guardada (não um ícone ou licença aberto numa aba)
           const caminho = new URL(req.url).pathname;

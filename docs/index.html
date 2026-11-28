@@ -112,7 +112,27 @@ body {
 }
 .topo h1 { font-size: 1.15rem; margin: 0; }
 .seletor-pet { display: flex; gap: 6px; align-items: center; flex: 1 1 180px; justify-content: flex-end; }
-.seletor-pet select { flex: 1; max-width: 240px; }
+.seletor-pet select { flex: 1; min-width: 0; max-width: 240px; }
+@media (max-width: 420px) { .topo .titulo-app { display: none; } .seletor-pet select { max-width: none; } }
+/* Aviso de instalar e lembrete de backup: só no Início */
+body:not([data-aba="inicio"]) #banner-instalar { display: none; }
+.lembrete-backup { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lembrete-backup p { flex: 1 1 200px; margin: 0; }
+/* Relatório para o veterinário */
+.relatorio { position: fixed; inset: 0; z-index: 60; overflow: auto; background: #fff; color: #111; padding: 20px max(16px, env(safe-area-inset-left, 0px)); }
+.relatorio-conteudo { max-width: 760px; margin: 0 auto; font-size: 0.95rem; }
+.relatorio h1 { font-size: 1.3rem; margin: 0 0 4px; }
+.relatorio h2 { font-size: 1.05rem; margin: 18px 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+.relatorio table { width: 100%; border-collapse: collapse; }
+.relatorio th, .relatorio td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+.relatorio .vazio-rel { color: #666; margin: 0; }
+.relatorio-botoes { display: flex; gap: 8px; justify-content: flex-end; max-width: 760px; margin: 0 auto 12px; }
+@media print {
+  body.imprimindo > *:not(#relatorio) { display: none !important; }
+  body.imprimindo::before { display: none; }
+  .relatorio { position: static; padding: 0; overflow: visible; }
+  .relatorio-botoes { display: none; }
+}
 
 main { max-width: 640px; margin: 0 auto; padding-block: 12px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--cartao); }
@@ -570,6 +590,10 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
 #embalagem-resultado .linha-botoes { margin-top: 10px; }
 #embalagem-resultado pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.78rem; background: var(--fundo); border-radius: 8px; padding: 8px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; }
 .check { display: flex; gap: 8px; align-items: center; color: var(--texto); }
+.carteira-item { border: 1px solid var(--borda); border-radius: 12px; padding: 8px 10px; margin: 8px 0; }
+.carteira-item.desmarcado { opacity: .55; }
+.carteira-item .check { font-weight: 600; }
+.carteira-item .dica-campo { margin: 4px 0 0; }
 .check input { width: 20px; min-height: 20px; height: 20px; margin: 0; flex: none; }
 .itens-nota li { padding: 6px 0; }
 .itens-nota .principal { font-weight: 500; font-size: 0.9rem; }
@@ -635,7 +659,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 </head>
 <body>
   <header class="topo">
-    <h1><i data-ic="pata"></i>Diário do Pet</h1>
+    <h1><i data-ic="pata"></i><span class="titulo-app">Diário do Pet</span></h1>
     <div class="seletor-pet">
       <label for="pet-atual" class="vis-oculto">Pet selecionado</label>
       <select id="pet-atual"></select>
@@ -819,6 +843,10 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 
     <!-- ===================== INÍCIO ===================== -->
     <section id="aba-inicio" class="aba" hidden>
+    <div class="cartao lembrete-backup" id="lembrete-backup" hidden>
+      <p id="lembrete-backup-txt"></p>
+      <button type="button" class="btn pequeno primario" id="btn-backup-agora"><i data-ic="baixar"></i>Fazer backup agora</button>
+    </div>
     <section id="resumo-pet" class="resumo" hidden>
       <div class="resumo-cab">
         <div class="avatar" id="resumo-emoji" aria-hidden="true"></div>
@@ -838,6 +866,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
         <h2><i data-ic="agenda"></i>Próximos</h2>
         <ul class="lista proximos" id="lista-proximos"></ul>
         <button type="button" class="btn" id="btn-ver-agenda" style="width:100%;margin-top:8px">Ver calendário completo</button>
+        <button type="button" class="btn" id="btn-relatorio" style="width:100%;margin-top:8px"><i data-ic="diario"></i>Relatório para o veterinário</button>
       </div>
       <div class="cartao" id="cartao-padroes" hidden>
         <h2><i data-ic="olho"></i>Padrões nos seus registros</h2>
@@ -1211,6 +1240,20 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
         </details>
       </div>
 
+      <div class="cartao" id="cartao-carteira">
+        <h2><i data-ic="camera"></i>Ler carteira de vacinação</h2>
+        <details class="ajuda" data-ajuda="carteira"><summary><i data-ic="info"></i>Como funciona</summary>
+          <p>Fotografe uma página da carteira, reta e com boa luz. O app lê no próprio aparelho as etiquetas das vacinas (V10, V4, antirrábica, Vanguard, Nobivac, Rabisin…) e as datas, e monta a lista para você conferir. Datas escritas à mão nem sempre são lidas: confira e corrija antes de salvar. Doses já registradas vêm desmarcadas.</p>
+        </details>
+        <div class="linha-botoes" id="carteira-botoes">
+          <label class="btn pequeno botao-arquivo"><i data-ic="camera"></i>Tirar foto<input type="file" id="carteira-camera" accept="image/*" capture="environment"></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="imagem"></i>Escolher da galeria<input type="file" id="carteira-galeria" accept="image/*"></label>
+        </div>
+        <div class="fotos-emb" id="carteira-fotos"></div>
+        <div class="leitura-status" id="carteira-status" role="status" aria-live="polite" hidden></div>
+        <div id="carteira-resultado" hidden></div>
+      </div>
+
       <div class="cartao">
         <h2 id="form-saude-titulo">Registrar vacina, vermífugo ou antipulgas</h2>
         <form id="form-saude" novalidate>
@@ -1565,6 +1608,14 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
   <div class="visor" id="visor-foto" hidden role="dialog" aria-label="Foto ampliada">
     <img alt="">
     <button type="button" class="btn">Fechar</button>
+  </div>
+
+  <div class="relatorio" id="relatorio" role="dialog" aria-modal="true" aria-label="Relatório para o veterinário" hidden>
+    <div class="relatorio-botoes">
+      <button type="button" class="btn pequeno primario" id="btn-rel-imprimir">Imprimir / salvar PDF</button>
+      <button type="button" class="btn pequeno" id="btn-rel-fechar">Fechar</button>
+    </div>
+    <div class="relatorio-conteudo" id="relatorio-conteudo"></div>
   </div>
 
   <div class="tutorial" id="tutorial" hidden>
@@ -2845,6 +2896,641 @@ $('#plano-vacinas').addEventListener('click', (ev) => {
     $('#form-saude').scrollIntoView({ behavior: 'smooth', block: 'center' });
     $('#saude-data').focus({ preventScroll: true });
   }
+});
+
+/* ---------- Carteira de vacinação por foto (OCR no aparelho) ---------- */
+// Marcas e nomes comuns nas etiquetas. cat = id em VACINAS_PLANO; nome = como fica registrado.
+const CARTEIRA_TERMOS = {
+  cao: [
+    { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|rabguard|imrab|rabvac|rai[\s-]?vac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
+    { cat: 'gripe', re: /gripe|tosse|bordetel|vanguard\W{0,3}b\b|bronchi|bronquisep|pneumodog|nobivac\s*kc|\bkc\b|intrac/i },
+    { cat: 'giardia', re: /gi[aá]rdia/i },
+    { cat: 'leish', re: /leish/i },
+    { cat: 'multipla', re: /\bv\s?(?:6|7|8|10|11|12)\b|polivalente|m[uú]ltipla|[oó]ctupla|d[eé]ctupla|vanguard|duramune|recombitek|canigen|eurican|biocan|nobivac\s*(?:dhp|puppy|lepto)|vencomax|cinomose|parvo|leptospir/i },
+  ],
+  gato: [
+    { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|imrab|rabvac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
+    { cat: 'felv', re: /felv|leucemia|leucogen/i },
+    { cat: 'multipla', re: /\bv\s?[345]\b|tr[ií]plice|qu[aá]drupla|qu[ií]ntupla|polivalente|m[uú]ltipla|felocell|fel[\s-]?o[\s-]?vax|purevax|feligen|tricat|quatricat|panleuco|rinotraq|calici/i },
+  ],
+};
+const ROTULOS_DATA_PROX = /revac|pr[oó]x|retorno|refor[cç]o|validade\s+da\s+vac|repetir/i;
+
+function nomeVacinaCarteira(cat, linha, especie) {
+  const n = (linha.match(/\bv\s?(\d{1,2})\b/i) || [])[1];
+  if (cat === 'raiva') return 'Antirrábica';
+  if (cat === 'gripe') return 'Gripe canina (tosse dos canis)';
+  if (cat === 'giardia') return 'Giárdia';
+  if (cat === 'leish') return 'Leishmaniose';
+  if (cat === 'felv') return 'FeLV';
+  if (especie === 'cao') return n && /^(6|7|8|10|11|12)$/.test(n) ? 'V' + n : 'V10';
+  if (n && /^[345]$/.test(n)) return 'V' + n;
+  return /felv|leucemia/i.test(linha) ? 'V5' : 'V4';
+}
+
+// Datas dd/mm/aa(aa) de até 25 anos atrás e até 3 anos à frente
+function datasDaLinha(l) {
+  const hoje = hojeISO();
+  const out = [];
+  if (/licen|minist|agricult|fabr|venc|part\b/i.test(l)) return out; // datas impressas no selo
+  const re = /(\d{1,2})\s?[\/.\-]\s?(\d{1,2})\s?[\/.\-]\s?(\d{4}|\d{2})(?!\d)/g;
+  let m;
+  while ((m = re.exec(l))) {
+    const d = Number(m[1]), mes = Number(m[2]);
+    const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    if (d < 1 || d > 31 || mes < 1 || mes > 12) continue;
+    const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (iso > somarDias(hoje, 3 * 365) || iso < somarDias(hoje, -18 * 365)) continue;
+    out.push({ iso, prox: ROTULOS_DATA_PROX.test(l.slice(Math.max(0, m.index - 25), m.index)) });
+  }
+  return out;
+}
+
+// Cada trecho lido tem posição (x, y de 0 a 1 na foto). Etiquetas próximas viram uma vacina;
+// cada data vai para a etiqueta mais próxima que esteja acima dela ou na mesma altura.
+const PRIORIDADE_CAT = { '': 0, multipla: 1 };
+function extrairCarteira(trechos, p) {
+  const termos = CARTEIRA_TERMOS[p.especie] || CARTEIRA_TERMOS.cao;
+  const hits = [];
+  const datas = [];
+  const rotulos = [];
+  for (const t of trechos) {
+    if (t.mao) { datas.push({ iso: t.mao[0].iso, cands: t.mao, x: t.x, y: t.y, mao: true }); continue; }
+    const l = limparTextoOcr(t.texto);
+    const achou = termos.find((x) => x.re.test(l));
+    if (achou) hits.push({ cat: achou.cat, texto: l, x: t.x, y: t.y });
+    else if (/vacina\s+(viva|inativada|atenuada|recombinante)|nobiva|zoetis|boehringer|\bmsd\b/i.test(l)) hits.push({ cat: '', texto: l, x: t.x, y: t.y });
+    if (t.girado) continue;
+    const dl = datasDaLinha(l);
+    if (!dl.length && /revac|refor[cç]o|pr[oó]xima/i.test(l)) rotulos.push({ prox: true, x: t.x, y: t.y });
+    else if (!dl.length && /vacinad|aplicad|^data\b/i.test(l)) rotulos.push({ prox: false, x: t.x, y: t.y });
+    for (const d of dl) if (!datas.some((o) => o.iso === d.iso && Math.abs(o.x - t.x) < 0.05 && Math.abs(o.y - t.y) < 0.03)) datas.push({ ...d, cands: [{ iso: d.iso, p: 1 }], x: t.x, y: t.y });
+  }
+  // data logo abaixo de "Revacinar em" é a próxima dose; abaixo de "Vacinado em", a aplicada
+  for (const d of datas) {
+    let r = null, dist = Infinity;
+    for (const o of rotulos) {
+      const dy = d.y - o.y, dx = Math.abs(d.x - o.x);
+      if (dy < -0.01 || dy > 0.07 || dx > 0.1) continue;
+      if (dy + dx < dist) { dist = dy + dx; r = o; }
+    }
+    if (r && !d.prox) { d.prox = r.prox; d.aplic = !r.prox; }
+  }
+  // junta etiquetas da mesma caixa (selos lado a lado, linhas da mesma etiqueta)
+  const grupos = [];
+  for (const h of hits.sort((a, b) => a.y - b.y)) {
+    const g = grupos.find((x) => Math.abs(x.y - h.y) < 0.06 && Math.abs(x.x - h.x) < 0.25
+      && (x.cat === h.cat || x.cat === '' || h.cat === '' || x.cat === 'multipla' || h.cat === 'multipla'));
+    if (!g) { grupos.push({ ...h, textos: [h.texto] }); continue; }
+    g.textos.push(h.texto);
+    if ((PRIORIDADE_CAT[h.cat] ?? 2) > (PRIORIDADE_CAT[g.cat] ?? 2)) g.cat = h.cat;
+  }
+  for (const d of datas) {
+    let melhor = null, nota = Infinity;
+    for (const g of grupos) {
+      const dy = d.y - g.y, dx = Math.abs(d.x - g.x);
+      const mesmaLinha = Math.abs(dy) <= 0.04 && dx <= 0.35, abaixo = dy > 0 && dy <= 0.16 && dx <= 0.12;
+      if (!mesmaLinha && !abaixo) continue;
+      const n = Math.abs(dy) * 2 + dx;
+      if (n < nota) { nota = n; melhor = g; }
+    }
+    if (melhor) { (melhor.datas = melhor.datas || []).push(d); d.g = melhor; }
+  }
+  // data sem selo por perto: vai junto da data logo acima (mesma coluna) ou à esquerda (mesma linha)
+  for (const d of datas) {
+    if (d.g) continue;
+    const viz = datas.find((e) => e.g && e !== d && e.g.datas.length < 2
+      && ((Math.abs(e.x - d.x) < 0.06 && d.y - e.y > 0 && d.y - e.y < 0.12) || (Math.abs(e.y - d.y) < 0.03 && d.x - e.x > 0 && d.x - e.x < 0.3)));
+    if (viz) { viz.g.datas.push(d); d.g = viz.g; }
+  }
+  // data bem lida numa caixa "Vacinado/Revacinar em" sem selo reconhecido: vira uma vacina sem nome
+  for (const d of datas) {
+    if (d.g || (d.prox === undefined && d.aplic === undefined) || (d.cands[0].conf ?? 1) < 0.8) continue;
+    const viz = grupos.find((g) => g.orfao && Math.abs(g.y - d.y) < 0.04 && Math.abs(g.x - d.x) < 0.3 && g.datas.length < 2);
+    if (viz) { viz.datas.push(d); d.g = viz; continue; }
+    const g = { cat: '', textos: [], x: d.x, y: d.y, orfao: true, datas: [d] };
+    grupos.push(g); d.g = g;
+  }
+  const hoje = hojeISO();
+  return grupos.map((g) => {
+    const txt = g.textos.join(' ');
+    let nome = g.cat ? nomeVacinaCarteira(g.cat, txt, p.especie) : '';
+    if (p.especie === 'gato' && g.cat === 'felv' && termos.find((x) => x.cat === 'multipla').re.test(txt) && /\bv\s?5\b|qu[ií]ntupla/i.test(txt)) nome = 'V5';
+    const { data, proxima } = escolherDatas(g.datas || [], hoje, p.nascimento || '');
+    return { cat: g.cat, nome, data, proxima, x: g.x, y: g.y, orfao: !!g.orfao };
+  }).sort((a, b) => (Math.abs(a.x - b.x) > 0.3 ? a.x - b.x : a.y - b.y));
+}
+
+// Escolhe a data aplicada e a próxima entre as leituras da caixa. A revacinação costuma ser
+// no mesmo dia e mês do ano seguinte: um par assim vale muito mais (corrige dígitos mal lidos).
+function escolherDatas(ds, hoje, nasc = '') {
+  let melhor = { data: '', proxima: '', s: 0 };
+  const vazio = { cands: [{ iso: '', p: 1 }] };
+  const tenta = (A, B) => {
+    for (const a of A.cands) for (const b of B.cands) {
+      if (a.iso && a.iso > hoje) continue;
+      if (a.iso && b.iso && b.iso <= a.iso) continue;
+      if (!a.iso && !b.iso) continue;
+      if (nasc && ((a.iso && a.iso < nasc) || (b.iso && b.iso <= nasc))) continue; // antes de o pet nascer
+      const umAno = a.iso && b.iso && a.iso.slice(4) === b.iso.slice(4) && Number(b.iso.slice(0, 4)) - Number(a.iso.slice(0, 4)) === 1;
+      // letra de mão: sozinha só vale com leitura bem segura; em par que bate, basta média
+      const minimo = umAno ? 0.45 : 0.8;
+      if ((a.iso && (a.conf ?? 1) < minimo) || (b.iso && (b.conf ?? 1) < minimo)) continue;
+      let s = a.p * b.p;
+      if (a.iso && b.iso) {
+        s *= umAno ? 20 : diasEntre(a.iso, b.iso) <= 400 ? 1.5 : 0.3;
+      } else s *= 0.6;
+      if (A.prox) s *= 0.2;
+      if (B.aplic) s *= 0.2;
+      if (s > melhor.s) melhor = { data: a.iso, proxima: b.iso, s };
+    }
+  };
+  for (const A of ds) { tenta(A, vazio); tenta(vazio, A); for (const B of ds) if (A !== B) tenta(A, B); }
+  return melhor;
+}
+
+// Trechos lidos com a posição do centro (0 a 1) na foto original
+function trechosDoResultado(data, w, h, giro = 0) {
+  const out = [];
+  for (const b of data.blocks || []) for (const pa of b.paragraphs || []) for (const l of pa.lines || []) {
+    if (!l.text || !l.bbox) continue;
+    const cx = (l.bbox.x0 + l.bbox.x1) / 2, cy = (l.bbox.y0 + l.bbox.y1) / 2;
+    // giro 1: foto girada 90° no sentido horário; -1: anti-horário (w, h = tamanho da original)
+    const x = giro === 1 ? cy : giro === -1 ? w - cy : cx;
+    const y = giro === 1 ? h - cx : giro === -1 ? cx : cy;
+    out.push({ texto: l.text.trim(), x: x / w, y: y / h, girado: !!giro });
+  }
+  return out;
+}
+function girarCanvas(c, dir) {
+  const o = document.createElement('canvas');
+  o.width = c.height; o.height = c.width;
+  const ctx = o.getContext('2d');
+  ctx.translate(o.width / 2, o.height / 2);
+  ctx.rotate(dir * Math.PI / 2);
+  ctx.drawImage(c, -c.width / 2, -c.height / 2);
+  return o;
+}
+
+/* ---------- Datas escritas à mão ----------
+   Rede pequena treinada com dígitos manuscritos (MNIST) + a barra "/", roda no aparelho.
+   Isola a tinta de caneta (azul/roxa), separa os caracteres, lê cada um e monta a data. */
+let redeDigitos = null;
+function obterRedeDigitos() {
+  if (!redeDigitos) {
+    redeDigitos = fetch(urlOcr('digitos.json')).then((r) => r.json()).then((j) => {
+      const P = {};
+      for (const [k, v] of Object.entries(j)) {
+        const bin = atob(v.dados);
+        const a = new Float32Array(bin.length);
+        for (let i = 0; i < bin.length; i++) { const b = bin.charCodeAt(i); a[i] = (b > 127 ? b - 256 : b) * v.escala; }
+        P[k] = a;
+      }
+      return P;
+    });
+    redeDigitos.catch(() => { redeDigitos = null; });
+  }
+  return redeDigitos;
+}
+
+function convRelu(x, H, W, C, w, b, k, pad, O) {
+  const out = new Float32Array(H * W * O);
+  for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+    const o0 = (y * W + xx) * O;
+    for (let o = 0; o < O; o++) out[o0 + o] = b[o];
+    for (let i = 0; i < k; i++) {
+      const yy = y + i - pad;
+      if (yy < 0 || yy >= H) continue;
+      for (let j = 0; j < k; j++) {
+        const xj = xx + j - pad;
+        if (xj < 0 || xj >= W) continue;
+        const xi = (yy * W + xj) * C, wi = (i * k + j) * C;
+        for (let c = 0; c < C; c++) {
+          const v = x[xi + c];
+          if (!v) continue;
+          const wr = (wi + c) * O;
+          for (let o = 0; o < O; o++) out[o0 + o] += v * w[wr + o];
+        }
+      }
+    }
+    for (let o = 0; o < O; o++) if (out[o0 + o] < 0) out[o0 + o] = 0;
+  }
+  return out;
+}
+function pool2(x, H, W, C) {
+  const h = H / 2, w = W / 2, out = new Float32Array(h * w * C);
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) for (let c = 0; c < C; c++) {
+    const a = (i, j) => x[((2 * y + i) * W + 2 * xx + j) * C + c];
+    out[(y * w + xx) * C + c] = Math.max(a(0, 0), a(0, 1), a(1, 0), a(1, 1));
+  }
+  return out;
+}
+function densa(x, w, b, O, relu) {
+  const out = Float32Array.from(b);
+  for (let i = 0; i < x.length; i++) { const v = x[i]; if (!v) continue; const r = i * O; for (let o = 0; o < O; o++) out[o] += v * w[r + o]; }
+  if (relu) for (let o = 0; o < O; o++) if (out[o] < 0) out[o] = 0;
+  return out;
+}
+// Devolve a probabilidade de cada classe (0–9 e 10 = "/")
+function classificarCaractere(P, img28) {
+  let a = convRelu(img28, 28, 28, 1, P.c1w, P.c1b, 5, 2, 16);
+  a = pool2(a, 28, 28, 16);
+  a = convRelu(a, 14, 14, 16, P.c2w, P.c2b, 3, 1, 32);
+  a = pool2(a, 14, 14, 32);
+  a = densa(a, P.f1w, P.f1b, 64, true);
+  const z = densa(a, P.f2w, P.f2b, 11, false);
+  const m = Math.max(...z);
+  let s = 0;
+  const p = Array.from(z, (v) => { const e = Math.exp(v - m); s += e; return e; });
+  return p.map((v) => v / s);
+}
+
+// Igual ao treino: lado maior = 20 px e centro de massa no meio de 28×28
+function normalizar28(bin, w, h) {
+  const k = 20 / Math.max(w, h);
+  const nw = Math.max(1, Math.round(w * k)), nh = Math.max(1, Math.round(h * k));
+  const src = document.createElement('canvas');
+  src.width = w; src.height = h;
+  const sc = src.getContext('2d');
+  const id = sc.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { const v = bin[i] ? 255 : 0; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+  sc.putImageData(id, 0, 0);
+  const dst = document.createElement('canvas');
+  dst.width = nw; dst.height = nh;
+  const dc = dst.getContext('2d', { willReadFrequently: true });
+  dc.imageSmoothingQuality = 'high';
+  dc.drawImage(src, 0, 0, nw, nh);
+  const px = dc.getImageData(0, 0, nw, nh).data;
+  let tot = 0, sx = 0, sy = 0;
+  const b = new Float32Array(nw * nh);
+  for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) { const v = px[(y * nw + x) * 4]; b[y * nw + x] = v; tot += v; sx += v * x; sy += v * y; }
+  const ox = Math.round(14 - (tot ? sx / tot : nw / 2)), oy = Math.round(14 - (tot ? sy / tot : nh / 2));
+  const out = new Float32Array(784);
+  for (let y = 0; y < nh; y++) {
+    const yy = y + oy;
+    if (yy < 0 || yy >= 28) continue;
+    for (let x = 0; x < nw; x++) { const xx = x + ox; if (xx >= 0 && xx < 28) out[yy * 28 + xx] = b[y * nw + x] / 255; }
+  }
+  return out;
+}
+
+async function fotoColorida(arquivo, W, H) {
+  const img = await createImageBitmap(arquivo, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(arquivo));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, W, H);
+  return c;
+}
+
+// Interpreta uma sequência de caracteres (cada um com as probabilidades) como datas possíveis
+function datasPossiveis(chars) {
+  let feixe = [{ s: '', p: 1 }];
+  for (const c of chars) {
+    let op = [{ s: '/', p: 1 }];
+    if (!c.sep) {
+      // "/" e "1" se confundem na letra de mão: cada um vale um pouco como o outro
+      const q = c.p.slice();
+      q[10] = Math.max(c.p[10], 0.35 * c.p[1]);
+      q[1] = Math.max(c.p[1], 0.35 * c.p[10]);
+      op = q.map((p, i) => ({ s: i === 10 ? '/' : String(i), p })).sort((a, b) => b.p - a.p).slice(0, 4);
+    }
+    const novo = [];
+    for (const f of feixe) for (const o of op) if (o.p > 0.02) novo.push({ s: f.s + o.s, p: f.p * o.p });
+    feixe = novo.sort((a, b) => b.p - a.p).slice(0, 150);
+  }
+  const hoje = hojeISO(), min = somarDias(hoje, -18 * 365), max = somarDias(hoje, 3 * 365);
+  const res = new Map();
+  const valida = (d, m, a) => {
+    if (a < 100) a += 2000;
+    const dt = new Date(a, m - 1, d);
+    if (dt.getFullYear() !== a || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    const iso = `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return iso >= min && iso <= max ? iso : null;
+  };
+  for (const f of feixe) {
+    const g = f.s.split('/').filter(Boolean);
+    const digs = g.join('');
+    const tent = [];
+    if (g.length === 3 && g[0].length <= 2 && g[1].length <= 2 && (g[2].length === 2 || g[2].length === 4)) tent.push([g[0], g[1], g[2]]);
+    if (digs.length === 6) tent.push([digs.slice(0, 2), digs.slice(2, 4), digs.slice(4)]);
+    if (digs.length === 8) tent.push([digs.slice(0, 2), digs.slice(2, 4), digs.slice(4)]);
+    if (digs.length === 5) { tent.push([digs.slice(0, 1), digs.slice(1, 3), digs.slice(3)]); tent.push([digs.slice(0, 2), digs.slice(2, 3), digs.slice(3)]); }
+    for (const [d, m, a] of tent) {
+      const iso = valida(Number(d), Number(m), Number(a));
+      if (iso) { res.set(iso, (res.get(iso) || 0) + f.p); break; }
+    }
+  }
+  return [...res].map(([iso, p]) => ({ iso, p })).sort((a, b) => b.p - a.p).slice(0, 12);
+}
+
+// Acha as linhas escritas com caneta colorida e devolve trechos com datas possíveis
+function datasManuscritas(cor, P, dbg = null) {
+  const W = cor.width, H = cor.height;
+  const px = cor.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data;
+  const tinta = new Uint8Array(W * H);
+  for (let i = 0, j = 0; j < tinta.length; i += 4, j++) if (px[i + 2] - Math.max(px[i], px[i + 1] * 0.9) > 20) tinta[j] = 1;
+  // fecha falhas de 1–2 px no traço (caneta falhando)
+  const maxMin = (src, max) => {
+    const t = new Uint8Array(W * H), o = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; const a = x > 0 ? src[i - 1] : src[i], b = x < W - 1 ? src[i + 1] : src[i]; t[i] = max ? (src[i] | a | b) : (src[i] & a & b); }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; const a = y > 0 ? t[i - W] : t[i], b = y < H - 1 ? t[i + W] : t[i]; o[i] = max ? (t[i] | a | b) : (t[i] & a & b); }
+    return o;
+  };
+  tinta.set(maxMin(maxMin(tinta, true), false));
+  // componentes conectados
+  const rot = new Int32Array(W * H);
+  const comps = [];
+  const pilha = new Int32Array(W * H);
+  for (let i0 = 0; i0 < tinta.length; i0++) {
+    if (!tinta[i0] || rot[i0]) continue;
+    const id = comps.length + 1;
+    let topo = 0, x0 = W, y0 = H, x1 = 0, y1 = 0, area = 0;
+    pilha[topo++] = i0; rot[i0] = id;
+    while (topo) {
+      const i = pilha[--topo], x = i % W, y = (i - x) / W;
+      area++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const k = yy * W + xx;
+        if (tinta[k] && !rot[k]) { rot[k] = id; pilha[topo++] = k; }
+      }
+    }
+    comps.push({ ids: [id], x0, y0, x1, y1, area });
+  }
+  const cs = comps.filter((c) => {
+    const h = c.y1 - c.y0 + 1, w = c.x1 - c.x0 + 1;
+    return c.area >= 6 && h <= 0.07 * H && w <= 0.08 * W  && !(c.area > 0.55 * w * h && w > 0.6 * h && h > 0.012 * H); // mancha cheia e larga = faixa do selo
+  });
+  // agrupa em linhas (da esquerda para a direita)
+  cs.sort((a, b) => a.x0 - b.x0);
+  const linhas = [];
+  for (const c of cs) {
+    const cy = (c.y0 + c.y1) / 2, h = c.y1 - c.y0 + 1;
+    let melhor = null, dist = Infinity;
+    for (const l of linhas) {
+      const lh = l.h, gap = c.x0 - l.x1;
+      if (Math.abs(cy - l.cy) > 0.6 * Math.max(lh, h) || gap > 1.3 * lh || gap < -0.6 * lh) continue;
+      if (gap < dist) { dist = gap; melhor = l; }
+    }
+    if (melhor) {
+      melhor.cs.push(c); melhor.x1 = Math.max(melhor.x1, c.x1);
+      if (h > 0.4 * melhor.h) { melhor.cy = (melhor.cy * 3 + cy) / 4; melhor.h = Math.max(melhor.h * 0.8, Math.min(h, melhor.h * 1.5)); }
+    } else linhas.push({ cs: [c], x1: c.x1, cy, h: Math.max(h, 0.012 * H) });
+  }
+  const out = [];
+  for (const l of linhas) {
+    if (l.cs.length < 4 || l.cs.length > 16) continue;
+    const alts = l.cs.map((c) => c.y1 - c.y0 + 1).sort((a, b) => a - b);
+    const lh = alts[Math.floor(alts.length * 0.7)];
+    if (lh < 0.008 * H) continue;
+    // junta pedaços do mesmo caractere (sobrepostos na horizontal)
+    const chars = [];
+    for (const c of l.cs) {
+      const ult = chars[chars.length - 1];
+      const ov = ult ? Math.min(ult.x1, c.x1) - Math.max(ult.x0, c.x0) : -1;
+      const pequeno = (k) => k.y1 - k.y0 + 1 < 0.35 * lh && k.x1 - k.x0 + 1 < 0.5 * lh;
+      if (ult && ov > 0.5 * Math.min(ult.x1 - ult.x0 + 1, c.x1 - c.x0 + 1) && !pequeno(c) && !pequeno(ult)) {
+        ult.ids.push(...c.ids); ult.x0 = Math.min(ult.x0, c.x0); ult.x1 = Math.max(ult.x1, c.x1); ult.y0 = Math.min(ult.y0, c.y0); ult.y1 = Math.max(ult.y1, c.y1);
+      } else chars.push({ ...c, ids: [...c.ids] });
+    }
+    const lidos = [];
+    for (const c of chars) {
+      const w = c.x1 - c.x0 + 1, h = c.y1 - c.y0 + 1;
+      if (h < 0.35 * lh && w < 0.5 * lh) { lidos.push({ sep: true }); continue; } // ponto ou vírgula
+      if (h < 0.25 * lh) { lidos.push({ sep: true }); continue; }                     // traço
+      const bin = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const r = rot[(c.y0 + y) * W + c.x0 + x]; if (r && c.ids.includes(r)) bin[y * w + x] = 1; }
+      // dígitos encostados: testa inteiro, cortado em 2 e em 3 (no ponto com menos tinta) e fica com a leitura mais segura
+      const recorta = (a0, a1) => { const ww = a1 - a0, pb = new Uint8Array(ww * h); for (let y = 0; y < h; y++) for (let x = 0; x < ww; x++) pb[y * ww + x] = bin[y * w + a0 + x]; return [pb, ww, h]; };
+      const vale = (a0, a1) => { let corte = a0 + 1, menor = Infinity; for (let x = Math.round(a0 + (a1 - a0) * 0.3); x < a0 + (a1 - a0) * 0.7; x++) { let s2 = 0; for (let y = 0; y < h; y++) s2 += bin[y * w + x]; if (s2 < menor) { menor = s2; corte = x; } } return corte; };
+      const opcoes = [];
+      const ref = Math.max(h, 0.7 * lh);
+      if (w <= 1.25 * ref) opcoes.push([[bin, w, h]]);                       // largo demais para 1 dígito
+      if (w > 0.75 * lh && w <= 2.3 * ref) { const c1 = vale(0, w); opcoes.push([recorta(0, c1), recorta(c1, w)]); }
+      if (w > 1.6 * ref) { const c1 = vale(0, Math.round(w * 0.6)), c2 = vale(Math.round(w * 0.4), w); if (c2 > c1 + 2) opcoes.push([recorta(0, c1), recorta(c1, c2), recorta(c2, w)]); }
+      if (!opcoes.length) opcoes.push([[bin, w, h]]);
+      let partes = opcoes[0], melhorConf = -1, melhorP = null;
+      for (const op of opcoes) {
+        const ps = op.map(([bb, ww, hh]) => classificarCaractere(P, normalizar28(bb, ww, hh)));
+        const conf = Math.pow(ps.reduce((m, q) => m * Math.max(...q), 1), 1 / ps.length) * (op.length > 1 ? 0.97 : 1);
+        if (conf > melhorConf) { melhorConf = conf; partes = op; melhorP = ps; }
+      }
+      partes.forEach(([b, ww, hh], k) => { if (dbg && dbg.imgs) dbg.imgs.push([l.cy / H, normalizar28(b, ww, hh)]); lidos.push({ p: melhorP[k] }); });
+    }
+    const n = lidos.filter((c) => !c.sep).length;
+    if (dbg) dbg.push(`${((l.cs[0].x0 + l.x1) / 2 / W).toFixed(2)},${(l.cy / H).toFixed(2)} ${lidos.map((c) => (c.sep ? '.' : (() => { const i = c.p.indexOf(Math.max(...c.p)); return (i === 10 ? '/' : i) + (c.p[i] < 0.6 ? '?' : ''); })())).join('')} -> ${datasPossiveis(lidos).slice(0, 2).map((d) => d.iso + ':' + d.p.toExponential(1)).join(' ')}`);
+    if (n < 5 || n > 10) continue;
+    const cands = datasPossiveis(lidos);
+    if (!cands.length || Math.pow(cands[0].p, 1 / n) < 0.35) continue;
+    const x0 = l.cs[0].x0;
+    for (const c of cands) c.conf = Math.pow(c.p, 1 / n); // certeza média por caractere
+    out.push({ texto: '', x: (x0 + l.x1) / 2 / W, y: l.cy / H, mao: cands });
+  }
+  return out;
+}
+
+let lendoCarteira = false;
+let arquivoCarteira = null;
+function statusCarteira(html, classe = '') {
+  const el = $('#carteira-status');
+  el.className = 'leitura-status' + (classe ? ' ' + classe : '');
+  el.innerHTML = html;
+  el.hidden = !html;
+}
+function limparCarteira() {
+  arquivoCarteira = null;
+  $('#carteira-fotos').innerHTML = '';
+  $('#carteira-resultado').hidden = true;
+  $('#carteira-resultado').innerHTML = '';
+  statusCarteira('');
+}
+
+async function lerCarteira(arquivo) {
+  if (lendoCarteira) return;
+  const p = petAtual();
+  if (!p) return;
+  lendoCarteira = true;
+  arquivoCarteira = arquivo;
+  $('#carteira-fotos').innerHTML = `<img src="${URL.createObjectURL(arquivo)}" alt="Foto da carteira">`;
+  $('#carteira-resultado').hidden = true;
+  $('#carteira-botoes').querySelectorAll('input').forEach((i) => { i.disabled = true; });
+  const progresso = (pct, txt) => statusCarteira(`${esc(txt)}<div class="progresso-ocr"><span style="width:${Math.round(pct * 100)}%"></span></div>`);
+  let etapa = 'Lendo a carteira…';
+  aoProgressoOcr = (m) => {
+    if (m.status === 'recognizing text') progresso(0.05 + m.progress * 0.9, etapa);
+    else if (/load|initializ/i.test(m.status)) progresso(0.02, 'Preparando o leitor (só na primeira vez demora um pouco)…');
+  };
+  progresso(0.01, 'Preparando o leitor…');
+  try {
+    const leitor = await obterLeitor();
+    const canvas = await prepararFoto(arquivo, 3000, 1500);
+    const W = canvas.width, H = canvas.height;
+    // modo "texto esparso": a carteira é uma grade de caixas, com selos e datas soltos
+    await leitor.setParameters({ tessedit_pageseg_mode: '11' });
+    // selos colados de lado: lê a foto girada (só os nomes das vacinas)
+    etapa = 'Procurando selos de lado…';
+    let { data } = await leitor.recognize(girarCanvas(canvas, 1), {}, { text: true, blocks: true });
+    let texto = data.text;
+    const trechos = trechosDoResultado(data, W, H, 1);
+    // a foto inteira é lida em 4 pedaços ampliados (letra miúda dos selos)
+    for (let i = 0; i < 4; i++) {
+      etapa = `Lendo em detalhes (parte ${i + 1} de 4)…`;
+      const fx0 = Math.max(0, (i % 2) / 2 - 0.06), fy0 = Math.max(0, Math.floor(i / 2) / 2 - 0.06);
+      const fx1 = Math.min(1, (i % 2 + 1) / 2 + 0.06), fy1 = Math.min(1, (Math.floor(i / 2) + 1) / 2 + 0.06);
+      const pw = (fx1 - fx0) * W, ph = (fy1 - fy0) * H;
+      const cv = document.createElement('canvas');
+      const esc = Math.min(2, 2600 / Math.max(pw, ph));
+      cv.width = Math.round(pw * esc); cv.height = Math.round(ph * esc);
+      const ctx = cv.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, fx0 * W, fy0 * H, pw, ph, 0, 0, cv.width, cv.height);
+      ({ data } = await leitor.recognize(cv, {}, { text: true, blocks: true }));
+      for (const t of trechosDoResultado(data, cv.width, cv.height)) trechos.push({ ...t, x: fx0 + t.x * (fx1 - fx0), y: fy0 + t.y * (fy1 - fy0) });
+      texto += '\n----\n' + data.text;
+    }
+    try {
+      progresso(0.97, 'Lendo as datas escritas à mão…');
+      const rede = await obterRedeDigitos();
+      trechos.push(...datasManuscritas(await fotoColorida(arquivo, W, H), rede));
+    } catch (e) { console.warn('datas à mão', e); }
+    let itens = extrairCarteira(trechos, p);
+    // selo achado sem nome (letras pequenas): amplia esse pedaço da foto e lê de novo
+    const semNome = itens.filter((it) => !it.cat && !it.orfao).slice(0, 4);
+    for (const [n, it] of semNome.entries()) {
+      etapa = `Ampliando selo ${n + 1} de ${semNome.length}…`;
+      const x0 = Math.max(0, it.x - 0.13) * W, y0 = Math.max(0, it.y - 0.06) * H;
+      const w = Math.min(W - x0, 0.26 * W), h = Math.min(H - y0, 0.12 * H);
+      const f = Math.min(3, 1800 / w);
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(w * f); cv.height = Math.round(h * f);
+      const ctx = cv.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, x0, y0, w, h, 0, 0, cv.width, cv.height);
+      let lido = '';
+      for (const psm of ['11', '6']) {
+        await leitor.setParameters({ tessedit_pageseg_mode: psm });
+        lido += '\n' + (await leitor.recognize(cv)).data.text;
+      }
+      texto += '\n---- selo ampliado ----\n' + lido;
+      // vacina oral ou nasal de cão = tosse dos canis (Bordetella)
+      if (p.especie === 'cao' && /\boral\b|intra\s?nasal/i.test(lido)) lido += '\nbordetella';
+      for (const l of lido.split('\n')) if (l.trim()) trechos.push({ texto: l.trim(), x: it.x, y: it.y, girado: true });
+    }
+    if (semNome.length) itens = extrairCarteira(trechos, p);
+    await leitor.setParameters({ tessedit_pageseg_mode: '6' });
+    mostrarCarteira(itens, texto.trim(), p);
+    marcarAjuda('carteira');
+  } catch (e) {
+    console.warn('OCR da carteira falhou', e);
+    statusCarteira('Não foi possível carregar o leitor de fotos. Verifique a internet na primeira vez que usar e tente de novo.', 'erro-leitura');
+  } finally {
+    lendoCarteira = false;
+    aoProgressoOcr = () => {};
+    $('#carteira-botoes').querySelectorAll('input').forEach((i) => { i.disabled = false; });
+  }
+}
+for (const sel of ['#carteira-camera', '#carteira-galeria']) {
+  $(sel).addEventListener('change', (ev) => {
+    const arq = ev.target.files[0];
+    ev.target.value = '';
+    if (arq && arq.type.startsWith('image/')) lerCarteira(arq);
+  });
+}
+
+function jaRegistrada(p, cat, nome, data) {
+  if (!data) return false;
+  const v = VACINAS_PLANO[p.especie].find((x) => x.id === cat);
+  return estado.saude.some((r) => r.petId === p.id && r.tipo === 'vacina' && r.data === data
+    && (v ? v.re.test(r.nome) : normalizar(r.nome) === normalizar(nome)));
+}
+
+function linhaCarteira(it, i, p) {
+  const dup = jaRegistrada(p, it.cat, it.nome, it.data);
+  const hoje = hojeISO();
+  return `<div class="carteira-item${dup ? ' desmarcado' : ''}" data-carteira-item="${i}">
+    <label class="check"><input type="checkbox" data-carteira-ok${dup ? '' : ' checked'}> Registrar esta dose</label>
+    <label>Vacina<input type="text" data-c="nome" maxlength="60" list="sugestoes-saude" value="${esc(it.nome || '')}" placeholder="ex.: V10, Antirrábica"></label>
+    <div class="linha">
+      <label>Data aplicada<input type="date" data-c="data" max="${hoje}" value="${it.data || ''}"></label>
+      <label>Próxima dose<input type="date" data-c="proxima" value="${it.proxima || ''}"></label>
+    </div>
+    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : ''}
+  </div>`;
+}
+
+function mostrarCarteira(itens, texto, p) {
+  const box = $('#carteira-resultado');
+  if (!itens.length) {
+    statusCarteira(texto.replace(/\W/g, '').length < 10
+      ? 'Não consegui ler texto nessa foto. Tente de novo com a carteira reta, perto e com boa luz.'
+      : 'Li o texto, mas não reconheci as vacinas. Adicione as doses abaixo olhando a carteira.', 'erro-leitura');
+    itens = [{ cat: '', nome: '', data: '', proxima: '' }];
+  } else {
+    const comData = itens.filter((x) => x.data).length;
+    statusCarteira(`Encontrei <strong>${plural(itens.length, 'vacina', 'vacinas')}</strong>${comData < itens.length ? ` (${comData} com data lida)` : ''}. Confira e complete antes de salvar.`, 'ok-leitura');
+  }
+  box.innerHTML = `<div id="carteira-itens">${itens.map((it, i) => linhaCarteira(it, i, p)).join('')}</div>
+    <p class="nota">A próxima dose vazia é preenchida pelo plano de vacinação ao salvar.</p>
+    <p class="erro" id="carteira-erro" role="alert" hidden></p>
+    <div class="linha-botoes">
+      <button type="button" class="btn primario" id="btn-carteira-salvar">Salvar doses marcadas</button>
+      <button type="button" class="btn" id="btn-carteira-mais">Adicionar dose</button>
+      <button type="button" class="btn" id="btn-carteira-descartar">Descartar</button>
+    </div>
+    <details class="historico"><summary>Ver texto lido</summary><pre id="carteira-texto"></pre></details>`;
+  $('#carteira-texto').textContent = texto;
+  box.hidden = false;
+}
+
+function salvarCarteira() {
+  const p = petAtual();
+  const erro = $('#carteira-erro');
+  const hoje = hojeISO();
+  const linhas = [...document.querySelectorAll('#carteira-itens [data-carteira-item]')]
+    .filter((el) => el.querySelector('[data-carteira-ok]').checked)
+    .map((el) => ({ nome: el.querySelector('[data-c="nome"]').value.trim(), data: el.querySelector('[data-c="data"]').value, proxima: el.querySelector('[data-c="proxima"]').value }));
+  let msg = '';
+  if (!linhas.length) msg = 'Marque pelo menos uma dose.';
+  else if (linhas.some((l) => !l.nome)) msg = 'Informe o nome de todas as vacinas marcadas.';
+  else if (linhas.some((l) => !l.data)) msg = 'Informe a data aplicada de todas as vacinas marcadas.';
+  else if (linhas.some((l) => l.data > hoje)) msg = 'A data aplicada não pode estar no futuro.';
+  else if (linhas.some((l) => l.proxima && l.proxima <= l.data)) msg = 'A próxima dose precisa ser depois da data aplicada.';
+  if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+  linhas.sort((a, b) => a.data.localeCompare(b.data));
+  let n = 0;
+  for (const l of linhas) {
+    let proxima = l.proxima;
+    const v = VACINAS_PLANO[p.especie].find((x) => x.re.test(l.nome));
+    if (!proxima && v) {
+      const regs = [...dosesDaVacina(v, p.id).filter((r) => r.data <= l.data), { data: l.data, criado: Date.now() }]
+        .sort((a, b) => a.data.localeCompare(b.data));
+      const sug = planejarVacina(v, p, regs.map((r) => ({ data: r.data, criado: r.criado })));
+      if (sug.proxima && sug.proxima > l.data) proxima = sug.proxima;
+    }
+    estado.saude.push({ id: novoId(), petId: p.id, tipo: 'vacina', nome: l.nome, data: l.data, proxima: proxima || '', obs: 'Lida da carteira de vacinação', criado: Date.now() + n++ });
+  }
+  salvar();
+  limparCarteira();
+  statusCarteira(`${plural(n, 'dose salva', 'doses salvas')} nas vacinas de ${esc(p.nome)}.`, 'ok-leitura');
+  renderTudo();
+}
+
+$('#carteira-resultado').addEventListener('click', (ev) => {
+  if (ev.target.closest('#btn-carteira-descartar')) { limparCarteira(); return; }
+  if (ev.target.closest('#btn-carteira-salvar')) salvarCarteira();
+  if (ev.target.closest('#btn-carteira-mais')) {
+    const cx = $('#carteira-itens');
+    cx.insertAdjacentHTML('beforeend', linhaCarteira({ cat: '', nome: '', data: '', proxima: '' }, cx.children.length, petAtual()));
+    cx.lastElementChild.querySelector('[data-c="nome"]').focus();
+  }
+});
+$('#carteira-resultado').addEventListener('change', (ev) => {
+  const ok = ev.target.closest('[data-carteira-ok]');
+  if (ok) ok.closest('.carteira-item').classList.toggle('desmarcado', !ok.checked);
 });
 
 /* ---------- Banho ---------- */
@@ -6757,8 +7443,8 @@ function eventosDoPet(petId, ini, fim) {
     const e = estoqueRemedio(r);
     if (e && dentro(e.acaba) && (!r.fim || e.acaba < r.fim)) ev.push({ chave: 'rem-est-' + r.id, data: e.acaba, ic: 'pilula', titulo: `${r.nome} acaba`, detalhe: 'compre mais antes', nivel: e.diasRestantes <= 3 ? 'perto' : '', aba: 'saude', sub: 'clinico' });
   }
-  // Aniversário
-  if (p.nascimento) {
+  // Aniversário (só com data de nascimento real: com idade aproximada a data seria inventada)
+  if (p.nascimento && !p.nascAprox) {
     const [an, mn, dn] = p.nascimento.split('-').map(Number);
     for (let a = Number(ini.slice(0, 4)); a <= Number(fim.slice(0, 4)); a++) {
       const ult = new Date(a, mn, 0).getDate();
@@ -7001,6 +7687,8 @@ function mostrarAba(nome) {
   if (nome === 'racao' || nome === 'alimentos') { mostrarSubabaPeso(nome); nome = 'peso'; }
   if (!ABAS.includes(nome)) nome = 'inicio';
   abaAtual = nome;
+  document.body.dataset.aba = nome;
+  if (typeof atualizarLembreteBackup === 'function') atualizarLembreteBackup();
   if (nome === 'peso') { preencherFormEcc(); preencherFormRacao(); preencherFormSaco(); }
   try { localStorage.setItem('diario-pet-aba', nome); } catch (e) { /* ignora */ }
   document.querySelectorAll('.aba-btn').forEach((b) => {
@@ -7096,6 +7784,70 @@ limparFormRemedio();
 limparFormSaude();
 
 /* ---------- Backup (exportar / importar) ---------- */
+// Lembrete no Início: 1º backup após 7 dias de uso, depois a cada 30 dias
+function lerLS(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function gravarLS(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignora */ } }
+if (!lerLS('diario-pet-primeiro-uso')) gravarLS('diario-pet-primeiro-uso', hojeISO());
+function diasDesde(iso) { return iso ? Math.floor((new Date(hojeISO() + 'T12:00') - new Date(iso + 'T12:00')) / 86400000) : 0; }
+function atualizarLembreteBackup() {
+  const el = $('#lembrete-backup');
+  if (!el) return;
+  const ultimo = lerLS('diario-pet-ultimo-backup');
+  const adiado = lerLS('diario-pet-backup-adiado');
+  const dias = diasDesde(ultimo || lerLS('diario-pet-primeiro-uso'));
+  const mostrar = estado.pets.length > 0 && dias >= (ultimo ? 30 : 7) && adiado !== hojeISO();
+  el.hidden = !mostrar;
+  if (mostrar) {
+    $('#lembrete-backup-txt').innerHTML = ultimo
+      ? `<strong>Faz ${dias} dias desde o último backup.</strong> Os dados ficam só neste celular: se ele for perdido ou o app apagado, tudo some.`
+      : '<strong>Você ainda não fez backup.</strong> Os dados ficam só neste celular: se ele for perdido ou o app apagado, tudo some.';
+  }
+}
+function marcarBackupFeito() { gravarLS('diario-pet-ultimo-backup', hojeISO()); atualizarLembreteBackup(); }
+$('#btn-backup-agora').addEventListener('click', () => {
+  gravarLS('diario-pet-backup-adiado', hojeISO()); // se cancelar, não insiste de novo hoje
+  $('#btn-exportar').click();
+  $('#lembrete-backup').hidden = true;
+});
+
+/* ---------- Relatório para o veterinário (imprimir ou salvar em PDF) ---------- */
+function montarRelatorio(p) {
+  const de = (lista) => lista.filter((r) => r.petId === p.id);
+  const ordem = (a, b) => String(b.data || b.inicio || '').localeCompare(String(a.data || a.inicio || ''));
+  const tabela = (cab, linhas) => linhas.length
+    ? `<table><thead><tr>${cab.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${linhas.map((l) => `<tr>${l.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    : '<p class="vazio-rel">Nenhum registro.</p>';
+  const d = (iso) => (iso ? fmtData(iso) : '—');
+  const pesos = de(estado.pesos).sort(ordem).slice(0, 12);
+  const saude = (tipo) => de(estado.saude).filter((r) => r.tipo === tipo).sort(ordem);
+  const remedios = de(estado.remedios).sort(ordem);
+  const doencas = de(estado.doencas);
+  const sintomas = de(estado.sintomas).sort(ordem).slice(0, 20);
+  const consultas = de(estado.consultas).sort(ordem).slice(0, 10);
+  const info = [ESPECIES[p.especie]?.nome, sexoTexto(p), p.raca, idadeDoPet(p)].filter(Boolean).map(esc).join(' · ');
+  const prev = (tipo) => tabela(['Nome', 'Aplicada', 'Próxima', 'Obs.'], saude(tipo).map((r) => [esc(r.nome), d(r.data), d(r.proxima), esc(r.obs || '')]));
+  return `<h1>${esc(p.nome)}</h1>
+    <p>${info}${p.nascimento && !p.nascAprox ? ` · nasc. ${fmtData(p.nascimento)}` : ''}</p>
+    <p style="color:#666;font-size:.85rem">Relatório do Diário do Pet gerado em ${fmtData(hojeISO())}.</p>
+    <h2>Peso (últimos registros)</h2>${tabela(['Data', 'Peso', 'Obs.'], pesos.map((r) => [d(r.data), `${fmtNum(r.kg, 2)} kg`, esc(r.obs || '')]))}
+    <h2>Doenças / diagnósticos</h2>${tabela(['Doença', 'Situação', 'Obs.'], doencas.map((r) => [esc(r.nome), esc(r.situacao || ''), esc(r.obs || '')]))}
+    <h2>Remédios</h2>${tabela(['Remédio', 'Dose', 'Início', 'Fim', 'Em uso'], remedios.map((r) => [esc(r.nome), esc(r.dose || ''), d(r.inicio), d(r.fim), remedioAtivo(r) ? 'sim' : 'não']))}
+    <h2>Vacinas</h2>${prev('vacina')}
+    <h2>Vermífugo</h2>${prev('vermifugo')}
+    <h2>Antipulgas</h2>${prev('antipulgas')}
+    <h2>Sintomas recentes</h2>${tabela(['Data', 'Sintoma', 'Intensidade', 'Obs.'], sintomas.map((r) => [d(r.data) + (r.hora ? ' ' + esc(r.hora) : ''), esc(nomeSintoma(r)), esc(r.intensidade || ''), esc(r.obs || '')]))}
+    <h2>Consultas e exames</h2>${tabela(['Data', 'Tipo', 'Clínica', 'Motivo / resultado'], consultas.map((r) => [d(r.data), esc((TIPOS_CONSULTA[r.tipo] || TIPOS_CONSULTA.consulta).nome), esc(r.clinica || ''), esc([r.motivo, r.resultado].filter(Boolean).join(' — '))]))}`;
+}
+$('#btn-relatorio').addEventListener('click', () => {
+  const p = petAtual();
+  if (!p) return;
+  $('#relatorio-conteudo').innerHTML = montarRelatorio(p);
+  $('#relatorio').hidden = false;
+  document.body.classList.add('imprimindo');
+});
+$('#btn-rel-fechar').addEventListener('click', () => { $('#relatorio').hidden = true; document.body.classList.remove('imprimindo'); });
+$('#btn-rel-imprimir').addEventListener('click', () => window.print());
+
 function statusBackup(html, classe = '') {
   const el = $('#backup-status');
   el.className = 'leitura-status' + (classe ? ' ' + classe : '');
@@ -7146,6 +7898,7 @@ $('#btn-exportar').addEventListener('click', async () => {
     const arq = new File([texto], nome, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [arq] })) {
       await navigator.share({ files: [arq], title: 'Backup do Diário do Pet' });
+      marcarBackupFeito();
       statusBackup(`Backup pronto ✓${comSenha ? ' (com senha)' : ''}`, 'ok-leitura');
       return;
     }
@@ -7154,6 +7907,7 @@ $('#btn-exportar').addEventListener('click', async () => {
   }
   marcarAjuda('backup');
   baixarTexto(nome, texto, 'application/json');
+  marcarBackupFeito();
   statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads).`, 'ok-leitura');
 });
 
