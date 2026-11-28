@@ -201,6 +201,10 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .estat .rot { font-size: 0.75rem; color: var(--texto-2); }
 .estat .val { font-size: 1.1rem; font-weight: 700; }
 
+/* Hoje: dose com texto e botão lado a lado (o texto não some nem quebra letra por letra) */
+.dose-hoje { display: flex; align-items: center; gap: 10px; }
+.dose-hoje .info { flex: 1; min-width: 0; }
+.dose-hoje > .btn.btn { width: auto; flex-shrink: 0; white-space: nowrap; } /* .btn.primario tem largura total por padrão */
 .grafico { position: relative; width: 100%; }
 .grafico svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
 .grafico .eixo { font-size: 11px; fill: var(--texto-2); }
@@ -7857,7 +7861,7 @@ function renderHoje() {
   let html = '';
   if (doses.length) {
     html += `<h3 class="lemb-grupo">Remédios de hoje <span class="selo-n ${doses.every((d) => d.feita) ? '' : 'perto'}">${doses.filter((d) => d.feita).length}/${doses.length}</span></h3><ul class="lista">`
-      + doses.map((d) => `<li><div class="info"><div class="principal">${esc(d.hora)} · ${esc(nomeDe(d.r.petId) + d.r.nome)}</div><div class="secundario">${esc(d.r.dose || '')}</div></div>
+      + doses.map((d) => `<li class="dose-hoje"><div class="info"><div class="principal">${esc(d.hora)} · ${esc(nomeDe(d.r.petId) + d.r.nome)}</div><div class="secundario">${esc(d.r.dose || '')}</div></div>
         <button type="button" class="btn pequeno${d.feita ? '' : ' primario'}" data-dose-remedio="${d.r.id}|${d.hora}" aria-pressed="${d.feita}">${d.feita ? '✓ Dada' : 'Marcar como dada'}</button></li>`).join('') + '</ul>';
   }
   const bloco = (titulo, lista, cls) => (lista.length
