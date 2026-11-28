@@ -8966,13 +8966,31 @@ function novaConexao() {
   });
   return pc;
 }
+// Resumo técnico da tentativa (para o usuário mandar print se não conectar)
+function diagnosticoConexao() {
+  const pc = Sync.pc;
+  if (!pc) return '';
+  const tipos = (sdp) => {
+    const c = { host: 0, mdns: 0, srflx: 0, relay: 0 };
+    for (const l of String(sdp || '').split(/\r?\n/)) {
+      if (!l.startsWith('a=candidate:')) continue;
+      const t = (/ typ (\w+)/.exec(l) || [])[1];
+      if (t === 'host') { if (/\.local /.test(l)) c.mdns++; else c.host++; } else if (c[t] !== undefined) c[t]++;
+    }
+    return `IP local ${c.host}, mDNS ${c.mdns}, público ${c.srflx}`;
+  };
+  return `Papel: ${Sync.papel || '?'} · ICE: ${pc.iceConnectionState} · conexão: ${pc.connectionState}<br>Este aparelho: ${tipos(pc.localDescription?.sdp)}<br>Outro aparelho: ${tipos(pc.remoteDescription?.sdp)}`;
+}
 function falhaConexao() {
   clearTimeout(Sync.timer);
-  syncProgresso('Os celulares não conseguiram se conectar. Coloque os dois no <strong>mesmo Wi-Fi</strong> (sem VPN) e tente de novo.', 'erro-leitura');
+  const diag = diagnosticoConexao();
+  syncProgresso('Os celulares não conseguiram se conectar. Confira se os dois estão no <strong>mesmo Wi-Fi</strong> (sem VPN) e tente de novo. Se continuar, use o backup: Exportar → Importar → Juntar.'
+    + (diag ? `<details><summary>Detalhes técnicos</summary><p class="dica-campo">${diag}</p></details>` : ''), 'erro-leitura');
 }
-function vigiarConexao() {
+// O prazo só vale depois que os dois códigos foram trocados; esperando a pessoa ler o QR, o prazo é longo
+function vigiarConexao(ms = 45000) {
   clearTimeout(Sync.timer);
-  Sync.timer = setTimeout(() => { if (!Sync.dc || Sync.dc.readyState !== 'open') falhaConexao(); }, 30000);
+  Sync.timer = setTimeout(() => { if (!Sync.dc || Sync.dc.readyState !== 'open') falhaConexao(); }, ms);
 }
 async function mostrarCodigo(codigo) {
   $('#sync-qr').innerHTML = await desenharQR(codigo);
@@ -9013,7 +9031,7 @@ async function responderOferta(sdp) {
   await esperarIce(Sync.pc);
   await mostrarCodigo(await codificarSDP('R', Sync.pc.localDescription.sdp));
   syncInstrucao('Agora, no <strong>primeiro celular</strong>, toque em <em>“Ler a resposta”</em> e aponte para este QR. Deixe esta tela aberta.');
-  vigiarConexao();
+  vigiarConexao(5 * 60000); // tempo para a pessoa ler este QR no outro celular
 }
 async function receberCodigo(txt) {
   let d;
@@ -9093,6 +9111,7 @@ function estadoParaEnviar() {
 }
 async function aoAbrirCanal() {
   clearTimeout(Sync.timer);
+  syncProgresso(''); // conectou: some qualquer aviso de falha anterior
   pararCamera();
   $('#sync-qr').hidden = true;
   $('#sync-acoes-codigo').hidden = true;
