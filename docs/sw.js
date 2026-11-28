@@ -4,7 +4,7 @@
    Leitor de fotos (ocr/, ~10 MB, inclui digitos.json: rede de dígitos à mão): só é baixado na primeira vez que alguém usa o leitor
    e depois sai sempre do guardado (sem baixar de novo a cada uso).
    Ao mudar a lista de arquivos ou o leitor, aumente a VERSAO. */
-const VERSAO = 'diario-pet-v19';
+const VERSAO = 'diario-pet-v20';
 const CACHE_LEMBRETES = 'diario-pet-lembretes'; // resumo dos lembretes escrito pela página (não apagar na atualização)
 const ARQUIVOS = [
   './',
@@ -76,19 +76,21 @@ async function avisarLembretes() {
   const c = await caches.open(CACHE_LEMBRETES);
   const resp = await c.match(urlDe('lembretes-dados.json'));
   if (!resp) return;
-  const { eventos = [] } = await resp.json();
+  const { eventos = [], config = {} } = await resp.json();
+  const ant = [0, 1, 3, 7].includes(config.antecedencia) ? config.antecedencia : 1;
   const hoje = isoLocal(new Date());
   const controle = await c.match(urlDe('lembretes-ultimo-aviso.txt'));
   if (controle && (await controle.text()) === hoje) return;
   const amanha = somarDiasISO(hoje, 1);
-  const atras = eventos.filter((e) => e.data < hoje && e.atrasavel !== false), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
+  const atras = config.atrasados === false ? [] : eventos.filter((e) => e.data < hoje && e.atrasavel !== false);
+  const deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data > hoje && e.data <= somarDiasISO(hoje, ant));
   if (!atras.length && !deHoje.length && !deAmanha.length) return;
   const partes = [];
   if (atras.length) partes.push(`${atras.length} ${atras.length === 1 ? 'atrasado' : 'atrasados'}`);
   if (deHoje.length) partes.push(`${deHoje.length} para hoje`);
-  if (deAmanha.length) partes.push(`${deAmanha.length} para amanhã`);
+  if (deAmanha.length) partes.push(ant === 1 ? `${deAmanha.length} para amanhã` : `${deAmanha.length} nos próximos ${ant} dias`);
   const linhas = [...atras, ...deHoje, ...deAmanha].slice(0, 4)
-    .map((e) => `• ${e.pet}: ${e.titulo}${e.data < hoje ? ' (atrasado)' : e.data === amanha ? ' (amanhã)' : ''}`);
+    .map((e) => `• ${e.pet}: ${e.titulo}${e.data < hoje ? ' (atrasado)' : e.data === amanha ? ' (amanhã)' : e.data > hoje ? ` (${e.data.slice(8)}/${e.data.slice(5, 7)})` : ''}`);
   await self.registration.showNotification(`Diário do Pet: ${partes.join(', ')}`, {
     body: linhas.join('\n'), icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'diario-pet-lembretes',
   });

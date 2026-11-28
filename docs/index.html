@@ -675,6 +675,11 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
       <button type="button" class="btn pequeno primario curto" id="btn-instalar" hidden>Instalar</button>
       <button type="button" class="btn pequeno" id="btn-fechar-banner" aria-label="Fechar aviso">✕</button>
     </div>
+    <div class="banner-app" id="aviso-versao" hidden>
+      <i data-ic="baixar"></i>
+      <p>Há uma versão nova do app pronta. Atualize para usar as melhorias.</p>
+      <button type="button" class="btn pequeno primario curto" id="btn-atualizar-app">Atualizar agora</button>
+    </div>
     <p class="aviso" id="aviso-armazenamento" role="alert" hidden>Não foi possível salvar neste navegador (modo anônimo ou armazenamento bloqueado). Os dados serão perdidos ao fechar.</p>
     <!-- ===================== PETS ===================== -->
     <section id="painel-pets" class="cartao" hidden>
@@ -782,6 +787,33 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
         <p class="dica-campo" style="margin:0 0 8px">Junta os dados de dois aparelhos (o seu e o de outra pessoa da família, ou o celular antigo e o novo) direto de um para o outro, sem passar por nenhum servidor.</p>
         <button type="button" class="btn pequeno" id="btn-abrir-sync"><i data-ic="celular"></i>Sincronizar agora</button>
       </div>
+      <div class="backup" id="cfg-notif">
+        <h3>Avisos e notificações</h3>
+        <p class="dica-campo" id="cfg-notif-status" style="margin:0 0 8px"></p>
+        <div class="linha-botoes">
+          <button type="button" class="btn pequeno" id="cfg-notif-ativar"><i data-ic="alerta"></i>Ativar avisos</button>
+          <button type="button" class="btn pequeno" id="cfg-notif-teste"><i data-ic="alerta"></i>Enviar aviso de teste</button>
+        </div>
+        <p class="dica-campo" style="margin:10px 0 4px"><strong>O que avisar</strong></p>
+        <div id="cfg-notif-cats"></div>
+        <label>Avisar com antecedência de
+          <select id="cfg-notif-antec">
+            <option value="0">só no dia</option><option value="1">1 dia</option><option value="3">3 dias</option><option value="7">7 dias</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="cfg-notif-atrasados"> Avisar também o que está atrasado</label>
+        <label>Lembrar de fazer backup depois de
+          <select id="cfg-backup-dias">
+            <option value="0">nunca lembrar</option><option value="15">15 dias</option><option value="30">30 dias</option><option value="60">60 dias</option>
+          </select>
+        </label>
+        <p class="dica-campo">Estas escolhas valem só neste aparelho. O aviso com o app fechado depende do navegador (Android: Chrome com o app instalado) e sai no máximo uma vez por dia. No iPhone, só com o app na Tela de Início.</p>
+      </div>
+      <div class="backup">
+        <h3>Versão do app</h3>
+        <p class="dica-campo" id="cfg-versao" style="margin:0 0 8px"></p>
+        <button type="button" class="btn pequeno" id="btn-buscar-atualizacao"><i data-ic="baixar"></i>Buscar atualização</button>
+      </div>
       <div class="backup">
         <h3>Ajuda</h3>
         <button type="button" class="btn pequeno" id="btn-ver-tutorial"><i data-ic="info"></i>Ver o tutorial de novo</button>
@@ -862,6 +894,10 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
       </div>
       <ul class="alertas" id="alertas" aria-live="polite"></ul>
     </section>
+      <div class="cartao" id="cartao-hoje">
+        <h2><i data-ic="alerta"></i>Hoje</h2>
+        <div id="hoje-conteudo"></div>
+      </div>
       <div class="cartao">
         <h2><i data-ic="agenda"></i>Próximos</h2>
         <ul class="lista proximos" id="lista-proximos"></ul>
@@ -1058,6 +1094,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
         <h2>Evolução do peso</h2>
         <div class="estat" id="peso-estat"></div>
         <div id="grafico-peso" class="grafico"></div>
+        <p class="dica-campo" id="peso-variacao" hidden></p>
       </div>
 
       <div class="cartao">
@@ -2260,6 +2297,7 @@ function abrirConfig() {
   fecharPainelPets();
   $('#painel-config').hidden = false;
   renderCores();
+  if (typeof renderConfigNotif === 'function') renderConfigNotif();
   $('#painel-config').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function fecharConfig() { $('#painel-config').hidden = true; }
@@ -2355,6 +2393,18 @@ function renderPeso() {
   }
 
   desenharGrafico($('#grafico-peso'), regs, ultimaAvaliacao()?.pesoIdeal || null);
+  // Variação em cerca de 30 dias: acima de 10% merece atenção
+  const vp = $('#peso-variacao');
+  const ultimoPeso = regs[regs.length - 1];
+  const ref = ultimoPeso && [...regs].reverse().find((r) => diasEntre(r.data, ultimoPeso.data) >= 20 && diasEntre(r.data, ultimoPeso.data) <= 45);
+  if (ref && ref.kg > 0) {
+    const pct = ((ultimoPeso.kg - ref.kg) / ref.kg) * 100;
+    const forte = Math.abs(pct) > 10;
+    vp.hidden = false;
+    vp.className = 'dica-campo' + (forte ? ' txt-erro' : '');
+    vp.textContent = `${forte ? '⚠️ ' : ''}Variação em ${diasEntre(ref.data, ultimoPeso.data)} dias: ${pct > 0 ? '+' : ''}${fmtNum(pct, 1)}% (${fmtKg(ref.kg)} → ${fmtKg(ultimoPeso.kg)}).`
+      + (forte ? ' Mudança de mais de 10% em um mês merece conversa com o veterinário.' : '');
+  } else vp.hidden = true;
 }
 
 /* ---------- Gráfico de linha (SVG) ---------- */
@@ -6959,6 +7009,14 @@ function renderGastos() {
   const doMes = regs.filter((g) => mesDe(g.data) === mesAtual);
   const porCat = Object.keys(CATEGORIAS).map((k) => [k, doMes.filter((g) => g.categoria === k).reduce((s, g) => s + g.valor, 0)])
     .filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const mesAnt = totais[4][0];
+  const antCat = (k) => regs.filter((g) => mesDe(g.data) === mesAnt && g.categoria === k).reduce((s, g) => s + g.valor, 0);
+  const deltaCat = (k, v) => {
+    const a = antCat(k);
+    if (!a) return '<span class="delta">novo</span>';
+    const pct = Math.round(((v - a) / a) * 100);
+    return `<span class="delta">${pct > 0 ? '▲ +' : pct < 0 ? '▼ ' : '= '}${pct}%</span>`;
+  };
 
   $('#gastos-resumo').innerHTML = regs.length ? `
     <dl class="fatos fatos-3">
@@ -6975,7 +7033,8 @@ function renderGastos() {
     <ul class="barras categorias">${porCat.map(([k, v]) => `
       <li><span class="rot">${CATEGORIAS[k]}</span>
         <span class="trilho"><span class="barra" style="width:${Math.max(2, (v / porCat[0][1]) * 100)}%"></span></span>
-        <span class="val">${fmtReais(v)}</span></li>`).join('')}</ul>` : ''}`
+        <span class="val">${fmtReais(v)} ${deltaCat(k, v)}</span></li>`).join('')}</ul>
+    <p class="dica-campo">▲▼ comparam cada categoria com o mês passado.</p>` : ''}`
     : '<p class="vazio-texto">Nenhum gasto ainda. Adicione abaixo; consultas com valor e sacos de ração com preço entram sozinhos.</p>';
 
   const item = (g) => {
@@ -7762,7 +7821,59 @@ function irDoEvento(ev) {
 }
 
 /* Início: próximos 60 dias (+ atrasados ainda pendentes) */
+// Doses de remédio de hoje (marcar como dada) + o que está atrasado ou vence hoje, de todos os pets
+function dosesDeHoje() {
+  const hoje = hojeISO(), out = [];
+  for (const r of estado.remedios) {
+    if (!remedioAtivo(r) || r.inicio > hoje || !(r.horas || []).length || !estado.pets.some((p) => p.id === r.petId)) continue;
+    for (const h of [...r.horas].sort()) out.push({ r, hora: h, feita: ((r.dadas || {})[hoje] || []).includes(h) });
+  }
+  return out.sort((a, b) => a.hora.localeCompare(b.hora));
+}
+function marcarDose(id, hora) {
+  const r = estado.remedios.find((x) => x.id === id);
+  if (!r) return;
+  const hoje = hojeISO();
+  r.dadas = r.dadas || {};
+  const lista = r.dadas[hoje] || [];
+  r.dadas[hoje] = lista.includes(hora) ? lista.filter((x) => x !== hora) : [...lista, hora];
+  if (!r.dadas[hoje].length) delete r.dadas[hoje];
+  for (const d of Object.keys(r.dadas)) if (d < somarDias(hoje, -60)) delete r.dadas[d]; // guarda só 60 dias
+  r.atualizado = Date.now();
+  salvar();
+  renderTudo();
+}
+function renderHoje() {
+  const box = $('#hoje-conteudo');
+  if (!box) return;
+  const hoje = hojeISO();
+  const varios = estado.pets.length > 1;
+  const nomeDe = (id) => (varios ? nomePet(id) + ': ' : '');
+  const evs = pendencias(estado.pets.map((p) => p.id), 7);
+  const atras = evs.filter((e) => e.data < hoje), deHoje = evs.filter((e) => e.data === hoje), semana = evs.filter((e) => e.data > hoje);
+  const doses = dosesDeHoje();
+  let html = '';
+  if (doses.length) {
+    html += `<h3 class="lemb-grupo">Remédios de hoje <span class="selo-n ${doses.every((d) => d.feita) ? '' : 'perto'}">${doses.filter((d) => d.feita).length}/${doses.length}</span></h3><ul class="lista">`
+      + doses.map((d) => `<li><div class="info"><div class="principal">${esc(d.hora)} · ${esc(nomeDe(d.r.petId) + d.r.nome)}</div><div class="secundario">${esc(d.r.dose || '')}</div></div>
+        <button type="button" class="btn pequeno${d.feita ? '' : ' primario'}" data-dose-remedio="${d.r.id}|${d.hora}" aria-pressed="${d.feita}">${d.feita ? '✓ Dada' : 'Marcar como dada'}</button></li>`).join('') + '</ul>';
+  }
+  const bloco = (titulo, lista, cls) => (lista.length
+    ? `<h3 class="lemb-grupo">${titulo} <span class="selo-n ${cls}">${lista.length}</span></h3><ul class="lista proximos">`
+      + lista.slice(0, 4).map((e) => itemEvento(varios ? { ...e, titulo: nomePet(e.petId) + ': ' + e.titulo } : e)).join('')
+      + (lista.length > 4 ? `<li class="vazio">e mais ${lista.length - 4} na agenda</li>` : '') + '</ul>' : '');
+  html += bloco('Atrasados', atras, 'atrasada') + bloco('Para hoje', deHoje, 'perto');
+  if (semana.length) html += `<p class="dica-campo">Mais ${plural(semana.length, 'item', 'itens')} nos próximos 7 dias (veja em Próximos).</p>`;
+  box.innerHTML = html || '<p class="vazio-texto">Tudo em dia por hoje. Nada atrasado nem marcado.</p>';
+}
+$('#hoje-conteudo').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-dose-remedio]');
+  if (b) { const [id, hora] = b.dataset.doseRemedio.split('|'); marcarDose(id, hora); return; }
+  irDoEvento(ev);
+});
+
 function renderProximos() {
+  renderHoje();
   const hoje = hojeISO();
   const evs = eventosDoPet(estado.petAtual, somarDias(hoje, -60), somarDias(hoje, 60))
     .filter((e) => e.data >= hoje || (e.nivel === 'alerta' && !e.compromisso))
@@ -8022,6 +8133,29 @@ limparFormSaude();
 function lerLS(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function gravarLS(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignora */ } }
 if (!lerLS('diario-pet-primeiro-uso')) gravarLS('diario-pet-primeiro-uso', hojeISO());
+// Preferências de avisos: só deste aparelho (não entram no backup nem na sincronização)
+const NOTIF_CATS = {
+  saude: { nome: 'Vacinas, vermífugo e antipulgas', re: /^(sau-|plano-|semreg-)/ },
+  banho: { nome: 'Banho e tosa', re: /^(banho-prox|tosa-prox)/ },
+  remedios: { nome: 'Remédios (fim e estoque)', re: /^rem-/ },
+  racao: { nome: 'Ração (fim do saco e validade)', re: /^rac-/ },
+  retornos: { nome: 'Retornos no veterinário', re: /^ret-/ },
+  agenda: { nome: 'Compromissos da agenda', re: /^cmp-/ },
+  datas: { nome: 'Aniversário e cio', re: /^(niver-|cio-)/ },
+};
+function categoriaNotif(chave) { return Object.keys(NOTIF_CATS).find((k) => NOTIF_CATS[k].re.test(chave || '')) || ''; }
+function prefsNotif() {
+  const pr = { cats: {}, antecedencia: 1, atrasados: true, backupDias: 30 };
+  try {
+    const sv = JSON.parse(lerLS('diario-pet-notif') || '{}');
+    if (sv.cats && typeof sv.cats === 'object') for (const k of Object.keys(NOTIF_CATS)) if (sv.cats[k] === false) pr.cats[k] = false;
+    if ([0, 1, 3, 7].includes(sv.antecedencia)) pr.antecedencia = sv.antecedencia;
+    if (sv.atrasados === false) pr.atrasados = false;
+    if ([0, 15, 30, 60].includes(sv.backupDias)) pr.backupDias = sv.backupDias;
+  } catch (e) { /* usa o padrão */ }
+  return pr;
+}
+function gravarPrefsNotif(pr) { gravarLS('diario-pet-notif', JSON.stringify(pr)); }
 function diasDesde(iso) { return iso ? Math.floor((new Date(hojeISO() + 'T12:00') - new Date(iso + 'T12:00')) / 86400000) : 0; }
 function atualizarLembreteBackup() {
   const el = $('#lembrete-backup');
@@ -8029,7 +8163,8 @@ function atualizarLembreteBackup() {
   const ultimo = lerLS('diario-pet-ultimo-backup');
   const adiado = lerLS('diario-pet-backup-adiado');
   const dias = diasDesde(ultimo || lerLS('diario-pet-primeiro-uso'));
-  const mostrar = estado.pets.length > 0 && dias >= (ultimo ? 30 : 7) && adiado !== hojeISO();
+  const limiteBackup = prefsNotif().backupDias;
+  const mostrar = estado.pets.length > 0 && limiteBackup > 0 && dias >= (ultimo ? limiteBackup : 7) && adiado !== hojeISO();
   el.hidden = !mostrar;
   if (mostrar) {
     $('#lembrete-backup-txt').innerHTML = ultimo
@@ -9092,6 +9227,7 @@ function renderNotif() {
       ? 'No iPhone, os avisos só funcionam com o app instalado na Tela de Início (Compartilhar → Adicionar à Tela de Início). O jeito mais confiável é exportar a agenda abaixo: os alarmes ficam na agenda do celular.'
       : 'Este navegador não mostra avisos. Exporte a agenda abaixo: os alarmes ficam na agenda do celular.';
     b.hidden = true; t.hidden = true;
+    if ($('#cfg-notif-status')) { $('#cfg-notif-status').textContent = st.textContent; $('#cfg-notif-ativar').hidden = true; $('#cfg-notif-teste').hidden = true; }
     return;
   }
   const perm = Notification.permission;
@@ -9106,7 +9242,54 @@ function renderNotif() {
   } else {
     st.textContent = 'Receba um aviso no celular quando houver vacina, remédio, ração ou retorno atrasado, para hoje ou para amanhã.';
   }
+  if ($('#cfg-notif-status')) { $('#cfg-notif-status').textContent = st.textContent; $('#cfg-notif-ativar').hidden = b.hidden; $('#cfg-notif-teste').hidden = t.hidden; }
 }
+function renderConfigNotif() {
+  const pr = prefsNotif();
+  $('#cfg-notif-cats').innerHTML = Object.entries(NOTIF_CATS).map(([k, c]) =>
+    `<label class="check"><input type="checkbox" data-notif-cat="${k}"${pr.cats[k] === false ? '' : ' checked'}> ${c.nome}</label>`).join('');
+  $('#cfg-notif-antec').value = String(pr.antecedencia);
+  $('#cfg-notif-atrasados').checked = pr.atrasados;
+  $('#cfg-backup-dias').value = String(pr.backupDias);
+  const st = $('#notif-status');
+  $('#cfg-notif-status').textContent = st ? st.textContent : '';
+  $('#cfg-notif-ativar').hidden = $('#btn-notif').hidden;
+  $('#cfg-notif-teste').hidden = $('#btn-notif-teste').hidden;
+  mostrarVersaoApp();
+}
+function salvarConfigNotif() {
+  const pr = { cats: {}, antecedencia: Number($('#cfg-notif-antec').value), atrasados: $('#cfg-notif-atrasados').checked, backupDias: Number($('#cfg-backup-dias').value) };
+  $('#cfg-notif-cats').querySelectorAll('[data-notif-cat]').forEach((i) => { if (!i.checked) pr.cats[i.dataset.notifCat] = false; });
+  gravarPrefsNotif(pr);
+  gravarLembretesParaAvisos();
+  atualizarLembreteBackup();
+}
+$('#cfg-notif').addEventListener('change', salvarConfigNotif);
+$('#cfg-notif-ativar').addEventListener('click', () => $('#btn-notif').click());
+$('#cfg-notif-teste').addEventListener('click', () => $('#btn-notif-teste').click());
+
+// Versão do app e aviso de versão nova (o service worker troca sozinho; a página só precisa recarregar)
+async function mostrarVersaoApp() {
+  let v = '';
+  try { v = ((await caches.keys()).find((k) => /^diario-pet-v\d+/.test(k)) || '').replace('diario-pet-', ''); } catch (e) { /* sem cache */ }
+  $('#cfg-versao').textContent = v ? `Versão instalada: ${v}.` : 'Versão não disponível neste navegador.';
+}
+$('#btn-buscar-atualizacao').addEventListener('click', async () => {
+  const el = $('#cfg-versao');
+  el.textContent = 'Procurando atualização…';
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) throw new Error('sem service worker');
+    await reg.update();
+    setTimeout(() => { if ($('#aviso-versao').hidden) { mostrarVersaoApp().then(() => { el.textContent += ' Você já está na versão mais recente.'; }); } }, 2500);
+  } catch (e) { el.textContent = 'Não consegui procurar agora (sem internet ou app não instalado). Tente de novo mais tarde.'; }
+});
+if ('serviceWorker' in navigator) {
+  const jaTinhaControle = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (jaTinhaControle) $('#aviso-versao').hidden = false; });
+}
+$('#btn-atualizar-app').addEventListener('click', () => location.reload());
+
 async function mostrarNotificacao(titulo, corpo) {
   const opcoes = { body: corpo, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'diario-pet-lembretes' };
   try {
@@ -9115,14 +9298,15 @@ async function mostrarNotificacao(titulo, corpo) {
   } catch (e) { try { new Notification(titulo, opcoes); } catch (e2) { /* sem aviso */ } }
 }
 // Mesmo texto que o service worker monta (ver sw.js)
-function textoAviso(eventos, hoje) {
+function textoAviso(eventos, hoje, ant = 1, mostrarAtrasados = true) {
   const amanha = somarDias(hoje, 1);
-  const atras = eventos.filter((e) => e.data < hoje && e.atrasavel !== false), deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data === amanha);
+  const atras = mostrarAtrasados ? eventos.filter((e) => e.data < hoje && e.atrasavel !== false) : [];
+  const deHoje = eventos.filter((e) => e.data === hoje), deAmanha = eventos.filter((e) => e.data > hoje && e.data <= somarDias(hoje, ant));
   const partes = [];
   if (atras.length) partes.push(plural(atras.length, 'atrasado', 'atrasados'));
   if (deHoje.length) partes.push(`${deHoje.length} para hoje`);
-  if (deAmanha.length) partes.push(`${deAmanha.length} para amanhã`);
-  const linhas = [...atras, ...deHoje, ...deAmanha].slice(0, 4).map((e) => `• ${e.pet}: ${e.titulo}${e.data < hoje ? ' (atrasado)' : e.data === amanha ? ' (amanhã)' : ''}`);
+  if (deAmanha.length) partes.push(ant === 1 ? `${deAmanha.length} para amanhã` : `${deAmanha.length} nos próximos ${ant} dias`);
+  const linhas = [...atras, ...deHoje, ...deAmanha].slice(0, 4).map((e) => `• ${e.pet}: ${e.titulo}${e.data < hoje ? ' (atrasado)' : e.data === amanha ? ' (amanhã)' : e.data > hoje ? ` (${e.data.slice(8)}/${e.data.slice(5, 7)})` : ''}`);
   return { titulo: `Diário do Pet: ${partes.join(', ')}`, corpo: linhas.join('\n') };
 }
 $('#btn-notif').addEventListener('click', async () => {
@@ -9132,8 +9316,9 @@ $('#btn-notif').addEventListener('click', async () => {
   renderNotif();
 });
 $('#btn-notif-teste').addEventListener('click', () => {
-  const evs = dadosParaAvisos().filter((e) => e.data <= somarDias(hojeISO(), 1));
-  if (evs.length) { const t = textoAviso(evs, hojeISO()); mostrarNotificacao(t.titulo, t.corpo); }
+  const pr = prefsNotif();
+  const evs = dadosParaAvisos().filter((e) => e.data <= somarDias(hojeISO(), pr.antecedencia) && (pr.atrasados || e.data >= hojeISO()));
+  if (evs.length) { const t = textoAviso(evs, hojeISO(), pr.antecedencia, pr.atrasados); mostrarNotificacao(t.titulo, t.corpo); }
   else mostrarNotificacao('Diário do Pet', 'Os avisos estão funcionando. Nada atrasado nem para hoje ou amanhã.');
 });
 
@@ -9142,7 +9327,9 @@ $('#btn-notif-teste').addEventListener('click', () => {
 // (vacina/vermífugo/antipulgas, plano de vacinas, retorno e validade da ração)
 const PODE_ATRASAR = /^(sau-|plano-|ret-|rac-val)/;
 function dadosParaAvisos() {
+  const pr = prefsNotif();
   return pendencias(estado.pets.map((p) => p.id), 45)
+    .filter((e) => { const c = categoriaNotif(e.chave); return !c || pr.cats[c] !== false; })
     .map((e) => ({ data: e.data, hora: e.hora || '', titulo: e.titulo, pet: nomePet(e.petId), atrasavel: PODE_ATRASAR.test(e.chave) }));
 }
 let timerAvisos = 0;
@@ -9153,7 +9340,7 @@ function gravarLembretesParaAvisos() {
     let eventos;
     try { eventos = dadosParaAvisos(); } catch (e) { return; }
     caches.open('diario-pet-lembretes').then((c) => c.put('lembretes-dados.json',
-      new Response(JSON.stringify({ gerado: Date.now(), eventos }), { headers: { 'Content-Type': 'application/json' } }))).catch(() => {});
+      new Response(JSON.stringify({ gerado: Date.now(), eventos, config: { antecedencia: prefsNotif().antecedencia, atrasados: prefsNotif().atrasados } }), { headers: { 'Content-Type': 'application/json' } }))).catch(() => {});
   }, 1500);
 }
 // Muda a cada gravação: os cálculos pesados (padrões) só refazem quando os dados mudam
