@@ -7846,7 +7846,8 @@ function marcarDose(id, hora) {
 }
 function renderHoje() {
   const box = $('#hoje-conteudo');
-  if (!box) return;
+  // pendencias() vem no último <script>: na 1ª pintura ainda não existe; o renderTudo() do fim do arquivo pinta de novo
+  if (!box || typeof pendencias !== 'function') return;
   const hoje = hojeISO();
   const varios = estado.pets.length > 1;
   const nomeDe = (id) => (varios ? nomePet(id) + ': ' : '');
@@ -7874,7 +7875,8 @@ $('#hoje-conteudo').addEventListener('click', (ev) => {
 });
 
 function renderProximos() {
-  renderHoje();
+  // um erro no cartão Hoje não pode interromper o carregamento do app (bloqueava exportar/importar)
+  try { renderHoje(); } catch (e) { console.warn('cartão Hoje', e); }
   const hoje = hojeISO();
   const evs = eventosDoPet(estado.petAtual, somarDias(hoje, -60), somarDias(hoje, 60))
     .filter((e) => e.data >= hoje || (e.nivel === 'alerta' && !e.compromisso))
