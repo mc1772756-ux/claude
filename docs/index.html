@@ -778,7 +778,7 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
         </label>
         <div class="linha-botoes">
           <button type="button" class="btn pequeno" id="btn-exportar"><i data-ic="baixar"></i>Exportar backup</button>
-          <label class="btn pequeno botao-arquivo"><i data-ic="enviar"></i>Importar backup<input type="file" id="arquivo-backup" accept=".json,application/json"></label>
+          <label class="btn pequeno botao-arquivo"><i data-ic="enviar"></i>Importar backup<input type="file" id="arquivo-backup"></label>
         </div>
         <div id="backup-status" class="leitura-status" role="status" aria-live="polite" hidden></div>
       </div>
@@ -8176,6 +8176,8 @@ function atualizarLembreteBackup() {
 function marcarBackupFeito() { gravarLS('diario-pet-ultimo-backup', hojeISO()); atualizarLembreteBackup(); }
 $('#btn-backup-agora').addEventListener('click', () => {
   gravarLS('diario-pet-backup-adiado', hojeISO()); // se cancelar, não insiste de novo hoje
+  // a mensagem e o botão "Salvar ou compartilhar" ficam nas Configurações: abre antes, senão nada aparece
+  abrirConfig();
   $('#btn-exportar').click();
   $('#lembrete-backup').hidden = true;
 });
@@ -8223,6 +8225,10 @@ function statusBackup(html, classe = '') {
   el.className = 'leitura-status' + (classe ? ' ' + classe : '');
   el.innerHTML = html;
   el.hidden = !html;
+  if (html) {
+    if ($('#painel-config').hidden) abrirConfig();
+    requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  }
 }
 let backupPendente = null;
 
