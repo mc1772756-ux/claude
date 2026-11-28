@@ -7589,9 +7589,11 @@ let backupPendente = null;
 
 $('#btn-exportar').addEventListener('click', async () => {
   const fotos = {};
-  for (const r of [...estado.sintomas, ...estado.consultas, ...estado.gastos]) {
-    if (!r.fotoId) continue;
-    try { const u = await FotosDB.ler(r.fotoId); if (u) fotos[r.fotoId] = u; } catch (e) { /* sem foto */ }
+  // ids das fotos: campo fotoId (sintomas, consultas, gastos) e foto (fotos de carteira de vacinação)
+  const idsFotos = [...estado.sintomas, ...estado.consultas, ...estado.gastos].map((r) => r.fotoId)
+    .concat(estado.saude.map((r) => r.foto));
+  for (const id of new Set(idsFotos.filter(Boolean))) {
+    try { const u = await FotosDB.ler(id); if (u) fotos[id] = u; } catch (e) { /* sem foto */ }
   }
   const dados = { app: 'diario-do-pet', formato: 1, exportadoEm: new Date().toISOString(), estado, fotos };
   const nome = `diario-do-pet-backup-${hojeISO()}.json`;
