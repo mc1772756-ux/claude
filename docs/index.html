@@ -1971,6 +1971,8 @@ function sanearEstado(e) {
 }
 function normalizarEstado(e) {
   for (const k of COLECOES) if (!Array.isArray(e[k])) e[k] = [];
+  // ração sem lista de refeições (backup antigo ou importado): evita erro em todas as telas
+  for (const r of e.racoes) if (r && !Array.isArray(r.refeicoes)) r.refeicoes = [];
   if (!e.sync || typeof e.sync !== 'object') e.sync = {};
   if (!e.sync.apagados || typeof e.sync.apagados !== 'object') e.sync.apagados = {};
   return e;
@@ -3820,7 +3822,7 @@ function racaoDoPet(petId = estado.petAtual) {
 }
 const fmtG = (n) => formato('max1', { maximumFractionDigits: 1 }).format(n) + ' g';
 function totalDia(refeicoes) {
-  return Math.round(refeicoes.reduce((s, x) => s + x.g, 0) * 10) / 10;
+  return Math.round((refeicoes || []).reduce((s, x) => s + (Number(x && x.g) || 0), 0) * 10) / 10;
 }
 function agoraHHMM() {
   const d = new Date();
