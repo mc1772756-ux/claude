@@ -9011,6 +9011,18 @@ async function mostrarCodigo(codigo) {
   $('#sync-compartilhar').hidden = !navigator.share;
 }
 
+// O Chrome do Android esconde o IP do celular atrás de um nome .local (mDNS), que muitas redes não resolvem.
+// Com permissão de câmera concedida, ele revela o IP local verdadeiro. Abre e fecha a câmera só para isso.
+async function liberarEnderecosLocais() {
+  if (!navigator.mediaDevices?.getUserMedia) return;
+  try {
+    const fluxo = await Promise.race([
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false }),
+      new Promise((_, f) => setTimeout(() => f(new Error('tempo')), 4000)),
+    ]);
+    for (const t of fluxo.getTracks()) t.stop();
+  } catch (e) { /* sem permissão: segue só com o nome .local */ }
+}
 // Aparelho A: cria a oferta e mostra o QR
 async function iniciarOferta() {
   reiniciarSync();
@@ -9018,6 +9030,7 @@ async function iniciarOferta() {
   Sync.papel = 'oferta';
   syncInstrucao('Preparando o código…');
   try {
+    await liberarEnderecosLocais();
     Sync.pc = novaConexao();
     configurarCanal(Sync.pc.createDataChannel('diario-do-pet', { ordered: true }));
     await Sync.pc.setLocalDescription(await Sync.pc.createOffer());
@@ -9035,6 +9048,7 @@ async function responderOferta(sdp) {
   mostrarEtapa();
   Sync.papel = 'resposta';
   syncInstrucao('Preparando a resposta…');
+  await liberarEnderecosLocais();
   Sync.pc = novaConexao();
   Sync.pc.addEventListener('datachannel', (ev) => configurarCanal(ev.channel));
   await Sync.pc.setRemoteDescription({ type: 'offer', sdp });
