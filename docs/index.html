@@ -9016,9 +9016,11 @@ async function mostrarCodigo(codigo) {
 async function liberarEnderecosLocais() {
   if (!navigator.mediaDevices?.getUserMedia) return;
   try {
+    // Espera o pedido de permissão ser respondido (o limite antigo de 4 s fechava antes de o usuário aceitar)
+    syncInstrucao('Se aparecer um pedido de <strong>câmera</strong>, toque em <em>Permitir</em>. Ele ajuda os celulares a se encontrarem.');
     const fluxo = await Promise.race([
       navigator.mediaDevices.getUserMedia({ video: true, audio: false }),
-      new Promise((_, f) => setTimeout(() => f(new Error('tempo')), 4000)),
+      new Promise((_, f) => setTimeout(() => f(new Error('tempo')), 30000)),
     ]);
     for (const t of fluxo.getTracks()) t.stop();
   } catch (e) { /* sem permissão: segue só com o nome .local */ }
