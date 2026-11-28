@@ -8555,6 +8555,8 @@ $('#tutorial-proximo').addEventListener('click', () => {
 });
 $('#tutorial-voltar').addEventListener('click', () => { if (passoTutorial > 0) { passoTutorial--; mostrarPassoTutorial(); } });
 $('#tutorial-pular').addEventListener('click', () => fecharTutorial());
+// Tocar fora do cartão também fecha: o tutorial não pode bloquear os botões do app
+$('#tutorial-fundo').addEventListener('click', () => fecharTutorial());
 $('#btn-ver-tutorial').addEventListener('click', abrirTutorial);
 document.addEventListener('keydown', (ev) => {
   if ($('#tutorial').hidden) return;
