@@ -7,6 +7,23 @@ consultas e gastos. Funciona **offline** e pode ser **instalado no celular**.
 Na primeira vez que é aberto, um tutorial explica como cadastrar pets e cada aba
 (dá para rever em ⚙️ → Ver o tutorial de novo).
 
+### Novidades
+
+- **Sincronizar com outro celular** (⚙️ → Sincronizar agora): os dois aparelhos trocam os dados
+  direto entre si (WebRTC), sem servidor. Um mostra um QR code, o outro lê com a câmera (ou cola o
+  código recebido por mensagem). Os dados são **juntados**: nada se perde, vale a edição mais
+  recente e o que foi apagado em um é apagado no outro. As fotos também vão.
+- **Backup com senha** (criptografia AES-256) e importação que **junta** em vez de só substituir.
+- **Lembretes** (aba Agenda): atrasados / hoje / 7 dias / 30 dias de todos os pets, compromissos
+  que se repetem (toda semana, todo mês…), avisos no celular mesmo com o app fechado (Android com o
+  app instalado) e exportação da agenda inteira em `.ics` com alarmes.
+- **Padrões nos seus registros** (aba Início): tendência de peso e previsão para o peso ideal,
+  sintomas que se repetem em intervalos regulares ou ficam mais frequentes, sintomas depois de
+  trocar a ração ou começar um remédio, coceira depois do banho, mudança no escore corporal e
+  gastos (alta e projeção anual). Cada cartão explica como foi calculado.
+- **Vários pets** (aba Início): visão geral com avisos de cada pet, comparação lado a lado e
+  registro em lote (vermífugo, antipulgas, vacina ou banho para vários pets, dividindo o valor).
+
 O app fica na pasta [`docs/`](docs/) e é publicado pelo GitHub Pages.
 
 ## Publicar (uma vez)
@@ -39,6 +56,9 @@ O app fica na pasta [`docs/`](docs/) e é publicado pelo GitHub Pages.
   `VERSAO` em `docs/sw.js`.
 
 ## Créditos
+
+Códigos QR: [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT) e
+[jsQR](https://github.com/cozmo/jsQR) (Apache-2.0), na pasta `docs/qr/`.
 
 Leitura de texto por [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache-2.0),
 com dados de idioma português do projeto Tesseract. O arquivo `docs/ocr/worker.min.js`
