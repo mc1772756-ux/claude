@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c2185b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ciclo">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Ciclo</title>
+<style>
+:root{
+  --bg:#fdf6f8;--card:#ffffff;--txt:#2b1b22;--mut:#7a6070;--pri:#c2185b;--pri-t:#ffffff;
+  --line:#f0dfe6;--per:#e53935;--per-p:#ffcdd2;--fert:#43a047;--fert-p:#c8e6c9;
+  --ov:#1e88e5;--r:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1216;--card:#2a1b21;--txt:#f7e9ee;--mut:#b9a0aa;--pri:#f06292;--pri-t:#1c1216;
+    --line:#3d2930;--per:#ef5350;--per-p:#5c2a2a;--fert:#66bb6a;--fert-p:#214d28;--ov:#42a5f5;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1216;--card:#2a1b21;--txt:#f7e9ee;--mut:#b9a0aa;--pri:#f06292;--pri-t:#1c1216;
+  --line:#3d2930;--per:#ef5350;--per-p:#5c2a2a;--fert:#66bb6a;--fert-p:#214d28;--ov:#42a5f5;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+header{
+  position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:calc(12px + env(safe-area-inset-top)) 16px 10px;
+  border-bottom:1px solid var(--line);
+}
+header h1{margin:0;font-size:22px;color:var(--pri)}
+header p{margin:2px 0 0;font-size:13px;color:var(--mut)}
+main{max-width:560px;margin:0 auto;padding:16px 16px 0}
+.hidden{display:none!important}
+h2{font-size:17px;margin:0 0 10px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:6px solid transparent}
+.card.per{border-left-color:var(--per)}
+.card.fert{border-left-color:var(--fert)}
+.card.late{border-left-color:var(--ov)}
+.card.none{border-left-color:var(--line)}
+.card.ok{border-left-color:var(--pri)}
+.estado-t{font-size:20px;font-weight:700;margin:0 0 4px}
+.estado-s{margin:0;color:var(--mut);font-size:14px;line-height:1.4}
+.mut{color:var(--mut);font-size:13px;line-height:1.45;margin:8px 0 0}
+.linha{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.linha:last-child{border-bottom:none}
+.linha span{color:var(--mut)}
+.aviso{background:var(--per-p);border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.btns{display:grid;gap:8px;margin-top:14px}
+.btn{background:var(--pri);color:var(--pri-t);border:none;border-radius:12px;padding:13px 14px;
+  font-size:15px;font-weight:600;cursor:pointer;width:100%}
+.btn2{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:12px;
+  padding:11px 14px;font-size:14px;cursor:pointer;width:100%;text-align:left}
+.btn2.pequeno{width:auto;padding:7px 10px;font-size:13px;color:var(--per)}
+.btn:active,.btn2:active,.chip:active,.dia:active{opacity:.8}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:999px;
+  padding:8px 12px;font-size:14px;cursor:pointer}
+.chip.on{background:var(--pri);color:var(--pri-t);border-color:var(--pri)}
+.campo{margin-top:16px}
+.campo>label{display:block;font-size:13px;color:var(--mut);margin-bottom:8px;font-weight:600}
+textarea,input[type=number],select{
+  width:100%;font:inherit;color:var(--txt);background:var(--bg);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px}
+textarea{min-height:76px;resize:vertical}
+/* calendário */
+.mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mes-nav button{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:10px;
+  width:40px;height:40px;font-size:18px;cursor:pointer}
+.grade{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.sem{text-align:center;font-size:12px;color:var(--mut);padding:4px 0}
+.dia{position:relative;aspect-ratio:1/1;border:none;border-radius:10px;background:transparent;
+  color:var(--txt);font-size:15px;cursor:pointer;padding:0}
+.dia.per{background:var(--per);color:#fff}
+.dia.pre{background:var(--per-p)}
+.dia.fert{background:var(--fert-p)}
+.dia.ov{background:var(--ov);color:#fff}
+.dia.hoje{outline:2px solid var(--pri);outline-offset:-2px;font-weight:700}
+.dia .pt{position:absolute;bottom:4px;left:50%;width:5px;height:5px;border-radius:50%;
+  background:var(--pri);transform:translateX(-50%)}
+.dia.per .pt,.dia.ov .pt{background:#fff}
+.legenda{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:14px;font-size:12px;color:var(--mut)}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.quad{width:14px;height:14px;border-radius:4px;display:inline-block}
+/* histórico */
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item b{font-size:15px}
+.barras{display:flex;align-items:flex-end;gap:6px;margin-top:6px}
+.barra{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.tubo{height:110px;width:100%;display:flex;align-items:flex-end}
+.tubo i{display:block;width:100%;background:var(--pri);border-radius:6px 6px 0 0;min-height:4px}
+.barra span{font-size:11px;color:var(--mut)}
+/* ajustes */
+.ajuste{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ajuste:last-child{border-bottom:none}
+.ajuste input,.ajuste select{width:auto;min-width:110px}
+/* navegação inferior */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);
+  border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+nav.tabs button{flex:1;background:none;border:none;color:var(--mut);font-size:11px;
+  padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button .ic{font-size:20px;line-height:1}
+nav.tabs button.ativo{color:var(--pri);font-weight:700}
+/* diálogo do dia */
+dialog{border:none;border-radius:20px;padding:0;width:min(94vw,480px);max-height:88vh;
+  background:var(--card);color:var(--txt);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:18px 18px 20px;overflow:auto;max-height:88vh}
+.dlg-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.dlg-top h2{text-transform:capitalize;margin:0}
+.x{background:none;border:none;color:var(--mut);font-size:26px;cursor:pointer;line-height:1;padding:0 4px}
+.acoes{display:grid;gap:8px}
+.salvar{margin-top:18px}
+/* aviso */
+#toast{
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  background:var(--txt);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90vw;text-align:center
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.rodape{font-size:12px;color:var(--mut);text-align:center;margin:18px 8px 8px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌸 Ciclo</h1>
+  <p>Acompanhe seu ciclo menstrual · tudo fica só neste aparelho</p>
+</header>
+
+<main>
+
+  <!-- INÍCIO -->
+  <section id="v-inicio" class="view">
+    <div id="estado" class="card none">
+      <p id="estado-t" class="estado-t"></p>
+      <p id="estado-s" class="estado-s"></p>
+      <div class="btns">
+        <button class="btn" id="b-hoje-com">Começou a menstruação hoje</button>
+        <button class="btn2" id="b-hoje-fim">Última menstruação hoje</button>
+        <button class="btn2" id="b-hoje-det">Detalhes de hoje (sintomas, humor, fluxo)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Próximas previsões</h2>
+      <div id="prev"></div>
+      <p class="mut">Estimativas com base nos seus registros. A ovulação é estimada 14 dias antes da próxima menstruação.</p>
+    </div>
+
+    <div class="card">
+      <h2>Seu padrão</h2>
+      <div id="padrao"></div>
+    </div>
+
+    <p class="rodape">Este app não é método contraceptivo e não substitui orientação médica.</p>
+  </section>
+
+  <!-- CALENDÁRIO -->
+  <section id="v-cal" class="view hidden">
+    <div class="card">
+      <div class="mes-nav">
+        <button id="mes-ant" aria-label="Mês anterior">‹</button>
+        <h2 id="mes-t" style="margin:0"></h2>
+        <button id="mes-prox" aria-label="Próximo mês">›</button>
+      </div>
+      <div id="grade" class="grade"></div>
+      <div class="legenda">
+        <span><i class="quad" style="background:var(--per)"></i>Menstruação</span>
+        <span><i class="quad" style="background:var(--per-p)"></i>Prevista</span>
+        <span><i class="quad" style="background:var(--fert-p)"></i>Fértil</span>
+        <span><i class="quad" style="background:var(--ov)"></i>Ovulação (estimada)</span>
+        <span><i class="quad" style="background:var(--pri)"></i>Tem registro</span>
+      </div>
+      <p class="mut">Toque em um dia para registrar.</p>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section id="v-hist" class="view hidden">
+    <div class="card">
+      <h2>Ciclos</h2>
+      <div id="barras" class="barras"></div>
+      <p class="mut">Duração de cada ciclo (dias entre o início de uma menstruação e a seguinte).</p>
+    </div>
+    <div class="card">
+      <h2>Menstruações registradas</h2>
+      <div id="lista"></div>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="v-ajustes" class="view hidden">
+    <div class="card">
+      <h2>Preferências</h2>
+      <div class="ajuste">
+        <span>Ciclo padrão (dias)</span>
+        <input type="number" id="cfg-ciclo" min="21" max="45" inputmode="numeric">
+      </div>
+      <div class="ajuste">
+        <span>Duração padrão da menstruação (dias)</span>
+        <input type="number" id="cfg-dur" min="2" max="10" inputmode="numeric">
+      </div>
+      <div class="ajuste">
+        <span>Tema</span>
+        <select id="cfg-tema">
+          <option value="sistema">Automático</option>
+          <option value="claro">Claro</option>
+          <option value="escuro">Escuro</option>
+        </select>
+      </div>
+      <p class="mut">Os valores padrão são usados até você ter pelo menos dois inícios de menstruação registrados.</p>
+    </div>
+
+    <div class="card">
+      <h2>Dados</h2>
+      <div class="btns" style="margin-top:0">
+        <button class="btn2" id="b-exp">Exportar backup (.json)</button>
+        <button class="btn2" id="b-imp">Importar backup</button>
+        <input type="file" id="arq" accept="application/json,.json" hidden>
+        <button class="btn2" id="b-apagar" style="color:var(--per)">Apagar todos os dados</button>
+      </div>
+      <p class="mut">Os dados ficam só neste aparelho e no navegador. Faça um backup de vez em quando.</p>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabs">
+  <button data-v="inicio" class="ativo"><span class="ic">🏠</span>Início</button>
+  <button data-v="cal"><span class="ic">📅</span>Calendário</button>
+  <button data-v="hist"><span class="ic">📊</span>Histórico</button>
+  <button data-v="ajustes"><span class="ic">⚙️</span>Ajustes</button>
+</nav>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <div class="dlg-top">
+      <h2 id="dia-t"></h2>
+      <button class="x" data-a="fechar" aria-label="Fechar">×</button>
+    </div>
+    <div id="dia-acoes" class="acoes"></div>
+    <div id="dia-form"></div>
+    <div class="acoes salvar"><button class="btn" data-a="salvar">Salvar detalhes</button></div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ===================== dados ===================== */
+const KEY = 'ciclo.v1';
+const DEF = () => ({ periodos: [], dias: {}, cfg: { ciclo: 28, duracao: 5, tema: 'sistema' } });
+const FLUXO = [['', 'Nenhum'], ['manchas', 'Manchas'], ['leve', 'Leve'], ['moderado', 'Moderado'], ['intenso', 'Intenso']];
+const SINTOMAS = ['Cólica', 'Dor de cabeça', 'Inchaço', 'Acne', 'Seios sensíveis', 'Dor nas costas',
+  'Cansaço', 'Insônia', 'Náusea', 'Apetite aumentado', 'Muco mais elástico'];
+const HUMOR = ['Feliz', 'Calma', 'Neutra', 'Irritada', 'Triste', 'Ansiosa'];
+
+let S = carregar();
+
+function carregar() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      const d = DEF();
+      return { periodos: Array.isArray(o.periodos) ? o.periodos : [],
+               dias: (o.dias && typeof o.dias === 'object') ? o.dias : {},
+               cfg: { ...d.cfg, ...(o.cfg || {}) } };
+    }
+  } catch (e) { /* dados ilegíveis: começa vazio */ }
+  return DEF();
+}
+function salvar() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast('Não foi possível salvar neste navegador'); }
+}
+
+/* ===================== datas ===================== */
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const dt = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const diff = (a, b) => Math.round((b - a) / 864e5);
+const hoje = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+const dfmt = d => d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+const clamp = (n, a, b) => Math.min(b, Math.max(a, Number(n) || a));
+const byIni = (a, b) => (a.ini < b.ini ? -1 : a.ini > b.ini ? 1 : 0);
+
+/* ===================== cálculos ===================== */
+function estatisticas() {
+  const p = [...S.periodos].sort(byIni);
+  const ciclos = [];
+  for (let i = 1; i < p.length; i++) {
+    const n = diff(dt(p[i - 1].ini), dt(p[i].ini));
+    if (n >= 15 && n <= 60) ciclos.push(n);
+  }
+  const rec = ciclos.slice(-6);
+  const ciclo = rec.length ? Math.round(rec.reduce((a, b) => a + b, 0) / rec.length) : S.cfg.ciclo;
+  const durs = p.filter(x => x.fim)
+    .map(x => diff(dt(x.ini), dt(x.fim)) + 1)
+    .filter(n => n >= 1 && n <= 15).slice(-6);
+  const duracao = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : S.cfg.duracao;
+  return {
+    p, ciclos, ciclo, duracao, real: rec.length > 0,
+    ultimo: p.length ? dt(p[p.length - 1].ini) : null
+  };
+}
+
+function previsoes(st, n) {
+  const out = [];
+  if (!st.ultimo) return out;
+  for (let k = 1; k <= n; k++) {
+    const ini = add(st.ultimo, st.ciclo * k);
+    const ovul = add(ini, -14);
+    out.push({ ini, fimPer: add(ini, st.duracao - 1), ovul, fIni: add(ovul, -5), fFim: add(ovul, 1) });
+  }
+  return out;
+}
+
+function periodoEm(k, dur) {
+  const t = dt(k);
+  return S.periodos.find(p => {
+    const a = dt(p.ini);
+    const b = p.fim ? dt(p.fim) : add(a, dur - 1);
+    return t >= a && t <= b;
+  });
+}
+
+function estadoHoje(st) {
+  if (!st.ultimo) return { tipo: 'none', titulo: 'Comece registrando seu ciclo',
+    sub: 'Quando a menstruação começar, toque em "Começou a menstruação hoje".' };
+  const t = hoje();
+  const dia = diff(st.ultimo, t) + 1;
+  const p = previsoes(st, 1)[0];
+  const per = periodoEm(iso(t), st.duracao);
+  if (per) return { tipo: 'per', titulo: 'Menstruação',
+    sub: `Dia ${diff(dt(per.ini), t) + 1} do período` };
+  if (t >= p.ini) {
+    const at = diff(p.ini, t);
+    return at > 0
+      ? { tipo: 'late', titulo: `Menstruação prevista há ${at} dia(s)`, sub: 'Se ela já começou, toque em "Começou a menstruação hoje".' }
+      : { tipo: 'late', titulo: 'Menstruação prevista para hoje', sub: 'Se ela começar, toque em "Começou a menstruação hoje".' };
+  }
+  if (t >= p.fIni && t <= p.fFim) return { tipo: 'fert', titulo: 'Janela fértil',
+    sub: `Dia ${dia} do ciclo · ovulação estimada em ${dfmt(p.ovul)}` };
+  const fase = t < p.ovul ? 'Fase folicular' : 'Fase lútea';
+  return { tipo: 'ok', titulo: fase,
+    sub: `Dia ${dia} do ciclo · próxima menstruação em ${diff(t, p.ini)} dia(s)` };
+}
+
+/* ===================== navegação ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+function mostrar(v) {
+  $$('.view').forEach(x => x.classList.toggle('hidden', x.id !== 'v-' + v));
+  $$('nav.tabs button').forEach(b => b.classList.toggle('ativo', b.dataset.v === v));
+  renderTudo();
+  window.scrollTo(0, 0);
+}
+$$('nav.tabs button').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.v)));
+
+function renderTudo() {
+  renderInicio();
+  renderCal();
+  renderHist();
+  renderAjustes();
+}
+
+/* ===================== início ===================== */
+function renderInicio() {
+  const st = estatisticas();
+  const e = estadoHoje(st);
+  const box = $('#estado');
+  box.className = 'card ' + e.tipo;
+  $('#estado-t').textContent = e.titulo;
+  $('#estado-s').textContent = e.sub;
+
+  if (!st.ultimo) {
+    $('#prev').innerHTML = '<p class="mut" style="margin:0">Sem previsões ainda.</p>';
+  } else {
+    const t = hoje();
+    const p = previsoes(st, 1)[0];
+    const atraso = diff(p.ini, t);
+    const parado = diff(st.ultimo, t);
+    $('#prev').innerHTML = `
+      <div class="linha"><span>Próxima menstruação</span><b>${dfmt(p.ini)} – ${dfmt(p.fimPer)}</b></div>
+      <div class="linha"><span>Ovulação estimada</span><b>${dfmt(p.ovul)}</b></div>
+      <div class="linha"><span>Janela fértil</span><b>${dfmt(p.fIni)} – ${dfmt(p.fFim)}</b></div>
+      ${atraso > 0 ? `<div class="aviso">Passaram ${atraso} dia(s) da data prevista.</div>` : ''}
+      ${parado > 60 ? `<div class="aviso">Faz ${parado} dias desde o último início registrado. As previsões podem estar desatualizadas.</div>` : ''}`;
+  }
+
+  const ult = st.ciclos.slice(-6);
+  const variacao = ult.length >= 2 ? Math.max(...ult) - Math.min(...ult) : null;
+  $('#padrao').innerHTML = `
+    <div class="linha"><span>Ciclo médio</span><b>${st.ciclo} dias${st.real ? '' : ' (padrão)'}</b></div>
+    <div class="linha"><span>Duração média da menstruação</span><b>${st.duracao} dias${st.p.some(x => x.fim) ? '' : ' (padrão)'}</b></div>
+    <div class="linha"><span>Ciclos completos registrados</span><b>${st.ciclos.length}</b></div>
+    ${variacao !== null ? `<div class="linha"><span>Variação entre os últimos ciclos</span><b>${variacao} dia(s)</b></div>` : ''}
+    <p class="mut">O ciclo médio usa os últimos ciclos registrados. Quanto mais inícios e fins anotados, mais precisas as previsões.</p>`;
+}
+
+$('#b-hoje-com').addEventListener('click', () => { comecou(iso(hoje())); renderTudo(); });
+$('#b-hoje-fim').addEventListener('click', () => { terminou(iso(hoje())); renderTudo(); });
+$('#b-hoje-det').addEventListener('click', () => abrirDia(iso(hoje())));
+
+/* ===================== registros de período ===================== */
+function comecou(k) {
+  if (periodoEm(k, estatisticas().duracao)) { toast('Este dia já está em um período'); return false; }
+  // se havia um período aberto antes, fecha no dia anterior ao novo início
+  S.periodos.forEach(p => { if (!p.fim && p.ini < k) p.fim = iso(add(dt(k), -1)); });
+  S.periodos.push({ ini: k, fim: null });
+  S.periodos.sort(byIni);
+  salvar();
+  toast('Início registrado');
+  return true;
+}
+function terminou(k) {
+  const antes = S.periodos.filter(p => p.ini <= k).sort(byIni);
+  if (!antes.length) { toast('Registre primeiro o início da menstruação'); return false; }
+  antes[antes.length - 1].fim = k;
+  salvar();
+  toast('Último dia registrado');
+  return true;
+}
+
+/* ===================== calendário ===================== */
+let mesVis = (() => { const h = hoje(); return new Date(h.getFullYear(), h.getMonth(), 1); })();
+
+function classeDia(date, k, st, prevs) {
+  if (periodoEm(k, st.duracao)) return 'per';
+  for (const p of prevs) {
+    if (k === iso(p.ovul)) return 'ov';
+    if (date >= p.ini && date <= p.fimPer) return 'pre';
+    if (date >= p.fIni && date <= p.fFim) return 'fert';
+  }
+  return '';
+}
+
+function renderCal() {
+  const st = estatisticas();
+  const prevs = st.ultimo ? previsoes(st, 3) : [];
+  const a = mesVis.getFullYear(), m = mesVis.getMonth();
+  const tit = mesVis.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  $('#mes-t').textContent = tit.charAt(0).toUpperCase() + tit.slice(1);
+  const off = (new Date(a, m, 1).getDay() + 6) % 7;
+  const n = new Date(a, m + 1, 0).getDate();
+  const hj = iso(hoje());
+  let h = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(x => `<span class="sem">${x}</span>`).join('');
+  for (let i = 0; i < off; i++) h += '<span></span>';
+  for (let d = 1; d <= n; d++) {
+    const date = new Date(a, m, d);
+    const k = iso(date);
+    const c = classeDia(date, k, st, prevs);
+    const lg = S.dias[k];
+    const ponto = lg && (lg.fluxo || (lg.sint && lg.sint.length) || lg.humor || lg.nota) ? '<i class="pt"></i>' : '';
+    h += `<button class="dia ${c} ${k === hj ? 'hoje' : ''}" data-d="${k}" aria-label="${dfmt(date)}">${d}${ponto}</button>`;
+  }
+  $('#grade').innerHTML = h;
+}
+$('#mes-ant').addEventListener('click', () => { mesVis = new Date(mesVis.getFullYear(), mesVis.getMonth() - 1, 1); renderCal(); });
+$('#mes-prox').addEventListener('click', () => { mesVis = new Date(mesVis.getFullYear(), mesVis.getMonth() + 1, 1); renderCal(); });
+$('#grade').addEventListener('click', e => {
+  const b = e.target.closest('[data-d]');
+  if (b) abrirDia(b.dataset.d);
+});
+
+/* ===================== histórico ===================== */
+function renderHist() {
+  const st = estatisticas();
+  const lista = [...st.p].reverse();
+  $('#lista').innerHTML = lista.length
+    ? lista.map((x, i) => {
+        const a = dt(x.ini);
+        const b = x.fim ? dt(x.fim) : null;
+        const dur = b ? diff(a, b) + 1 : null;
+        const prox = i > 0 ? lista[i - 1] : null; // período seguinte (mais recente)
+        const ciclo = prox ? diff(a, dt(prox.ini)) : null;
+        const partes = [];
+        if (dur) partes.push(`${dur} dia(s) de menstruação`);
+        if (ciclo && ciclo >= 15 && ciclo <= 60) partes.push(`ciclo de ${ciclo} dias`);
+        return `<div class="item">
+          <div><b>${dfmt(a)}${b ? ' – ' + dfmt(b) : ' (em andamento)'}</b>
+          <div class="mut" style="margin:2px 0 0">${partes.join(' · ')}</div></div>
+          <button class="btn2 pequeno" data-rem="${x.ini}">Remover</button>
+        </div>`;
+      }).join('')
+    : '<p class="mut" style="margin:0">Nenhuma menstruação registrada ainda.</p>';
+
+  const cs = st.ciclos.slice(-12);
+  $('#barras').innerHTML = cs.length
+    ? cs.map(n => `<div class="barra" title="${n} dias"><div class="tubo"><i style="height:${Math.min(100, Math.round(n / 50 * 100))}%"></i></div><span>${n}</span></div>`).join('')
+    : '<p class="mut" style="margin:0">Os ciclos aparecem aqui quando houver dois inícios de menstruação registrados.</p>';
+}
+$('#lista').addEventListener('click', e => {
+  const b = e.target.closest('[data-rem]');
+  if (!b) return;
+  if (!confirm('Remover este período do histórico?')) return;
+  S.periodos = S.periodos.filter(p => p.ini !== b.dataset.rem);
+  salvar(); renderTudo(); toast('Período removido');
+});
+
+/* ===================== ajustes ===================== */
+function aplicaTema() {
+  const t = S.cfg.tema;
+  if (t === 'claro') document.documentElement.dataset.theme = 'light';
+  else if (t === 'escuro') document.documentElement.dataset.theme = 'dark';
+  else delete document.documentElement.dataset.theme;
+}
+function renderAjustes() {
+  $('#cfg-ciclo').value = S.cfg.ciclo;
+  $('#cfg-dur').value = S.cfg.duracao;
+  $('#cfg-tema').value = S.cfg.tema;
+}
+$('#cfg-ciclo').addEventListener('change', e => { S.cfg.ciclo = clamp(e.target.value, 21, 45); salvar(); renderTudo(); });
+$('#cfg-dur').addEventListener('change', e => { S.cfg.duracao = clamp(e.target.value, 2, 10); salvar(); renderTudo(); });
+$('#cfg-tema').addEventListener('change', e => { S.cfg.tema = e.target.value; salvar(); aplicaTema(); });
+
+$('#b-exp').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ app: 'ciclo', versao: 1, ...S }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ciclo-backup-${iso(hoje())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('#b-imp').addEventListener('click', () => $('#arq').click());
+$('#arq').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const o = JSON.parse(await f.text());
+    if (!o || !Array.isArray(o.periodos)) throw new Error('formato');
+    const okD = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+    const pers = o.periodos.filter(p => p && okD(p.ini) && (p.fim === null || p.fim === undefined || okD(p.fim)));
+    if (!confirm(`Juntar ${pers.length} período(s) deste arquivo aos dados que já estão no aparelho?`)) return;
+    for (const p of pers) {
+      if (!S.periodos.some(x => x.ini === p.ini)) S.periodos.push({ ini: p.ini, fim: p.fim || null });
+    }
+    for (const [k, v] of Object.entries(o.dias || {})) {
+      if (okD(k) && v && typeof v === 'object') {
+        S.dias[k] = {
+          fluxo: String(v.fluxo || ''),
+          sint: Array.isArray(v.sint) ? v.sint.map(String) : [],
+          humor: String(v.humor || ''),
+          nota: String(v.nota || '')
+        };
+      }
+    }
+    S.periodos.sort(byIni);
+    salvar(); renderTudo(); toast('Backup importado');
+  } catch (err) {
+    toast('Arquivo inválido');
+  }
+});
+
+$('#b-apagar').addEventListener('click', () => {
+  if (!confirm('Apagar todos os dados deste aparelho? Não dá para desfazer. Faça um backup antes.')) return;
+  S = DEF();
+  salvar(); aplicaTema(); renderTudo(); toast('Dados apagados');
+});
+
+/* ===================== registro do dia ===================== */
+let editando = null;
+let rascunho = null;
+
+function abrirDia(k) {
+  editando = k;
+  const r = S.dias[k] || {};
+  rascunho = { fluxo: r.fluxo || '', sint: [...(r.sint || [])], humor: r.humor || '', nota: r.nota || '' };
+  const d = dt(k);
+  $('#dia-t').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  renderDia();
+  $('#dlg').showModal();
+}
+
+function lerNota() {
+  const ta = $('#dia-nota');
+  if (ta && rascunho) rascunho.nota = ta.value;
+}
+
+function renderDia() {
+  const k = editando;
+  const st = estatisticas();
+  const contem = periodoEm(k, st.duracao);
+  const inicioAqui = S.periodos.find(p => p.ini === k);
+  const algumAnterior = S.periodos.some(p => p.ini <= k);
+
+  let acoes = '';
+  if (inicioAqui) acoes += '<button class="btn2" data-a="rem">Remover o início de menstruação deste dia</button>';
+  else if (!contem) acoes += '<button class="btn" data-a="com">Começou a menstruação neste dia</button>';
+  if (algumAnterior) acoes += '<button class="btn2" data-a="fim">Último dia de menstruação é este dia</button>';
+  $('#dia-acoes').innerHTML = acoes;
+
+  $('#dia-form').innerHTML = `
+    <div class="campo"><label>Fluxo</label>
+      <div class="chips">${FLUXO.map(([v, l]) =>
+        `<button class="chip ${rascunho.fluxo === v ? 'on' : ''}" data-a="fl" data-v="${v}">${l}</button>`).join('')}
+      </div></div>
+    <div class="campo"><label>Sintomas</label>
+      <div class="chips">${SINTOMAS.map(s =>
+        `<button class="chip ${rascunho.sint.includes(s) ? 'on' : ''}" data-a="s" data-v="${s}">${s}</button>`).join('')}
+      </div></div>
+    <div class="campo"><label>Humor</label>
+      <div class="chips">${HUMOR.map(h =>
+        `<button class="chip ${rascunho.humor === h ? 'on' : ''}" data-a="h" data-v="${h}">${h}</button>`).join('')}
+      </div></div>
+    <div class="campo"><label for="dia-nota">Anotações</label>
+      <textarea id="dia-nota" placeholder="Como você se sentiu, remédios, atividade física…"></textarea></div>`;
+  $('#dia-nota').value = rascunho.nota;
+}
+
+$('#dlg').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (!b) return;
+  const a = b.dataset.a, v = b.dataset.v;
+  if (a === 'fechar') return $('#dlg').close();
+  if (a === 'salvar') return salvarDia();
+  lerNota();
+  if (a === 'com') { comecou(editando); }
+  else if (a === 'fim') { terminou(editando); }
+  else if (a === 'rem') {
+    if (confirm('Remover o início de menstruação deste dia?')) {
+      S.periodos = S.periodos.filter(p => p.ini !== editando);
+      salvar(); toast('Período removido');
+    }
+  }
+  else if (a === 'fl') { rascunho.fluxo = v; }
+  else if (a === 's') {
+    const i = rascunho.sint.indexOf(v);
+    if (i < 0) rascunho.sint.push(v); else rascunho.sint.splice(i, 1);
+  }
+  else if (a === 'h') { rascunho.humor = rascunho.humor === v ? '' : v; }
+  if (['com', 'fim', 'rem'].includes(a)) renderTudo();
+  renderDia();
+});
+
+function salvarDia() {
+  lerNota();
+  const r = rascunho;
+  const vazio = !r.fluxo && !r.sint.length && !r.humor && !r.nota.trim();
+  if (vazio) delete S.dias[editando];
+  else S.dias[editando] = { fluxo: r.fluxo, sint: r.sint, humor: r.humor, nota: r.nota.trim() };
+  salvar();
+  $('#dlg').close();
+  renderTudo();
+  toast('Dia salvo');
+}
+
+/* ===================== utilitários ===================== */
+let tt;
+function toast(m) {
+  const t = $('#toast');
+  t.textContent = m;
+  t.classList.add('on');
+  clearTimeout(tt);
+  tt = setTimeout(() => t.classList.remove('on'), 2200);
+}
+
+/* ===================== início ===================== */
+aplicaTema();
+mostrar('inicio');
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+})();
+</script>
+</body>
+</html>

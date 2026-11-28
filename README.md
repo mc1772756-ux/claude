@@ -26,6 +26,17 @@ Na primeira vez que é aberto, um tutorial explica como cadastrar pets e cada ab
 
 O app fica na pasta [`docs/`](docs/) e é publicado pelo GitHub Pages.
 
+## Ciclo menstrual
+
+Outro app, separado, em [`docs/ciclo/`](docs/ciclo/): registra o início e o fim da menstruação,
+fluxo, sintomas, humor e anotações; calcula o ciclo e a duração médios, a próxima menstruação, a
+ovulação estimada e a janela fértil; mostra tudo num calendário. Também funciona **offline**,
+instalável no celular, e os dados ficam só no aparelho (backup em ⚙️ → Exportar backup).
+Não é método contraceptivo.
+
+Endereço: `https://<usuario>.github.io/claude/ciclo/`. Se mudar arquivos dele, aumente a
+`VERSAO` em `docs/ciclo/sw.js`.
+
 ## Publicar (uma vez)
 
 1. No GitHub, abra **Settings → Pages**.
