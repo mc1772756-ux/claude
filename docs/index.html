@@ -2937,7 +2937,7 @@ function nomeVacinaCarteira(cat, linha, especie) {
 }
 
 // Datas dd/mm/aa(aa) de até 25 anos atrás e até 3 anos à frente
-function datasDaLinha(l) {
+function datasDaLinha(l, nasc = '') {
   const hoje = hojeISO();
   const out = [];
   if (/licen|minist|agricult|fabr|venc|part\b/i.test(l)) return out; // datas impressas no selo
@@ -2952,6 +2952,7 @@ function datasDaLinha(l) {
     if (curta && /^[\]\[)(}{?!'"`´^~a-zA-Z]/.test(l.slice(m.index + m[0].length))) continue;
     const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     if (iso > somarDias(hoje, 3 * 365) || iso < somarDias(hoje, -25 * 365)) continue;
+    if (nasc && iso < nasc) continue; // antes do nascimento do pet: erro de leitura
     out.push({ iso, curta, prox: ROTULOS_DATA_PROX.test(l.slice(Math.max(0, m.index - 25), m.index)) });
   }
   return out;
@@ -2966,13 +2967,14 @@ function extrairCarteira(trechos, p) {
   const datas = [];
   const rotulos = [];
   for (const t of trechos) {
+    if (t.mao && p.nascimento && t.mao[0].iso < p.nascimento) continue;
     if (t.mao) { datas.push({ iso: t.mao[0].iso, cands: t.mao, x: t.x, y: t.y, mao: true }); continue; }
     const l = limparTextoOcr(t.texto);
     const achou = termos.find((x) => x.re.test(l));
     if (achou) hits.push({ cat: achou.cat, texto: l, x: t.x, y: t.y });
     else if (/vacina\s+(viva|inativada|atenuada|recombinante)|nobiva|zoetis|boehringer|\bmsd\b/i.test(l)) hits.push({ cat: '', texto: l, x: t.x, y: t.y });
     if (t.girado) continue;
-    const dl = datasDaLinha(l);
+    const dl = datasDaLinha(l, p.nascimento || '');
     if (!dl.length && /revac|refor[cç]o|pr[oó]xima/i.test(l)) rotulos.push({ prox: true, x: t.x, y: t.y });
     else if (!dl.length && /vacinad|aplicad|^data\b/i.test(l)) rotulos.push({ prox: false, x: t.x, y: t.y });
     for (const d of dl) if (!datas.some((o) => o.iso === d.iso && Math.abs(o.x - t.x) < 0.05 && Math.abs(o.y - t.y) < 0.03)) datas.push({ ...d, cands: [{ iso: d.iso, p: 1 }], x: t.x, y: t.y });
