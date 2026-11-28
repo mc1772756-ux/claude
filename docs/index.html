@@ -1223,19 +1223,23 @@ textarea:focus { outline: 2px solid var(--primaria); outline-offset: 1px; }
 
       <div id="saude-prevencao">
       <div class="cartao">
-        <h2><i data-ic="banho"></i>Banho</h2>
+        <h2><i data-ic="banho"></i>Banho e tosa</h2>
         <p class="destaque" id="banho-ultimo"></p>
+        <div class="nota" id="banho-plano"></div>
         <form id="form-banho" novalidate>
           <div class="linha alinhar-base">
-            <label>Data do banho
+            <label>Data
               <input type="date" id="banho-data" required>
             </label>
-            <button type="submit" class="btn primario curto">Registrar banho</button>
+            <label>O que foi feito
+              <select id="banho-tipo"><option value="banho">Banho</option><option value="tosa">Tosa</option><option value="ambos">Banho e tosa</option></select>
+            </label>
+            <button type="submit" class="btn primario curto">Registrar</button>
           </div>
           <p class="erro" id="banho-erro" role="alert" hidden></p>
         </form>
         <details class="historico">
-          <summary>Banhos anteriores</summary>
+          <summary>Banhos e tosas anteriores</summary>
           <ul id="lista-banho" class="lista"></ul>
         </details>
       </div>
@@ -3651,24 +3655,109 @@ $('#form-banho').addEventListener('submit', (ev) => {
   if (!data) { erro.textContent = 'Informe a data do banho.'; erro.hidden = false; return; }
   if (data > hojeISO()) { erro.textContent = 'A data do banho não pode estar no futuro.'; erro.hidden = false; return; }
   erro.hidden = true;
-  estado.banhos.push({ id: novoId(), petId: estado.petAtual, data, criado: Date.now() });
+  estado.banhos.push({ id: novoId(), petId: estado.petAtual, data, tipo: $('#banho-tipo').value || 'banho', criado: Date.now() });
   salvar();
   $('#banho-data').value = hojeISO();
   renderTudo();
 });
 
+/* ---------- Banho e tosa por raça, idade e espécie ---------- */
+// Pelagem reconhecida pelo texto da raça (já sem acento). Só raças de pelo que cresce sem parar
+// precisam de tosa periódica; as de dupla camada não devem ser tosadas (só escovadas).
+const PELAGEM = {
+  cao: [
+    { id: 'continuo', nome: 'pelo que cresce sem parar', banho: 21, tosa: 42,
+      re: /poodle|shih ?tzu|shitzu|yorkshire|yorkie|maltes|bichon|lhasa|schnauzer|bolognese|bolonhes|havanes|westie|west highland|scottish|cocker|pequines|airedale|kerry|tibetan|lulu de|coton/,
+      nota: 'Pelo que não para de crescer: tosa de manutenção a cada 6 semanas (4 a 8, conforme o corte) e escovação várias vezes por semana para não embolar.' },
+    { id: 'dupla', nome: 'dupla camada de pelo', banho: 30, tosa: 0,
+      re: /golden|labrador|husky|malamute|spitz|pomerania|lulu|akita|pastor|border collie|collie|corgi|samoyed|chow|terra nova|newfoundland|sao bernardo|shetland|setter|retriever|bernes/,
+      nota: 'Não precisa de tosa periódica e não deve ser tosado rente (a pelagem protege do calor e do sol e pode não crescer igual). Escove 2 a 3 vezes por semana, todos os dias na troca de pelo; só tosa higiênica (patas, barriga).' },
+    { id: 'curto', nome: 'pelo curto', banho: 30, tosa: 0,
+      re: /pug|bulldog|boxer|beagle|pit ?bull|staffordshire|american staff|dachshund|salsicha|chihuahua|doberman|dalmata|rottweiler|jack russell|jrt|parson|fox paulistinha|paulistinha|terrier brasileiro|whippet|greyhound|shar ?pei|pinscher|basset|bull terrier|weimaraner|pointer|boston terrier|fila|mastim|rhodesian|galgo|american bully|boiadeiro/,
+      nota: 'Não precisa de tosa. Uma escovação semanal com luva de borracha basta. Em raças com dobras de pele (pug, bulldog) limpe e seque as dobras depois de cada banho.' },
+    { id: 'padrao', nome: 'sem raça definida ou não reconhecida', banho: 30, tosa: 0,
+      re: /$^/, nota: 'Sem raça reconhecida, o app não agenda tosa. Se o pelo crescer a ponto de embolar ou cobrir os olhos, faça tosa higiênica e registre aqui.' },
+  ],
+  gato: [
+    { id: 'longo', nome: 'pelo longo', banho: 45, tosa: 0,
+      re: /persa|himalaio|maine coon|ragdoll|angora|birman|noruegues|siberiano|balines|ragamuffin|selkirk|exotico de pelo longo/,
+      nota: 'Escovação diária evita nós e bolas de pelo. Banho a cada 4 a 8 semanas ajuda. A tosa só é indicada em caso de nós ou pelo emaranhado (higiênica, com profissional).' },
+    { id: 'sem-pelo', nome: 'sem pelo', banho: 14, tosa: 0,
+      re: /sphynx|esfinge|peterbald|donskoy|elf/,
+      nota: 'Gatos sem pelo acumulam oleosidade na pele: banho a cada 1 a 2 semanas costuma ser necessário. Não há tosa.' },
+    { id: 'curto', nome: 'pelo curto', banho: 0, tosa: 0,
+      re: /siames|bengal|abissinio|russo azul|british|bombay|burmes|oriental|savannah|manx|devon rex|cornish|exotico|mau egipcio/,
+      nota: 'Gatos se limpam sozinhos: banho de rotina não é necessário, só se sujar de algo ou por orientação do veterinário. Escovação semanal. Sem tosa.' },
+    { id: 'padrao', nome: 'sem raça definida ou não reconhecida', banho: 0, tosa: 0,
+      re: /$^/, nota: 'Gatos se limpam sozinhos: banho só se sujar ou por orientação do veterinário. Escove com mais frequência se o pelo for longo. Sem tosa.' },
+  ],
+};
+const semTosa = (r) => r.tipo !== 'tosa';
+const comTosa = (r) => r.tipo === 'tosa' || r.tipo === 'ambos';
+
+// Perfil de banho e tosa do pet: intervalos em dias (0 = não precisa de rotina) e avisos
+function perfilBanho(p) {
+  const t = ' ' + normalizar(p.raca) + ' ';
+  const lista = PELAGEM[p.especie] || PELAGEM.cao;
+  const base = lista.find((x) => x.re.test(t)) || lista[lista.length - 1];
+  const meses = idadeEmMeses(p.nascimento);
+  let banho = base.banho, tosa = base.tosa;
+  const notas = [base.nota];
+  if (meses !== null && meses < 4) {
+    banho = 0; tosa = 0;
+    notas.unshift('Filhote: sem banho de rotina. Se precisar, só com produto próprio para filhotes e depois que o veterinário liberar (em geral após o esquema de vacinas).');
+  } else if (tosa && meses !== null && meses < 6) {
+    tosa = 0;
+    notas.unshift('Filhote: a primeira tosa de manutenção costuma ficar para depois dos 6 meses; antes disso, só higiênica.');
+  }
+  const idoso = meses !== null && meses >= (p.especie === 'gato' ? 132 : 96);
+  if (idoso && banho) { banho = Math.round(banho * 1.5); notas.push('Pet idoso: pele mais ressecada, então o intervalo do banho foi aumentado em 50%.'); }
+  return { pelagem: base.nome, banho, tosa, notas };
+}
+
 function renderBanho() {
   const regs = banhosDoPet();
+  const p = petAtual();
+  const nomeTipo = (r) => (r.tipo === 'tosa' ? 'Tosa' : r.tipo === 'ambos' ? 'Banho e tosa' : 'Banho');
+  const ult = regs.find(semTosa), ultT = regs.find(comTosa);
   $('#banho-ultimo').innerHTML = regs.length
-    ? `Último banho: <strong>${fmtData(regs[0].data)}</strong> (${textoHaDias(regs[0].data)})`
-    : 'Nenhum banho registrado ainda.';
+    ? [ult ? `Último banho: <strong>${fmtData(ult.data)}</strong> (${textoHaDias(ult.data)})` : '', ultT ? `Última tosa: <strong>${fmtData(ultT.data)}</strong> (${textoHaDias(ultT.data)})` : ''].filter(Boolean).join('<br>')
+    : 'Nenhum banho ou tosa registrado ainda.';
+  if (p) {
+    const pf = perfilBanho(p);
+    const linhas = [`<strong>Pelagem: ${esc(pf.pelagem)}</strong>`];
+    const prox = (ultimo, dias) => (ultimo ? ` Próximo: <strong>${fmtData(somarDias(ultimo.data, dias))}</strong>.` : '');
+    linhas.push(pf.banho ? `Banho: a cada <strong>${pf.banho} dias</strong>.${prox(ult, pf.banho)}` : 'Banho: sem rotina, só quando sujar ou o veterinário indicar.');
+    linhas.push(pf.tosa ? `Tosa: a cada <strong>${pf.tosa} dias</strong>.${prox(ultT, pf.tosa)}` : 'Tosa: <strong>não precisa de tosa periódica</strong> para este pet.');
+    $('#banho-plano').innerHTML = linhas.map((l) => `<p>${l}</p>`).join('') + pf.notas.map((n) => `<p class="dica-campo">${esc(n)}</p>`).join('')
+      + '<p class="dica-campo">Intervalos de referência: confirme com o veterinário ou o tosador.</p>';
+  }
   $('#lista-banho').innerHTML = regs.length
     ? regs.map((r) => `
       <li>
-        <div class="info"><div class="principal">${fmtData(r.data)}</div><div class="secundario">${textoHaDias(r.data)}</div></div>
+        <div class="info"><div class="principal">${fmtData(r.data)} · ${nomeTipo(r)}</div><div class="secundario">${textoHaDias(r.data)}</div></div>
         <button type="button" class="btn pequeno perigo" data-remover-banho="${r.id}">Excluir</button>
       </li>`).join('')
     : '<li class="vazio">Sem registros.</li>';
+}
+
+// Próximo banho e próxima tosa na agenda (só depois do primeiro registro de cada um)
+function eventosBanho(p, dentro, hoje) {
+  const pf = perfilBanho(p);
+  const regs = estado.banhos.filter((r) => r.petId === p.id).sort((a, b) => (a.data < b.data ? 1 : -1));
+  const out = [];
+  const add = (ultimo, dias, titulo, chave) => {
+    if (!ultimo || !dias) return;
+    const prox = somarDias(ultimo.data, dias);
+    const quando = prox < hoje ? hoje : prox;
+    if (!dentro(quando)) return;
+    out.push({ chave: `${chave}-${p.id}`, data: quando, ic: 'banho', titulo,
+      detalhe: prox < hoje ? `atrasado desde ${fmtData(prox)}` : `a cada ${dias} dias · ${pf.pelagem}`,
+      nivel: prox < hoje ? 'perto' : '', aba: 'saude', sub: 'prevencao' });
+  };
+  add(regs.find(semTosa), pf.banho, 'Banho', 'banho-prox');
+  add(regs.find(comTosa), pf.tosa, 'Tosa', 'tosa-prox');
+  return out;
 }
 
 /* ---------- Ração e alimentador ---------- */
@@ -7354,7 +7443,7 @@ function renderResumo() {
   $('#resumo-det').innerHTML = [esc(ESPECIES[p.especie].nome), SEXOS[p.sexo] ? esc(sexoTexto(p)) : '<button type="button" class="link" data-informar-sexo>informar sexo</button>', esc(p.raca)].filter(Boolean).join(' · ');
 
   const pesos = pesosDoPet();
-  const banho = banhosDoPet()[0];
+  const banho = banhosDoPet().find(semTosa);
   const idade = idadeDoPet(p);
   const fatos = [
     ['Idade', idade || '<button type="button" class="link" data-informar-idade>Informar</button>',
@@ -7502,11 +7591,28 @@ function rrulePara(c) {
 }
 
 // Eventos entre ini e fim (ISO). Cada um: { chave, data, hora?, ic, titulo, detalhe, nivel, aba, sub, compromisso? }
-// Intervalo padrão de vermífugo e antipulgas sem data marcada (dias)
-function intervaloSaudeDias(p, tipo) {
-  if (tipo === 'vermifugo') { const m = idadeEmMeses(p.nascimento); return m !== null && m < 6 ? 30 : 90; }
-  return 30;
+// Intervalo de vermífugo e antipulgas quando o registro não traz a próxima dose (dias).
+// Segue o que está marcado no registro; sem marcação, usa referência geral (diretrizes ESCCAP/CAPC e bulas):
+// vermífugo: filhote até 2 meses a cada 2 semanas, até 6 meses todo mês, depois a cada 3 meses;
+// antipulgas: depende do produto (mensal na maioria, Bravecto 12 semanas, coleira Seresto 8 meses).
+function intervaloSaude(p, tipo, produto = '') {
+  const nome = normalizar(produto);
+  const m = idadeEmMeses(p.nascimento);
+  if (tipo === 'antipulgas') {
+    if (/bravecto/.test(nome)) return { dias: 84, motivo: 'Bravecto dura 12 semanas (bula)' };
+    if (/seresto/.test(nome)) return { dias: 240, motivo: 'coleira Seresto dura 8 meses (bula)' };
+    return { dias: 30, motivo: 'a maioria dos antipulgas protege por 1 mês (veja a bula do produto)' };
+  }
+  if (/simparica trio|nexgard spectra|milbemax|interceptor|heartgard|revolution/.test(nome)) {
+    return { dias: 30, motivo: 'produto que também previne dirofilariose: aplicação mensal (bula)' };
+  }
+  if (m !== null && m < 2) return { dias: 14, motivo: 'filhote até 2 meses: a cada 2 semanas' };
+  if (m !== null && m < 6) return { dias: 30, motivo: 'filhote até 6 meses: uma vez por mês' };
+  const base = m === null ? 'sem data de nascimento, usei o padrão de adulto: ' : '';
+  const extra = p.especie === 'gato' ? ' (gato que sai de casa ou caça: pergunte sobre intervalo mensal)' : ' (se vai a parques ou come fezes, pergunte sobre intervalo mensal)';
+  return { dias: 90, motivo: `${base}adulto: a cada 3 meses${extra}` };
 }
+const intervaloSaudeDias = (p, tipo, produto) => intervaloSaude(p, tipo, produto).dias;
 
 function eventosDoPet(petId, ini, fim) {
   const p = estado.pets.find((x) => x.id === petId);
@@ -7519,7 +7625,8 @@ function eventosDoPet(petId, ini, fim) {
   const ids = vigentes(regs);
   for (const r of regs.filter((x) => ids.has(x.id))) {
     // Vermífugo/antipulgas sem data marcada: sugere pelo intervalo padrão
-    const sugerida = !r.proxima && r.tipo !== 'vacina' ? somarDias(r.data, intervaloSaudeDias(p, r.tipo)) : '';
+    const iv = !r.proxima && r.tipo !== 'vacina' ? intervaloSaude(p, r.tipo, r.nome) : null;
+    const sugerida = iv ? somarDias(r.data, iv.dias) : '';
     const prox = r.proxima || sugerida;
     if (!prox) continue;
     // Atrasada: aparece hoje, para não sumir do cronograma
@@ -7528,12 +7635,13 @@ function eventosDoPet(petId, ini, fim) {
     const st = statusDose(prox);
     const g = eventoVacina({ ...r, proxima: prox });
     ev.push({ chave: 'sau-' + r.id, data: quando, ic: TIPOS[r.tipo].ic, titulo: `${TIPOS[r.tipo].nome}: ${r.nome}`,
-      detalhe: prox < hoje ? `atrasada desde ${fmtData(prox)}` : sugerida ? 'sugerido pelo intervalo padrão' : 'próxima dose',
+      detalhe: prox < hoje ? `atrasada desde ${fmtData(prox)}` : sugerida ? `sugerido: ${iv.motivo}` : 'próxima dose',
       nivel: st.nivel === 'atrasada' ? 'alerta' : st.nivel === 'perto' ? 'perto' : '',
       aba: 'saude', sub: 'prevencao', google: { ...g, data: quando, uid: `${r.id}-${compacto(prox)}` } });
   }
   // Plano de vacinação: datas sugeridas ainda sem registro
   ev.push(...eventosPlano(p, dentro));
+  ev.push(...eventosBanho(p, dentro, hoje));
   // Vacina essencial sem nenhuma dose registrada (pet com data de nascimento): lembra de conferir
   if (p.nascimento && dentro(hoje)) {
     for (const x of planoVacinas(p).filter((y) => y.essencial && y.situacao === 'sem-registro')) {
@@ -9238,7 +9346,7 @@ function padroesCausas(p) {
       como: 'Compara episódios de vômito, diarreia, falta de apetite, apatia e coceira nas 2 semanas antes e depois do início do remédio.' });
   }
   // Coceira logo depois do banho
-  const banhos = estado.banhos.filter((b) => b.petId === p.id && b.data >= somarDias(hoje, -365)).map((b) => b.data).sort();
+  const banhos = estado.banhos.filter((b) => b.petId === p.id && semTosa(b) && b.data >= somarDias(hoje, -365)).map((b) => b.data).sort();
   const coceira = episodios(p.id, (s) => s.tipo === 'coceira').filter((e) => e.ini >= somarDias(hoje, -365));
   if (banhos.length >= 2 && coceira.length >= 3) {
     const cobertosSet = new Set();
@@ -9416,7 +9524,7 @@ function renderComparacao() {
     ['Próx. antipulgas', (p) => { const d = proximaDoseTipo(p.id, 'antipulgas'); return d ? `<span class="${d < hoje ? 'txt-erro' : ''}">${fmtDataCurta(d)}</span>` : '—'; }],
     ['Remédios em uso', (p) => String(estado.remedios.filter((r) => r.petId === p.id && remedioAtivo(r) && r.inicio <= hoje).length || '—')],
     ['Sintomas (30 dias)', (p) => String(estado.sintomas.filter((s) => s.petId === p.id && s.data >= somarDias(hoje, -29)).length || '—')],
-    ['Último banho', (p) => { const b = estado.banhos.filter((x) => x.petId === p.id).map((x) => x.data).sort().pop(); return b ? textoHaDias(b) : '—'; }],
+    ['Último banho', (p) => { const b = estado.banhos.filter((x) => x.petId === p.id && semTosa(x)).map((x) => x.data).sort().pop(); return b ? textoHaDias(b) : '—'; }],
     ['Gastos (30 dias)', (p) => fmtReais(gastoPeriodo(p.id, 30))],
     ['Gastos (12 meses)', (p) => fmtReais(gastoPeriodo(p.id, 365))],
   ];
