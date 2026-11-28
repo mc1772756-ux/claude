@@ -2744,7 +2744,7 @@ function planejarVacina(v, p, regs) {
   // Atrasada há muito tempo: recomeçar o esquema inicial
   if (v.reiniciaDias && diasEntre(ult, hoje) > v.reiniciaDias && idadeHoje >= 26) {
     const qtd = v.serie === 'filhote' ? v.adultoDoses : v.doses;
-    return { proxima: somarDias(ult, 365), rotulo: `reforço atrasado: ${qtd > 1 ? `pode ser preciso recomeçar com ${qtd} doses` : 'aplicar assim que possível'}`, fonte: 'plano', situacao: 'atrasada-reinicia' };
+    return { proxima: somarMeses(ult, 12), rotulo: `reforço atrasado: ${qtd > 1 ? `pode ser preciso recomeçar com ${qtd} doses` : 'aplicar assim que possível'}`, fonte: 'plano', situacao: 'atrasada-reinicia' };
   }
   if (v.serie === 'filhote') {
     const serieAte = v.serieAte + (v.id === 'multipla' && p.especie === 'cao' && RE_RISCO_PARVO.test(p.raca || '') ? 2 : 0);
@@ -2763,13 +2763,13 @@ function planejarVacina(v, p, regs) {
     const talvezPrimeira = !deFilhote.length && n === 1 && diasEntre(ult, hoje) <= 60;
     // Primeira dose da vida tomada já adulto: a 2ª vem 3 a 4 semanas depois (se a 1ª já era reforço, é só ignorar)
     if (talvezPrimeira) return { proxima: somarDias(ult, 28), rotulo: '2ª dose: 3 a 4 semanas depois da 1ª (se a 1ª já era reforço, ignore e registre a próxima)', fonte: 'plano' };
-    return { proxima: somarDias(ult, 365), rotulo: 'reforço anual', fonte: 'plano' };
+    return { proxima: somarMeses(ult, 12), rotulo: 'reforço anual', fonte: 'plano' };
   }
   // Vacinas de N doses iniciais e reforço anual
   let serie = 1;
   for (let i = n - 1; i > 0 && diasEntre(datas[i - 1], datas[i]) <= 60; i--) serie++;
   if (serie < v.doses) return { proxima: somarDias(ult, v.intervalo), rotulo: `${serie + 1}ª dose do esquema inicial`, fonte: 'plano' };
-  return { proxima: somarDias(ult, 365), rotulo: 'reforço anual', fonte: 'plano' };
+  return { proxima: somarMeses(ult, 12), rotulo: 'reforço anual', fonte: 'plano' };
 }
 
 function planoVacinas(p) {
@@ -2919,7 +2919,7 @@ const CARTEIRA_TERMOS = {
   gato: [
     { cat: 'raiva', re: /raiva|r[aá]bica|rabisin|defensor|imrab|rabvac|nobivac\s*r(?:abies)?\b|\brabies\b/i },
     { cat: 'felv', re: /felv|leucemia|leucogen/i },
-    { cat: 'multipla', re: /\bv\s?[345]\b|tr[ií]plice|qu[aá]drupla|qu[ií]ntupla|polivalente|m[uú]ltipla|felocell|fel[\s-]?o[\s-]?vax|purevax|feligen|tricat|quatricat|panleuco|rinotraq|calici/i },
+    { cat: 'multipla', re: /\bv\s?[345]\b|tr[ií]plice|qu[aá]drupla|qu[ií]ntupla|polivalente|m[uú]ltipla|felocell|fel[\s-]?o[\s-]?vax|purevax|\w{1,3}evax\b|feligen|tricat|quatricat|panleuco|rinotraq|calici/i },
   ],
 };
 const ROTULOS_DATA_PROX = /revac|pr[oó]x|retorno|refor[cç]o|validade\s+da\s+vac|repetir/i;
@@ -2947,9 +2947,12 @@ function datasDaLinha(l) {
     const d = Number(m[1]), mes = Number(m[2]);
     const ano = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
     if (d < 1 || d > 31 || mes < 1 || mes > 12) continue;
+    // ano de 2 dígitos colado em lixo ("03/03/20]") é ano de 4 dígitos cortado pelo OCR: não serve
+    const curta = m[3].length === 2;
+    if (curta && /^[\]\[)(}{?!'"`´^~a-zA-Z]/.test(l.slice(m.index + m[0].length))) continue;
     const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    if (iso > somarDias(hoje, 3 * 365) || iso < somarDias(hoje, -18 * 365)) continue;
-    out.push({ iso, prox: ROTULOS_DATA_PROX.test(l.slice(Math.max(0, m.index - 25), m.index)) });
+    if (iso > somarDias(hoje, 3 * 365) || iso < somarDias(hoje, -25 * 365)) continue;
+    out.push({ iso, curta, prox: ROTULOS_DATA_PROX.test(l.slice(Math.max(0, m.index - 25), m.index)) });
   }
   return out;
 }
@@ -2984,15 +2987,28 @@ function extrairCarteira(trechos, p) {
     }
     if (r && !d.prox) { d.prox = r.prox; d.aplic = !r.prox; }
   }
-  // a mesma data lida duas vezes (pedaços sobrepostos) com anos diferentes: se uma cai no futuro
-  // sem rótulo de próxima dose e a outra não, o ano futuro é erro do OCR (ex.: 2025 lido como 2027)
+  // a mesma data lida duas vezes (pedaços sobrepostos) com anos diferentes (ex.: 2025 lido como 2027)
   const hojeC = hojeISO();
   for (let i = datas.length - 1; i >= 0; i--) {
     const d = datas[i];
-    if (d.mao || d.prox || d.iso <= hojeC) continue;
-    const gemea = datas.some((e) => e !== d && !e.mao && e.iso <= hojeC && e.iso.slice(5) === d.iso.slice(5)
+    if (d.mao) continue;
+    // ano futuro sem rótulo de próxima dose, ou ano de 2 dígitos, perde para leitura gêmea de 4 dígitos
+    if (!((!d.prox && d.iso > hojeC) || d.curta)) continue;
+    const gemea = datas.some((e) => e !== d && !e.mao && !e.curta && e.iso <= hojeC && e.iso !== d.iso && e.iso.slice(5) === d.iso.slice(5)
       && Math.abs(e.x - d.x) < 0.1 && Math.abs(e.y - d.y) < 0.03);
     if (gemea) datas.splice(i, 1);
+  }
+  // leituras gêmeas de 4 dígitos com anos diferentes (8 lido como 7): fica a que tem
+  // a próxima dose (mesmo dia e mês, ano seguinte) em outra coluna da mesma linha
+  const anoDe = (x) => Number(x.iso.slice(0, 4));
+  const temProx = (c) => datas.some((e) => e.iso.slice(5) === c.iso.slice(5) && anoDe(e) === anoDe(c) + 1
+    && Math.abs(e.y - c.y) < 0.03 && Math.abs(e.x - c.x) >= 0.1);
+  for (let i = datas.length - 1; i >= 0; i--) {
+    const d = datas[i];
+    if (d.mao || d.prox) continue;
+    const gemeas = datas.filter((e) => e !== d && !e.mao && !e.prox && e.iso !== d.iso && e.iso.slice(5) === d.iso.slice(5)
+      && Math.abs(e.x - d.x) < 0.1 && Math.abs(e.y - d.y) < 0.03);
+    if (gemeas.length && !temProx(d) && gemeas.some(temProx)) datas.splice(i, 1);
   }
   // junta etiquetas da mesma caixa (selos lado a lado, linhas da mesma etiqueta)
   const grupos = [];
