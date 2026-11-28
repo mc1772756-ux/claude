@@ -8804,13 +8804,14 @@ function fecharSync() { reiniciarSync(); $('#painel-sync').hidden = true; }
 function mostrarEtapa() { $('#sync-inicio').hidden = true; $('#sync-etapa').hidden = false; $('#sync-cancelar').textContent = 'Cancelar'; }
 
 /* ----- Código da apresentação: DP1 + O/R (oferta/resposta) + Z/T (comprimido/texto) + base64url ----- */
+// Código menor = QR menos denso (câmera de celular lê melhor). Só fica o essencial para o canal de dados.
+// Candidatos: sem TCP e sem IPv6; endereços IPv4 normais antes dos .local (mDNS), até 4 no total.
 function enxugarSDP(sdp) {
-  let n = 0;
-  return sdp.split(/\r?\n/).filter((l) => {
-    if (!l) return false;
-    if (l.startsWith('a=candidate:')) { if (/ tcp /i.test(l)) return false; return ++n <= 8; }
-    return true;
-  }).join('\r\n') + '\r\n';
+  const linhas = sdp.split(/\r?\n/).filter((l) => l && !/^a=(extmap|rtcp|msid|ssrc|rtpmap|fmtp)/.test(l));
+  const cands = linhas.filter((l) => l.startsWith('a=candidate:') && !/ tcp /i.test(l) && !/:[0-9a-f]*:[0-9a-f]*:/i.test(l.split(' ')[4] || ''));
+  const ordenados = [...cands.filter((l) => !/\.local /.test(l)), ...cands.filter((l) => /\.local /.test(l))].slice(0, 4);
+  const resto = linhas.filter((l) => !l.startsWith('a=candidate:'));
+  return [...resto, ...ordenados].join('\r\n') + '\r\n';
 }
 async function codificarSDP(tipo, sdp) {
   let bytes = new TextEncoder().encode(enxugarSDP(sdp));
