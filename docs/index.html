@@ -2761,7 +2761,9 @@ function planejarVacina(v, p, regs) {
     }
     // Adulto com uma dose só: na maioria das vezes é o último reforço anual registrado
     const talvezPrimeira = !deFilhote.length && n === 1 && diasEntre(ult, hoje) <= 60;
-    return { proxima: somarDias(ult, 365), rotulo: talvezPrimeira ? `reforço anual (se foi a 1ª vacina da vida, faça a 2ª dose ${v.intervalo / 7}–4 semanas depois)` : 'reforço anual', fonte: 'plano' };
+    // Primeira dose da vida tomada já adulto: a 2ª vem 3 a 4 semanas depois (se a 1ª já era reforço, é só ignorar)
+    if (talvezPrimeira) return { proxima: somarDias(ult, 28), rotulo: '2ª dose: 3 a 4 semanas depois da 1ª (se a 1ª já era reforço, ignore e registre a próxima)', fonte: 'plano' };
+    return { proxima: somarDias(ult, 365), rotulo: 'reforço anual', fonte: 'plano' };
   }
   // Vacinas de N doses iniciais e reforço anual
   let serie = 1;
@@ -7444,6 +7446,12 @@ function rrulePara(c) {
 }
 
 // Eventos entre ini e fim (ISO). Cada um: { chave, data, hora?, ic, titulo, detalhe, nivel, aba, sub, compromisso? }
+// Intervalo padrão de vermífugo e antipulgas sem data marcada (dias)
+function intervaloSaudeDias(p, tipo) {
+  if (tipo === 'vermifugo') { const m = idadeEmMeses(p.nascimento); return m !== null && m < 6 ? 30 : 90; }
+  return 30;
+}
+
 function eventosDoPet(petId, ini, fim) {
   const p = estado.pets.find((x) => x.id === petId);
   if (!p) return [];
@@ -7453,15 +7461,31 @@ function eventosDoPet(petId, ini, fim) {
   // Vacinas, vermífugos, antipulgas: próxima dose do registro mais recente
   const regs = saudeDoPet(petId);
   const ids = vigentes(regs);
-  for (const r of regs.filter((x) => ids.has(x.id) && x.proxima)) {
-    if (!dentro(r.proxima)) continue;
-    const st = statusDose(r.proxima);
-    ev.push({ chave: 'sau-' + r.id, data: r.proxima, ic: TIPOS[r.tipo].ic, titulo: `${TIPOS[r.tipo].nome}: ${r.nome}`,
-      detalhe: r.proxima < hoje ? 'atrasada' : 'próxima dose', nivel: st.nivel === 'atrasada' ? 'alerta' : st.nivel === 'perto' ? 'perto' : '',
-      aba: 'saude', sub: 'prevencao', google: eventoVacina(r) });
+  for (const r of regs.filter((x) => ids.has(x.id))) {
+    // Vermífugo/antipulgas sem data marcada: sugere pelo intervalo padrão
+    const sugerida = !r.proxima && r.tipo !== 'vacina' ? somarDias(r.data, intervaloSaudeDias(p, r.tipo)) : '';
+    const prox = r.proxima || sugerida;
+    if (!prox) continue;
+    // Atrasada: aparece hoje, para não sumir do cronograma
+    const quando = prox < hoje ? hoje : prox;
+    if (!dentro(quando)) continue;
+    const st = statusDose(prox);
+    const g = eventoVacina({ ...r, proxima: prox });
+    ev.push({ chave: 'sau-' + r.id, data: quando, ic: TIPOS[r.tipo].ic, titulo: `${TIPOS[r.tipo].nome}: ${r.nome}`,
+      detalhe: prox < hoje ? `atrasada desde ${fmtData(prox)}` : sugerida ? 'sugerido pelo intervalo padrão' : 'próxima dose',
+      nivel: st.nivel === 'atrasada' ? 'alerta' : st.nivel === 'perto' ? 'perto' : '',
+      aba: 'saude', sub: 'prevencao', google: { ...g, data: quando, uid: `${r.id}-${compacto(prox)}` } });
   }
   // Plano de vacinação: datas sugeridas ainda sem registro
   ev.push(...eventosPlano(p, dentro));
+  // Vacina essencial sem nenhuma dose registrada (pet com data de nascimento): lembra de conferir
+  if (p.nascimento && dentro(hoje)) {
+    for (const x of planoVacinas(p).filter((y) => y.essencial && y.situacao === 'sem-registro')) {
+      ev.push({ chave: 'semreg-' + x.v.id, data: hoje, ic: 'vacina', titulo: `Sem registro: ${x.v.nome}`,
+        detalhe: 'nenhuma dose registrada: confira a carteira ou fale com o veterinário', nivel: 'alerta', aba: 'saude', sub: 'prevencao',
+        google: { uid: `semreg-${p.id}-${x.v.id}`, titulo: `${p.nome}: sem registro de ${x.v.nome}`, detalhes: 'Nenhuma dose registrada. Confira a carteira ou fale com o veterinário.\nRegistrado no Diário do Pet.', data: hoje, alarmes: ['PT9H'] } });
+    }
+  }
   // Retornos marcados nas consultas
   for (const c of consultasDoPet(petId).filter(retornoPendente)) {
     if (!dentro(c.retorno)) continue;
@@ -7497,15 +7521,19 @@ function eventosDoPet(petId, ini, fim) {
     }
   }
   // Cio previsto (cadelas não castradas): intervalo médio entre os cios registrados, ou ~6 meses
-  if (p.especie === 'cao' && femeaInteira(p)) {
+  // Só fêmeas inteiras (castrada não tem cio). Gatas: ciclos de ~2 a 3 semanas na estação
+  if (femeaInteira(p) && (p.especie === 'cao' || p.especie === 'gato')) {
+    const gata = p.especie === 'gato';
     const cios = [...new Set(estado.sintomas.filter((s) => s.petId === petId && s.tipo === 'cio').map((s) => s.data))].sort()
-      .filter((d, i, a) => i === 0 || diasEntre(a[i - 1], d) > 30); // dias seguidos do mesmo cio contam uma vez
+      .filter((d, i, a) => i === 0 || diasEntre(a[i - 1], d) > (gata ? 7 : 30)); // dias seguidos do mesmo cio contam uma vez
     if (cios.length) {
-      const gaps = cios.slice(1).map((d, i) => diasEntre(cios[i], d)).filter((g) => g >= 120 && g <= 365);
-      const intervalo = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 182;
+      const [minG, maxG, padrao] = gata ? [10, 60, 21] : [120, 365, 182];
+      const gaps = cios.slice(1).map((d, i) => diasEntre(cios[i], d)).filter((g) => g >= minG && g <= maxG);
+      const intervalo = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : padrao;
       let prev = somarDias(cios[cios.length - 1], intervalo);
       while (prev < hoje) prev = somarDias(prev, intervalo);
-      if (dentro(prev)) ev.push({ chave: 'cio-' + prev, data: prev, ic: 'gota', titulo: 'Cio previsto', detalhe: `a cada ~${Math.round(intervalo / 30)} meses${gaps.length ? '' : ' (estimado)'}`,
+      if (dentro(prev)) ev.push({ chave: 'cio-' + prev, data: prev, ic: 'gota', titulo: 'Cio previsto',
+        detalhe: gata ? `a cada ~${intervalo} dias${gaps.length ? '' : ' (estimado)'}` : `a cada ~${Math.round(intervalo / 30)} meses${gaps.length ? '' : ' (estimado)'}`,
         nivel: '', aba: 'diario', sub: 'sintomas' });
     }
   }
@@ -8982,7 +9010,7 @@ function statusLemb(html, classe = '') {
 $('#btn-exportar-agenda').addEventListener('click', () => {
   const meses = Number($('#lemb-periodo').value) || 12;
   const hoje = hojeISO();
-  const fim = somarMeses(hoje, meses);
+  const fim = somarDias(somarMeses(hoje, meses), -1); // janela exata: o dia final não entra de novo (evita aniversário duplicado)
   const ids = petsDoEscopo();
   const vistos = new Set();
   const evs = [];
