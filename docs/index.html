@@ -1098,7 +1098,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
         <h2><i data-ic="vacina"></i>Vacinas</h2>
         <ul class="lista" data-lista-tipo="vacina"></ul>
         <div class="linha-botoes">
-          <button type="button" class="btn pequeno" id="btn-agenda-vacinas"><i data-ic="agenda"></i>Pôr todas as vacinas na agenda</button>
+          <button type="button" class="btn pequeno" id="btn-agenda-vacinas"><i data-ic="agenda"></i>Pôr o cronograma na agenda</button>
         </div>
         <p class="dica-campo" id="agenda-vacinas-status" role="status" hidden></p>
       </div>
@@ -3301,14 +3301,12 @@ $('#carteira-resultado').addEventListener('change', (ev) => {
 });
 
 /* ---------- Agenda das vacinas: um arquivo com todas as próximas doses ---------- */
-// Doses registradas com próxima data a partir de hoje + doses sugeridas pelo plano
-function eventosVacinasAgenda(p) {
+// Tudo do cronograma com data nos próximos 12 meses (vacinas, plano, remédios, ração, banhos, retornos)
+function eventosCronogramaAgenda(p) {
   const hoje = hojeISO();
-  const registradas = estado.saude
-    .filter((r) => r.petId === p.id && r.tipo === 'vacina' && r.proxima && r.proxima >= hoje)
-    .map(eventoVacina);
-  const sugeridas = eventosPlano(p, (iso) => iso >= hoje).map((e) => e.google);
-  return [...registradas, ...sugeridas];
+  return eventosDoPet(p.id, hoje, somarDias(hoje, 365))
+    .filter((e) => e.google && e.data >= hoje)
+    .map((e) => e.google);
 }
 
 async function agendaVacinas() {
@@ -3316,15 +3314,15 @@ async function agendaVacinas() {
   const msg = $('#agenda-vacinas-status');
   const mostrar = (texto) => { msg.innerHTML = texto; msg.hidden = false; };
   if (!p) return;
-  const evs = eventosVacinasAgenda(p);
-  if (!evs.length) { mostrar('Nenhuma vacina com próxima dose para pôr na agenda.'); return; }
+  const evs = eventosCronogramaAgenda(p);
+  if (!evs.length) { mostrar('Nada no cronograma com data para pôr na agenda.'); return; }
   const texto = arquivoICS(evs);
-  const nome = nomeArquivo('vacinas', p.nome) + '.ics';
+  const nome = nomeArquivo('cronograma', p.nome) + '.ics';
   // No celular: compartilhar o arquivo abre a agenda direto
   try {
     const arq = new File([texto], nome, { type: 'text/calendar' });
     if (navigator.canShare && navigator.canShare({ files: [arq] })) {
-      await navigator.share({ files: [arq], title: `Vacinas de ${p.nome}` });
+      await navigator.share({ files: [arq], title: `Cronograma de ${p.nome}` });
       mostrar(`${plural(evs.length, 'evento enviado', 'eventos enviados')} para a agenda.`);
       return;
     }
@@ -7172,18 +7170,22 @@ function eventosDoPet(petId, ini, fim) {
   const er = estoqueRacao(p);
   if (er && er.acaba && dentro(er.acaba)) {
     ev.push({ chave: 'rac-fim', data: er.acaba, ic: 'racao', titulo: 'Ração deve acabar', detalhe: `${racaoDoPet(petId)?.marca || 'saco atual'} · ${fmtG(er.consumo)}/dia`,
-      nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'peso', sub: 'racao' });
+      nivel: er.diasRestantes <= 5 ? 'perto' : '', aba: 'peso', sub: 'racao',
+      google: { uid: `rac-fim-${petId}-${compacto(er.acaba)}`, titulo: `${nomePet(petId)}: ração deve acabar`, detalhes: 'Estimativa pelo consumo diário e pelo estoque. Compre antes de acabar.\nRegistrado no Diário do Pet.', data: er.acaba, alarmes: ['-P3D', 'PT9H'] } });
   }
   const sacoP = sacoDono(p).saco;
   if (sacoP?.validade && dentro(sacoP.validade)) {
     ev.push({ chave: 'rac-val', data: sacoP.validade, ic: 'saco', titulo: 'Validade da ração', detalhe: racaoDoPet(petId)?.marca || '',
-      nivel: sacoP.validade < hoje ? 'alerta' : diasEntre(hoje, sacoP.validade) <= 15 ? 'perto' : '', aba: 'peso', sub: 'racao' });
+      nivel: sacoP.validade < hoje ? 'alerta' : diasEntre(hoje, sacoP.validade) <= 15 ? 'perto' : '', aba: 'peso', sub: 'racao',
+      google: { uid: `rac-val-${petId}-${compacto(sacoP.validade)}`, titulo: `${nomePet(petId)}: validade da ração`, detalhes: 'Confira a validade do saco antes de usar.\nRegistrado no Diário do Pet.', data: sacoP.validade, alarmes: ['-P3D', 'PT9H'] } });
   }
   // Remédios: último dia e fim do estoque
   for (const r of estado.remedios.filter((x) => x.petId === petId && remedioAtivo(x))) {
-    if (r.fim && dentro(r.fim)) ev.push({ chave: 'rem-fim-' + r.id, data: r.fim, ic: 'pilula', titulo: `Último dia: ${r.nome}`, detalhe: r.dose || '', nivel: '', aba: 'saude', sub: 'clinico' });
+    if (r.fim && dentro(r.fim)) ev.push({ chave: 'rem-fim-' + r.id, data: r.fim, ic: 'pilula', titulo: `Último dia: ${r.nome}`, detalhe: r.dose || '', nivel: '', aba: 'saude', sub: 'clinico',
+      google: { uid: `rem-fim-${r.id}`, titulo: `${nomePet(petId)}: último dia de ${r.nome}`, detalhes: `Último dia do remédio ${r.nome}${r.dose ? ', ' + r.dose : ''}.\nRegistrado no Diário do Pet.`, data: r.fim, alarmes: ['PT9H'] } });
     const e = estoqueRemedio(r);
-    if (e && dentro(e.acaba) && (!r.fim || e.acaba < r.fim)) ev.push({ chave: 'rem-est-' + r.id, data: e.acaba, ic: 'pilula', titulo: `${r.nome} acaba`, detalhe: 'compre mais antes', nivel: e.diasRestantes <= 3 ? 'perto' : '', aba: 'saude', sub: 'clinico' });
+    if (e && dentro(e.acaba) && (!r.fim || e.acaba < r.fim)) ev.push({ chave: 'rem-est-' + r.id, data: e.acaba, ic: 'pilula', titulo: `${r.nome} acaba`, detalhe: 'compre mais antes', nivel: e.diasRestantes <= 3 ? 'perto' : '', aba: 'saude', sub: 'clinico',
+      google: { uid: `rem-est-${r.id}-${compacto(e.acaba)}`, titulo: `${nomePet(petId)}: ${r.nome} acaba`, detalhes: 'Compre mais antes do fim do estoque.\nRegistrado no Diário do Pet.', data: e.acaba, alarmes: ['-P2DT15H', 'PT9H'] } });
   }
   // Aniversário (só com data de nascimento real: com idade aproximada a data seria inventada)
   if (p.nascimento && !p.nascAprox) {
@@ -7208,6 +7210,16 @@ function eventosDoPet(petId, ini, fim) {
       if (dentro(prev)) ev.push({ chave: 'cio-' + prev, data: prev, ic: 'gota', titulo: 'Cio previsto', detalhe: `a cada ~${Math.round(intervalo / 30)} meses${gaps.length ? '' : ' (estimado)'}`,
         nivel: '', aba: 'diario', sub: 'sintomas' });
     }
+  }
+  // Banho: sugestão de 30 dias (cães) ou 60 (gatos) depois do último registrado
+  const ultimoBanho = estado.banhos.filter((b) => b.petId === petId).sort((a, b) => b.data.localeCompare(a.data))[0];
+  const petDoBanho = estado.pets.find((x) => x.id === petId);
+  if (ultimoBanho && petDoBanho) {
+    const dias = petDoBanho.especie === 'gato' ? 60 : 30;
+    const previsto = somarDias(ultimoBanho.data, dias);
+    const prox = previsto < hoje ? hoje : previsto; // atrasado: sugere hoje
+    if (dentro(prox)) ev.push({ chave: 'banho-' + prox, data: prox, ic: 'banho', titulo: 'Banho', detalhe: `sugerido a cada ${dias} dias`, nivel: prox <= hoje ? 'perto' : '', aba: 'saude', sub: 'prevencao',
+      google: { uid: `banho-${petId}-${compacto(prox)}`, titulo: `${nomePet(petId)}: banho`, detalhes: `Banho sugerido a cada ${dias} dias.\nRegistrado no Diário do Pet.`, data: prox, alarmes: ['PT9H'] } });
   }
   // Compromissos anotados
   for (const c of estado.agenda.filter((x) => x.petId === petId)) {
