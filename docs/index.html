@@ -8946,7 +8946,9 @@ async function lerQRDeFoto(arquivo) {
     if (!txt) throw new Error('nada');
     receberCodigo(txt);
   } catch (e) {
-    syncProgresso('Não achei um código QR nessa foto. Tente uma foto mais de perto e sem reflexo.', 'erro-leitura');
+    const motivo = e && e.message === 'nada' ? 'a imagem foi lida, mas nenhum QR apareceu'
+      : e && e.message === 'script' ? 'o leitor de QR não carregou (verifique a internet)' : 'a foto não abriu';
+    syncProgresso(`Não achei um código QR nessa foto (${motivo}). Tente uma foto mais de perto, reta e sem reflexo, ou cole o código.`, 'erro-leitura');
   } finally { URL.revokeObjectURL(url); }
 }
 
@@ -8993,7 +8995,15 @@ function vigiarConexao(ms = 45000) {
   Sync.timer = setTimeout(() => { if (!Sync.dc || Sync.dc.readyState !== 'open') falhaConexao(); }, ms);
 }
 async function mostrarCodigo(codigo) {
-  $('#sync-qr').innerHTML = await desenharQR(codigo);
+  try {
+    $('#sync-qr').innerHTML = await desenharQR(codigo);
+  } catch (e) {
+    $('#sync-qr').hidden = true;
+    syncProgresso(`Não consegui desenhar o QR neste celular (${esc(e.message || e.name || 'erro')}). Use “Copiar código” e cole no outro aparelho.`, 'erro-leitura');
+    $('#sync-acoes-codigo').hidden = false;
+    $('#sync-qr').dataset.codigo = codigo;
+    return;
+  }
   $('#sync-qr').hidden = false;
   $('#sync-qr').dataset.codigo = codigo;
   $('#sync-acoes-codigo').hidden = false;
@@ -9054,7 +9064,7 @@ async function receberCodigo(txt) {
     }
     syncProgresso('');
   } catch (e) {
-    syncProgresso('Não deu para usar esse código. Toque em Cancelar e comece de novo nos dois celulares.', 'erro-leitura');
+    syncProgresso(`Não deu para usar esse código (${esc(e && e.message || 'erro')}). Confira se copiou o código inteiro, começando por DP1, ou comece de novo nos dois celulares.`, 'erro-leitura');
   }
 }
 
