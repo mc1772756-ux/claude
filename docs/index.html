@@ -2383,6 +2383,7 @@ function renderSaude() {
     const antigos = doTipo.filter((r) => !ids.has(r.id));
     const item = (r, atual) => `
       <li class="item-saude${atual ? '' : ' antigo'}">
+        ${miniatura(r.foto)}
         <div class="info">
           <div class="principal">${esc(r.nome)}</div>
           <div class="secundario">Aplicada em ${fmtData(r.data)}${r.proxima ? ` · próxima: <strong>${fmtData(r.proxima)}</strong>` : ''}${r.obs ? ' · ' + esc(r.obs) : ''}</div>
@@ -2396,6 +2397,7 @@ function renderSaude() {
         </div>
       </li>`;
     ul.innerHTML = atuais.map((r) => item(r, true)).join('') + antigos.map((r) => item(r, false)).join('');
+    carregarFotos(ul);
   }
   renderBanho();
   atualizarSugestoes();
@@ -3180,19 +3182,30 @@ function jaRegistrada(p, cat, nome, data) {
     && (v ? v.re.test(r.nome) : normalizar(r.nome) === normalizar(nome)));
 }
 
+// Próxima dose sugerida pelo plano para uma dose lida da carteira (vazio se não houver vacina conhecida)
+function sugerirProxima(nome, data, p) {
+  const v = VACINAS_PLANO[p.especie].find((x) => x.re.test(nome));
+  if (!v || !data) return '';
+  const regs = [...dosesDaVacina(v, p.id).filter((r) => r.data <= data), { data, criado: Date.now() }]
+    .sort((a, b) => a.data.localeCompare(b.data));
+  const sug = planejarVacina(v, p, regs.map((r) => ({ data: r.data, criado: r.criado })));
+  return sug.proxima && sug.proxima > data ? sug.proxima : '';
+}
+
 function linhaCarteira(it, i, p) {
   const dup = jaRegistrada(p, it.cat, it.nome, it.data);
   const incompleta = !it.nome || !it.data;
   const desmarcar = dup || incompleta;
+  const prox = it.proxima || sugerirProxima(it.nome, it.data, p);
   const hoje = hojeISO();
   return `<div class="carteira-item${desmarcar ? ' desmarcado' : ''}" data-carteira-item="${i}">
     <label class="check"><input type="checkbox" data-carteira-ok${desmarcar ? '' : ' checked'}> Registrar esta dose</label>
     <label>Vacina<input type="text" data-c="nome" maxlength="60" list="sugestoes-saude" value="${esc(it.nome || '')}" placeholder="ex.: V10, Antirrábica"></label>
     <div class="linha">
       <label>Data aplicada<input type="date" data-c="data" max="${hoje}" value="${it.data || ''}"></label>
-      <label>Próxima dose<input type="date" data-c="proxima" value="${it.proxima || ''}"></label>
+      <label>Próxima dose<input type="date" data-c="proxima" value="${prox}"></label>
     </div>
-    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : !it.proxima && it.nome && it.data ? '<p class="dica-campo">Próxima dose não lida: o app vai calcular pelo plano. Confira com a carteira.</p>' : ''}
+    ${dup ? '<p class="dica-campo">Já registrada no app com essa data.</p>' : it.x !== undefined && !it.nome ? '<p class="dica-campo">Achei um selo, mas não o nome da vacina: digite olhando a carteira.</p>' : !it.data && it.nome ? '<p class="dica-campo">Data não lida (escrita à mão?): preencha olhando a carteira.</p>' : !it.proxima && prox ? '<p class="dica-campo">Próxima dose não lida: preenchi pelo plano. Confira com a carteira.</p>' : !it.proxima && it.nome && it.data ? '<p class="dica-campo">Próxima dose não lida e sem plano para esta vacina: preencha olhando a carteira.</p>' : ''}
   </div>`;
 }
 
@@ -3212,6 +3225,7 @@ function mostrarCarteira(itens, texto, p) {
     <p class="erro" id="carteira-erro" role="alert" hidden></p>
     <div class="linha-botoes">
       <button type="button" class="btn primario" id="btn-carteira-salvar">Salvar doses marcadas</button>
+      <button type="button" class="btn" id="btn-carteira-todas">Marcar / desmarcar todas</button>
       <button type="button" class="btn" id="btn-carteira-mais">Adicionar dose</button>
       <button type="button" class="btn" id="btn-carteira-descartar">Descartar</button>
     </div>
@@ -3220,7 +3234,7 @@ function mostrarCarteira(itens, texto, p) {
   box.hidden = false;
 }
 
-function salvarCarteira() {
+async function salvarCarteira() {
   const p = petAtual();
   const erro = $('#carteira-erro');
   const hoje = hojeISO();
@@ -3235,19 +3249,23 @@ function salvarCarteira() {
   else if (linhas.some((l) => l.proxima && l.proxima <= l.data)) msg = 'A próxima dose precisa ser depois da data aplicada.';
   if (msg) { erro.textContent = msg; erro.hidden = false; return; }
   linhas.sort((a, b) => a.data.localeCompare(b.data));
+  // guarda a foto da carteira (compactada) para consultar depois
+  let fotoId = '';
+  if (arquivoCarteira) {
+    try {
+      const url = await comprimirImagem(arquivoCarteira, 1024, 0.7);
+      fotoId = novoId();
+      await FotosDB.salvar(fotoId, url);
+      cacheFotos.set(fotoId, url);
+    } catch (e) { fotoId = ''; }
+  }
   let n = 0;
   for (const l of linhas) {
-    let proxima = l.proxima;
-    const v = VACINAS_PLANO[p.especie].find((x) => x.re.test(l.nome));
-    if (!proxima && v) {
-      const regs = [...dosesDaVacina(v, p.id).filter((r) => r.data <= l.data), { data: l.data, criado: Date.now() }]
-        .sort((a, b) => a.data.localeCompare(b.data));
-      const sug = planejarVacina(v, p, regs.map((r) => ({ data: r.data, criado: r.criado })));
-      if (sug.proxima && sug.proxima > l.data) proxima = sug.proxima;
-    }
-    estado.saude.push({ id: novoId(), petId: p.id, tipo: 'vacina', nome: l.nome, data: l.data, proxima: proxima || '', obs: 'Lida da carteira de vacinação', criado: Date.now() + n++ });
+    const proxima = l.proxima || sugerirProxima(l.nome, l.data, p);
+    estado.saude.push({ id: novoId(), petId: p.id, tipo: 'vacina', nome: l.nome, data: l.data, proxima: proxima || '', obs: 'Lida da carteira de vacinação', foto: fotoId, criado: Date.now() + n++ });
   }
   salvar();
+  renderSaude();
   limparCarteira();
   statusCarteira(`${plural(n, 'dose salva', 'doses salvas')} nas vacinas de ${esc(p.nome)}.`, 'ok-leitura');
   renderTudo();
@@ -3256,6 +3274,17 @@ function salvarCarteira() {
 $('#carteira-resultado').addEventListener('click', (ev) => {
   if (ev.target.closest('#btn-carteira-descartar')) { limparCarteira(); return; }
   if (ev.target.closest('#btn-carteira-salvar')) salvarCarteira();
+  if (ev.target.closest('#btn-carteira-todas')) {
+    // só mexe em doses completas (nome e data); as incompletas continuam desmarcadas
+    const linhasCompletas = [...document.querySelectorAll('#carteira-itens [data-carteira-item]')]
+      .filter((el) => el.querySelector('[data-c="nome"]').value.trim() && el.querySelector('[data-c="data"]').value);
+    const marcar = linhasCompletas.some((el) => !el.querySelector('[data-carteira-ok]').checked);
+    linhasCompletas.forEach((el) => {
+      el.querySelector('[data-carteira-ok]').checked = marcar;
+      el.classList.toggle('desmarcado', !marcar);
+    });
+    return;
+  }
   if (ev.target.closest('#btn-carteira-mais')) {
     const cx = $('#carteira-itens');
     cx.insertAdjacentHTML('beforeend', linhaCarteira({ cat: '', nome: '', data: '', proxima: '' }, cx.children.length, petAtual()));
