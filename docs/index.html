@@ -2984,6 +2984,16 @@ function extrairCarteira(trechos, p) {
     }
     if (r && !d.prox) { d.prox = r.prox; d.aplic = !r.prox; }
   }
+  // a mesma data lida duas vezes (pedaços sobrepostos) com anos diferentes: se uma cai no futuro
+  // sem rótulo de próxima dose e a outra não, o ano futuro é erro do OCR (ex.: 2025 lido como 2027)
+  const hojeC = hojeISO();
+  for (let i = datas.length - 1; i >= 0; i--) {
+    const d = datas[i];
+    if (d.mao || d.prox || d.iso <= hojeC) continue;
+    const gemea = datas.some((e) => e !== d && !e.mao && e.iso <= hojeC && e.iso.slice(5) === d.iso.slice(5)
+      && Math.abs(e.x - d.x) < 0.1 && Math.abs(e.y - d.y) < 0.03);
+    if (gemea) datas.splice(i, 1);
+  }
   // junta etiquetas da mesma caixa (selos lado a lado, linhas da mesma etiqueta)
   const grupos = [];
   for (const h of hits.sort((a, b) => a.y - b.y)) {
@@ -3423,7 +3433,12 @@ async function lerCarteira(arquivo) {
         const depois = (d2.text.match(/\d{1,2}\s?\/\s?\d{1,2}\s?\/\s?\d{2,4}/g) || []);
         if (antes.length && antes.length === depois.length) {
           let k = 0;
-          t.texto = t.texto.replace(/\d{1,2}\s?\/\s?\d{1,2}\s?\/\s?\d{2,4}/g, () => depois[k++].replace(/\s/g, ''));
+          // só completa ano lido pela metade ("12/03/20"): dia e mês têm de bater com a primeira leitura
+          const dm = (x) => x.replace(/\s/g, '').split('/').slice(0, 2).map(Number).join('/');
+          t.texto = t.texto.replace(/\d{1,2}\s?\/\s?\d{1,2}\s?\/\s?\d{2,4}/g, (a) => {
+            const b = depois[k++].replace(/\s/g, '');
+            return dm(a) === dm(b) && !/\/\s?\d{4}$/.test(a) && /\/\d{4}$/.test(b) ? b : a;
+          });
         }
       }
     } catch (e) { console.warn('releitura das datas', e); }
