@@ -728,6 +728,7 @@ input, select, textarea { font-size: max(16px, 1rem) !important; }
         <details class="ajuda" data-ajuda="backup"><summary><i data-ic="info"></i>Como funciona</summary><p>Seus dados ficam só neste aparelho. Exporte um backup de vez em quando (ou antes de trocar de celular) e guarde no Drive, e-mail ou WhatsApp.</p></details>
         <div class="linha-botoes">
           <button type="button" class="btn pequeno" id="btn-exportar"><i data-ic="baixar"></i>Exportar backup</button>
+          <button type="button" class="btn pequeno" id="btn-exportar-pet"><i data-ic="baixar"></i>Exportar só este pet</button>
           <label class="btn pequeno botao-arquivo"><i data-ic="enviar"></i>Importar backup<input type="file" id="arquivo-backup" accept=".json,application/json"></label>
         </div>
         <div id="backup-status" class="leitura-status" role="status" aria-live="polite" hidden></div>
@@ -7587,16 +7588,42 @@ function statusBackup(html, classe = '') {
 }
 let backupPendente = null;
 
-$('#btn-exportar').addEventListener('click', async () => {
+const LISTAS_BACKUP = ['pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda'];
+
+// Foto grande vira JPEG menor antes de entrar no backup (o arquivo fica bem mais leve)
+function reduzirFoto(url, max = 900, qualidade = 0.65) {
+  return new Promise((ok) => {
+    if (typeof url !== 'string' || !url.startsWith('data:image/')) return ok(url);
+    const img = new Image();
+    img.onload = () => {
+      const f = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const menor = c.toDataURL('image/jpeg', qualidade);
+      ok(menor.length < url.length ? menor : url);
+    };
+    img.onerror = () => ok(url);
+    img.src = url;
+  });
+}
+
+// pet = null: backup de tudo. pet = objeto do pet: só ele e os registros dele
+async function exportarBackup(pet = null) {
   const fotos = {};
-  // ids das fotos: campo fotoId (sintomas, consultas, gastos) e foto (fotos de carteira de vacinação)
-  const idsFotos = [...estado.sintomas, ...estado.consultas, ...estado.gastos].map((r) => r.fotoId)
-    .concat(estado.saude.map((r) => r.foto));
-  for (const id of new Set(idsFotos.filter(Boolean))) {
-    try { const u = await FotosDB.ler(id); if (u) fotos[id] = u; } catch (e) { /* sem foto */ }
+  let dadosEstado = estado;
+  if (pet) {
+    dadosEstado = { ...estadoVazio(), petAtual: pet.id, pets: [pet] };
+    for (const k of LISTAS_BACKUP) dadosEstado[k] = (estado[k] || []).filter((r) => r.petId === pet.id);
   }
-  const dados = { app: 'diario-do-pet', formato: 1, exportadoEm: new Date().toISOString(), estado, fotos };
-  const nome = `diario-do-pet-backup-${hojeISO()}.json`;
+  // ids das fotos: campo fotoId (sintomas, consultas, gastos) e foto (fotos de carteira de vacinação)
+  const idsFotos = [...dadosEstado.sintomas, ...dadosEstado.consultas, ...dadosEstado.gastos].map((r) => r.fotoId)
+    .concat(dadosEstado.saude.map((r) => r.foto));
+  for (const id of new Set(idsFotos.filter(Boolean))) {
+    try { const u = await FotosDB.ler(id); if (u) fotos[id] = await reduzirFoto(u); } catch (e) { /* sem foto */ }
+  }
+  const dados = { app: 'diario-do-pet', formato: 1, exportadoEm: new Date().toISOString(), ...(pet ? { pet: pet.nome } : {}), estado: dadosEstado, fotos };
+  const nome = pet ? `diario-do-pet-${nomeArquivo(pet.nome)}-${hojeISO()}.json` : `diario-do-pet-backup-${hojeISO()}.json`;
   const texto = JSON.stringify(dados);
   // No celular, oferece "compartilhar" (salvar no Drive, enviar no WhatsApp...)
   try {
@@ -7614,6 +7641,12 @@ $('#btn-exportar').addEventListener('click', async () => {
   baixarTexto(nome, texto, 'application/json');
   marcarBackupFeito();
   statusBackup(`Backup salvo: <strong>${esc(nome)}</strong> (pasta de downloads).`, 'ok-leitura');
+}
+$('#btn-exportar').addEventListener('click', () => exportarBackup(null));
+$('#btn-exportar-pet').addEventListener('click', () => {
+  const p = petAtual();
+  if (!p) { statusBackup('Escolha um pet primeiro.', 'erro-leitura'); return; }
+  exportarBackup(p);
 });
 
 $('#arquivo-backup').addEventListener('change', async (ev) => {
@@ -7627,8 +7660,8 @@ $('#arquivo-backup').addEventListener('change', async (ev) => {
     const nomes = b.estado.pets.map((p) => esc(p.nome)).join(', ') || 'nenhum pet';
     const data = b.exportadoEm ? new Date(b.exportadoEm).toLocaleDateString('pt-BR') : '?';
     statusBackup(`Backup de ${data} com ${plural(b.estado.pets.length, 'pet', 'pets')} (${nomes}).<br>
-      <strong>Isso substitui todos os dados atuais deste aparelho.</strong>
-      <div class="linha-botoes" style="margin-top:8px"><button type="button" class="btn pequeno perigo" id="btn-confirmar-import">Substituir pelos dados do backup</button>
+      <p class="dica-campo">Adicionar mantém o que já existe e acrescenta só o que não está aqui (pelo id). Substituir apaga os dados atuais.</p>
+      <div class="linha-botoes" style="margin-top:8px"><button type="button" class="btn pequeno primario" id="btn-mesclar-import">Adicionar ao que já tenho</button><button type="button" class="btn pequeno perigo" id="btn-confirmar-import">Substituir tudo</button>
       <button type="button" class="btn pequeno" id="btn-cancelar-import">Cancelar</button></div>`);
   } catch (e) {
     backupPendente = null;
@@ -7638,19 +7671,42 @@ $('#arquivo-backup').addEventListener('change', async (ev) => {
 
 $('#backup-status').addEventListener('click', async (ev) => {
   if (ev.target.closest('#btn-cancelar-import')) { backupPendente = null; statusBackup(''); return; }
+  const mesclar = ev.target.closest('#btn-mesclar-import');
   const b = ev.target.closest('#btn-confirmar-import');
-  if (!b || !backupPendente || !pedeConfirmacao(b, 'Tem certeza? Toque de novo')) return;
-  const novo = Object.assign(estadoVazio(), backupPendente.estado);
-  for (const k of ['pets', 'pesos', 'racoes', 'saude', 'banhos', 'doencas', 'remedios', 'ecc', 'checagens', 'sintomas', 'consultas', 'gastos', 'agenda']) if (!Array.isArray(novo[k])) novo[k] = [];
+  if (!mesclar && (!b || !backupPendente || !pedeConfirmacao(b, 'Tem certeza? Toque de novo'))) return;
+  if (!backupPendente) return;
+  const origem = backupPendente.estado;
   for (const [id, url] of Object.entries(backupPendente.fotos || {})) {
     if (typeof url === 'string' && url.startsWith('data:image/')) { try { await FotosDB.salvar(id, url); cacheFotos.set(id, url); } catch (e) { /* segue */ } }
   }
-  estado = novo;
+  let novos = 0;
+  if (mesclar) {
+    // Junta: mantém o que já existe e acrescenta o que tem só no backup (pelo id)
+    const novo = { ...estado };
+    const idsPets = new Set(estado.pets.map((p) => p.id));
+    novo.pets = [...estado.pets, ...(origem.pets || []).filter((p) => !idsPets.has(p.id))];
+    novos += novo.pets.length - estado.pets.length;
+    for (const k of LISTAS_BACKUP) {
+      const atuais = estado[k] || [];
+      const ids = new Set(atuais.map((r) => r.id));
+      const extras = (origem[k] || []).filter((r) => !ids.has(r.id));
+      novos += extras.length;
+      novo[k] = [...atuais, ...extras];
+    }
+    novo.petAtual = estado.petAtual || origem.petAtual || null;
+    estado = novo;
+  } else {
+    const novo = Object.assign(estadoVazio(), origem);
+    for (const k of ['pets', ...LISTAS_BACKUP]) if (!Array.isArray(novo[k])) novo[k] = [];
+    estado = novo;
+  }
   backupPendente = null;
   salvar();
   aoTrocarPet();
   renderListaPets();
-  statusBackup(`Backup restaurado ✓ (${plural(estado.pets.length, 'pet', 'pets')}).`, 'ok-leitura');
+  statusBackup(mesclar
+    ? `Backup adicionado ✓: ${plural(novos, 'registro novo', 'registros novos')}.`
+    : `Backup restaurado ✓ (${plural(estado.pets.length, 'pet', 'pets')}).`, 'ok-leitura');
 });
 
 /* ---------- Tema: automático, claro ou escuro ---------- */
